@@ -1,0 +1,55 @@
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlmodel import Session
+
+from ...core.database import get_session
+from ...schemas.auth import LoginRequest, SignupRequest, RefreshRequest, TokenPair, UserRead
+from ...services.auth_service import AuthService
+from ...api.deps import get_current_user
+from ...services.rate_limit import InMemoryRateLimiter, parse_rule
+from ...core.config import settings
+
+
+router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+
+# Global in-memory rate limiter instance (will also be attached to app.state in main)
+rate_limiter = InMemoryRateLimiter()
+login_rule = parse_rule(settings.LOGIN_RATE_LIMIT)
+
+
+@router.post("/signup", response_model=UserRead)
+def signup(payload: SignupRequest, session: Session = Depends(get_session)):
+    service = AuthService(session)
+    user = service.signup(payload.email, payload.password)
+    return user
+
+
+@router.post("/login", response_model=TokenPair)
+def login(
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    # rate limit per username+ip to reduce brute force
+    ip = request.client.host if request.client else "unknown"
+    key = f"login:{ip}:{form_data.username}"
+    if not rate_limiter.allow(key, login_rule):
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many login attempts")
+    service = AuthService(session)
+    user = service.authenticate(form_data.username, form_data.password)
+    access, refresh, expires_in = service.issue_tokens(user)
+    return TokenPair(access_token=access, refresh_token=refresh, expires_in=expires_in)
+
+
+@router.post("/refresh", response_model=TokenPair)
+def refresh(payload: RefreshRequest, session: Session = Depends(get_session)):
+    service = AuthService(session)
+    access, refresh_token, expires_in = service.rotate_refresh(payload.refresh_token)
+    return TokenPair(access_token=access, refresh_token=refresh_token, expires_in=expires_in)
+
+
+@router.get("/me", response_model=UserRead)
+def me(user=Depends(get_current_user)):
+    return user

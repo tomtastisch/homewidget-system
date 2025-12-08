@@ -199,7 +199,7 @@ error TS2304: Cannot find name 'process'
 ```
 
 **Lösung:**
-- Prüfe ob `@types/node` in `devDependencies` vorhanden
+- Prüfe, ob `@types/node` in `devDependencies` vorhanden
 - Reinstalliere Dependencies: `cd mobile && rm -rf node_modules && npm ci`
 - Prüfe `tsconfig.json` - sollte `"node"` in `types` Array haben
 

@@ -21,7 +21,7 @@ class AuthService:
         existing = self.session.exec(select(User).where(User.email == email)).first()
         if existing:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="Email already registered",
             )
         user = User(email=email, password_hash=hash_password(password))
@@ -55,7 +55,7 @@ class AuthService:
             int(settings.access_token_expire.total_seconds()),
         )
 
-    def rotate_refresh(self, token: str) -> tuple[str, str, int]:
+    def rotate_refresh(self, token: str) -> tuple[str, str, int, User]:
         now = datetime.now(tz=UTC)
         rt = self.session.exec(
             select(RefreshToken).where(
@@ -73,4 +73,5 @@ class AuthService:
         self.session.add(rt)
         self.session.commit()
         self.log.info("refresh_rotated", extra={"user_id": user.id})
-        return self.issue_tokens(user)
+        access, refresh, expires_in = self.issue_tokens(user)
+        return access, refresh, expires_in, user

@@ -28,7 +28,7 @@ fi
 # Sicherstellen, dass venv + Tools installiert sind
 if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
   log "Backend-venv fehlt → führe setup_dev_env.sh aus."
-  PYTHON_BIN=python3.13 bash "${PROJECT_ROOT}/tools/dev/setup_dev_env.sh"
+  PYTHON_BIN=python3 bash "${PROJECT_ROOT}/tools/dev/setup_dev_env.sh"
 fi
 
 # shellcheck disable=SC1091

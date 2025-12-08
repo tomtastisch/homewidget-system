@@ -7,15 +7,16 @@ engine to be passed in.
 """
 
 from typing import Optional
+from sqlalchemy.engine import Engine
 from sqlmodel import SQLModel
 from .database import engine as app_engine
 
 
-def init_db(engine: Optional[object] = None) -> None:
+def init_db(engine: Optional[Engine] = None) -> None:
     """
     Create all tables defined by SQLModel models.
 
     If no engine is provided, the application engine is used.
     """
-
-    SQLModel.metadata.create_all(engine or app_engine)
+    target_engine = engine if engine is not None else app_engine
+    SQLModel.metadata.create_all(target_engine)

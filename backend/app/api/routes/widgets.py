@@ -3,15 +3,18 @@ from sqlmodel import Session, select
 
 from ...api.deps import get_current_user
 from ...core.database import get_session
+from ...core.logging_config import get_logger
 from ...models.widget import Widget
 from ...schemas.widget import WidgetCreate, WidgetRead
 
 router = APIRouter(prefix="/api/widgets", tags=["widgets"])
+LOG = get_logger("api.widgets")
 
 
 @router.get("/", response_model=list[WidgetRead])
 def list_widgets(session: Session = Depends(get_session), user=Depends(get_current_user)):
     widgets = session.exec(select(Widget).where(Widget.owner_id == user.id)).all()
+    LOG.info("widgets_listed", extra={"count": len(widgets)})
     return widgets
 
 
@@ -25,6 +28,7 @@ def create_widget(
     session.add(widget)
     session.commit()
     session.refresh(widget)
+    LOG.info("widget_created", extra={"widget_id": widget.id})
     return widget
 
 
@@ -39,4 +43,5 @@ def delete_widget(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
     session.delete(widget)
     session.commit()
+    LOG.info("widget_deleted", extra={"widget_id": widget_id})
     return None

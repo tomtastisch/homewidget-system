@@ -1,4 +1,5 @@
 import { getAccessToken, getRefreshToken, saveTokens, clearTokens } from '../storage/tokens';
+import { createLogger } from '../logging/logger';
 
 export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
@@ -40,8 +41,10 @@ export class ApiClient {
   }
 
   private async doRefresh(): Promise<boolean> {
+    const LOG = createLogger('mobile.api');
     const refresh = await getRefreshToken();
     if (!refresh) {
+      LOG.warn('no_refresh_token');
       if (this.onUnauthorized) await this.onUnauthorized('no_token');
       return false;
     }
@@ -51,11 +54,13 @@ export class ApiClient {
       body: JSON.stringify({ refresh_token: refresh }),
     });
     if (!res.ok) {
+      LOG.warn('refresh_failed', { status: res.status });
       if (this.onUnauthorized) await this.onUnauthorized('refresh_failed');
       return false;
     }
     const data = await res.json();
     await saveTokens(data.access_token, data.refresh_token);
+    LOG.info('token_refreshed');
     if (this.onTokenRefreshed) await this.onTokenRefreshed(data.access_token, data.refresh_token);
     return true;
   }
@@ -70,12 +75,16 @@ export class ApiClient {
   }
 
   async request(path: string, init: RequestInit = {}): Promise<Response> {
+    const LOG = createLogger('mobile.api');
+    const method = (init.method || 'GET').toUpperCase();
+    LOG.debug('request', { method, path });
     let access = await getAccessToken();
     const headers: Record<string, string> = { ...(init.headers as Record<string, string>) };
     if (access) headers['Authorization'] = `Bearer ${access}`;
     let res = await fetch(`${this.baseUrl}${path}`, { ...init, headers });
 
     if (res.status === 401) {
+      LOG.warn('unauthorized_response', { path });
       const ok = await this.ensureRefreshed();
       if (!ok) {
         await clearTokens();
@@ -89,8 +98,10 @@ export class ApiClient {
     }
 
     if (res.status === 403) {
+      LOG.warn('forbidden_response', { path });
       if (this.onUnauthorized) await this.onUnauthorized('forbidden');
     }
+    LOG.info('response', { method, path, status: res.status });
     return res;
   }
 

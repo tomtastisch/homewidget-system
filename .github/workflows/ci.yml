@@ -55,7 +55,7 @@ jobs:
           echo "::group::Backend Tests"
           
           # Check if tests exist
-          if [ -d "backend/tests" ] || ls backend/**/*_test.py backend/**/test_*.py 2>/dev/null | grep -q .; then
+          if [ -d "backend/tests" ] || find backend -name '*_test.py' -o -name 'test_*.py' | grep -q .; then
             echo "✓ Tests found, running pytest..."
             
             # Activate venv and run pytest
@@ -128,7 +128,7 @@ jobs:
         working-directory: mobile
         run: |
           echo "::group::Mobile Build Check"
-          if npm run 2>&1 | grep -q "^\s*build$"; then
+          if grep -q '"build"' package.json; then
             echo "✓ Build script found, running build..."
             npm run build || {
               echo "::error::Mobile build failed"

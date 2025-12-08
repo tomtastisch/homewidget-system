@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class WidgetBase(BaseModel):
@@ -17,5 +17,5 @@ class WidgetRead(WidgetBase):
     owner_id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    # Pydantic v2 style config
+    model_config = ConfigDict(from_attributes=True)

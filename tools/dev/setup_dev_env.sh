@@ -25,11 +25,11 @@ setup_backend() {
     return 0
   fi
 
-  local python_bin="${PYTHON_BIN:-python3.13}"
+  local python_bin="${PYTHON_BIN:-python3}"
   local venv_dir="${BACKEND_DIR}/.venv"
 
   if ! command -v "${python_bin}" >/dev/null 2>&1; then
-    die "[Backend] Basis-Python '${python_bin}' nicht im PATH gefunden."
+    die "[Backend] Basis-Python '${python_bin}' nicht im PATH gefunden. Bitte Python 3.13+ installieren."
   fi
 
   log "[Backend] Projektverzeichnis: ${BACKEND_DIR}"

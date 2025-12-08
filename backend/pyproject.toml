@@ -13,6 +13,9 @@ dependencies = [
   "python-jose[cryptography]>=3.5.0",
   "fastapi-cache2>=0.2",
   "fastapi-limiter>=0.1",
+  "pydantic[email]>=2.9",
+  # Required by FastAPI when using form data (e.g., OAuth2PasswordRequestForm)
+  "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +24,9 @@ dev = [
   "mypy>=1.11",
   "types-python-jose",
   "types-passlib",
+  # Für Tests: Starlette/FastAPI TestClient benötigt httpx
+  "pytest>=7.0",
+  "httpx>=0.24",
 ]
 
 [build-system]
@@ -48,9 +54,16 @@ check_untyped_defs = true
 
 [tool.ruff]
 line-length = 120
-target-version = "py313"
+target-version = "py312"
 
 [tool.ruff.lint]
 # B008: FastAPI Depends() in Defaults ist idiomatisch und sicher
 # Info: Hier bewusst ignoriert.
 ignore = ["D", "ANN", "B008"]
+
+[tool.pytest.ini_options]
+# Silence a third-party deprecation inside passlib's Argon2 handler that queries
+# argon2-cffi's __version__. This is external noise and not actionable in our code.
+filterwarnings = [
+  "ignore:Accessing argon2.__version__ is deprecated and will be removed in a future release:DeprecationWarning:passlib.handlers.argon2",
+]

@@ -9,8 +9,6 @@ from ...schemas.widget import WidgetRead
 from ...services.home_feed_service import HomeFeedService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
 
-from logging import getLogger as logger
-
 router = APIRouter(prefix="/api/home", tags=["home"])
 
 rate_limiter = InMemoryRateLimiter()

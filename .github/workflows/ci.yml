@@ -55,7 +55,7 @@ jobs:
           echo "::group::Backend Tests"
           
           # Check if tests exist
-          if [ -d "backend/tests" ] || find backend -name '*_test.py' -o -name 'test_*.py' | grep -q .; then
+          if [ -d "backend/tests" ] || find backend \( -name '*_test.py' -o -name 'test_*.py' \) | grep -q .; then
             echo "✓ Tests found, running pytest..."
             
             # Activate venv and run pytest

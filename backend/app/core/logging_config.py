@@ -76,12 +76,15 @@ def setup_logging(
     """
 
     env = os.getenv("ENV", "dev").lower()
-    level = (level or os.getenv("LOG_LEVEL", "INFO")).upper()
-    fmt = (fmt or os.getenv("LOG_FORMAT") or ("text" if env == "dev" else "json")).lower()
-    output = (output or os.getenv("LOG_OUTPUT", "stdout")).lower()
+    level_str: str = level if level is not None else (os.getenv("LOG_LEVEL") or "INFO")
+    level = level_str.upper()
+    fmt_str: str = fmt if fmt is not None else (os.getenv("LOG_FORMAT") or ("text" if env == "dev" else "json"))
+    fmt = fmt_str.lower()
+    output_str: str = output if output is not None else (os.getenv("LOG_OUTPUT") or "stdout")
+    output = output_str.lower()
     file_path = file_path or os.getenv("LOG_FILE", "logs/backend.log")
-    max_bytes = int(max_bytes or os.getenv("LOG_FILE_MAX_BYTES", "5242880"))
-    backup_count = int(backup_count or os.getenv("LOG_FILE_BACKUP_COUNT", "5"))
+    max_bytes = int(max_bytes if max_bytes is not None else int(os.getenv("LOG_FILE_MAX_BYTES", "5242880")))
+    backup_count = int(backup_count if backup_count is not None else int(os.getenv("LOG_FILE_BACKUP_COUNT", "5")))
 
     # Handlers
     handlers: Dict[str, Dict[str, Any]] = {}
@@ -95,7 +98,7 @@ def setup_logging(
             "formatter": "dev_text" if fmt == "text" else "json",
         }
 
-    if output in ("file", "both"):
+    if output in ("file", "both") and file_path:
         _ensure_log_dir(file_path)
         handlers["file"] = {
             "()": RotatingFileHandler,

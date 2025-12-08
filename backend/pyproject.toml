@@ -13,6 +13,7 @@ dependencies = [
   "python-jose[cryptography]>=3.5.0",
   "fastapi-cache2>=0.2",
   "fastapi-limiter>=0.1",
+  "pydantic[email]>=2.9",
 ]
 
 [project.optional-dependencies]
@@ -57,3 +58,10 @@ target-version = "py312"
 # B008: FastAPI Depends() in Defaults ist idiomatisch und sicher
 # Info: Hier bewusst ignoriert.
 ignore = ["D", "ANN", "B008"]
+
+[tool.pytest.ini_options]
+# Silence a third-party deprecation inside passlib's Argon2 handler that queries
+# argon2-cffi's __version__. This is external noise and not actionable in our code.
+filterwarnings = [
+  "ignore:Accessing argon2.__version__ is deprecated and will be removed in a future release:DeprecationWarning:passlib.handlers.argon2",
+]

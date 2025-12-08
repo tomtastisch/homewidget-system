@@ -12,6 +12,16 @@ from ..models.widget import RefreshToken
 from .security import create_jwt, hash_password, verify_password
 
 
+def ensure_utc_aware(dt: datetime) -> datetime:
+    """Ensure a datetime object is timezone-aware (UTC).
+    
+    SQLite doesn't preserve timezone info, so we need to ensure all datetime
+    comparisons use UTC-aware datetimes. This helper assumes naive datetimes
+    are in UTC (which is our application standard).
+    """
+    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
+
+
 class AuthService:
     def __init__(self, session: Session):
         self.session = session
@@ -66,8 +76,8 @@ class AuthService:
         if not rt:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
         
-        # Ensure expires_at is timezone-aware for comparison
-        expires_at = rt.expires_at.replace(tzinfo=UTC) if rt.expires_at.tzinfo is None else rt.expires_at
+        # Ensure timezone-aware comparison using our utility
+        expires_at = ensure_utc_aware(rt.expires_at)
         if expires_at < now:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
         

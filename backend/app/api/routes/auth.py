@@ -6,6 +6,7 @@ from ...api.deps import get_current_user
 from ...core.config import settings
 from ...core.database import get_session
 from ...core.logging_config import get_logger
+from ...models.user import User
 from ...schemas.auth import RefreshRequest, SignupRequest, TokenPair, UserRead
 from ...services.auth_service import AuthService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
@@ -19,21 +20,25 @@ rate_limiter = InMemoryRateLimiter()
 login_rule = parse_rule(settings.LOGIN_RATE_LIMIT)
 
 
-@router.post("/signup", response_model=UserRead)
-def signup(payload: SignupRequest, session: Session = Depends(get_session)):
+def _perform_signup(payload: SignupRequest, session: Session) -> User:
+    """Shared signup logic for both /signup and /register endpoints."""
     service = AuthService(session)
     user = service.signup(str(payload.email), payload.password)
     LOG.info("user_signed_up", extra={"user_id": user.id})
     return user
+
+
+@router.post("/signup", response_model=UserRead)
+def signup(payload: SignupRequest, session: Session = Depends(get_session)):
+    """Register a new user account."""
+    return _perform_signup(payload, session)
 
 
 # Alias endpoint to match ticket naming
 @router.post("/register", response_model=UserRead)
 def register(payload: SignupRequest, session: Session = Depends(get_session)):
-    service = AuthService(session)
-    user = service.signup(str(payload.email), payload.password)
-    LOG.info("user_signed_up", extra={"user_id": user.id})
-    return user
+    """Register a new user account (alias for /signup)."""
+    return _perform_signup(payload, session)
 
 
 @router.post("/login", response_model=TokenPair)

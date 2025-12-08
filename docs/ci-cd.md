@@ -283,7 +283,7 @@ Success: no issues found in 20 source files
 3. **Type Annotations:**
    - MyPy-Enforcement für `app/services`, `app/core`, `app/models`
    - Explizite Type Hints für öffentliche Funktionen/Methoden
-   - `Optional[T]` statt `T | None` für Konsistenz (Python <3.10 Kompatibilität)
+   - `Optional[T]` statt `T | None` für Konsistenz im Code-Stil (beide sind ab Python 3.10+ gültig)
 
 4. **Ruff Ignore-Rules:**
    - Aktuell ignoriert: `D` (Docstrings), `ANN` (Type Annotations überall), `B008` (FastAPI Depends())

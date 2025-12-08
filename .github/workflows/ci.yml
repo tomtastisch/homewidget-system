@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dev Container CI
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: |
+            bash -lc 'echo Python: $(python --version) && echo Node: $(node --version) && echo NPM: $(npm --version)'
+            # Backend: Dependencies sicherstellen und Import-/Smoke-Test
+            bash -lc 'python -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt && python -c "import backend.app.main as m; app=m.create_app(); print(\"APP_OK:\", app.title)"'
+            # Mobile: Typecheck
+            bash -lc 'cd mobile && npm ci && npx tsc --noEmit'

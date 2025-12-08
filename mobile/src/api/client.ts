@@ -1,8 +1,11 @@
 import { getAccessToken, getRefreshToken, saveTokens, clearTokens } from '../storage/tokens';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
-async function refreshAccessToken(): Promise<boolean> {
+// Eine einfache Sperre, um parallele Refresh-Requests zu verhindern
+let refreshLock: Promise<boolean> | null = null;
+
+async function doRefresh(): Promise<boolean> {
   const refresh = await getRefreshToken();
   if (!refresh) return false;
   const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
@@ -16,6 +19,16 @@ async function refreshAccessToken(): Promise<boolean> {
   return true;
 }
 
+async function ensureRefreshed(): Promise<boolean> {
+  if (!refreshLock) {
+    refreshLock = doRefresh().finally(() => {
+      // Nach Abschluss wieder freigeben
+      refreshLock = null;
+    });
+  }
+  return refreshLock;
+}
+
 export async function fetchWithAuth(path: string, init: RequestInit = {}): Promise<Response> {
   let access = await getAccessToken();
   const headers: Record<string, string> = {
@@ -24,7 +37,7 @@ export async function fetchWithAuth(path: string, init: RequestInit = {}): Promi
   if (access) headers['Authorization'] = `Bearer ${access}`;
   let res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
   if (res.status === 401) {
-    const ok = await refreshAccessToken();
+    const ok = await ensureRefreshed();
     if (!ok) {
       await clearTokens();
       return res;
@@ -37,6 +50,22 @@ export async function fetchWithAuth(path: string, init: RequestInit = {}): Promi
     res = await fetch(`${BASE_URL}${path}`, { ...init, headers: retryHeaders });
   }
   return res;
+}
+
+export async function requestJSON<T = any>(path: string, init: RequestInit = {}): Promise<T> {
+  const res = await fetchWithAuth(path, init);
+  const text = await res.text();
+  let data: any;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (e) {
+    throw new Error(`Unerwartete Antwort: ${text}`);
+  }
+  if (!res.ok) {
+    const message = (data && (data.detail || data.message)) || res.statusText || 'Request fehlgeschlagen';
+    throw new Error(String(message));
+  }
+  return data as T;
 }
 
 export async function login(username: string, password: string) {
@@ -71,7 +100,5 @@ export async function signup(email: string, password: string) {
 }
 
 export async function getFeed() {
-  const res = await fetchWithAuth('/api/home/feed');
-  if (!res.ok) throw new Error('Failed to load feed');
-  return res.json();
+  return requestJSON('/api/home/feed');
 }

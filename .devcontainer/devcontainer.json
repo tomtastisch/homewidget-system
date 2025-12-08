@@ -1,0 +1,21 @@
+{
+  "name": "homewidget-system-dev",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.13-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "customizations": {
+    "jetbrains": {
+      "backend": "intellij"
+    }
+  },
+  "postCreateCommand": "bash -lc 'bash tools/dev/setup_dev_env.sh'",
+  "forwardPorts": [
+    8000,   // FastAPI / Uvicorn
+    8081,   // Metro / React Native
+    19000,  // Expo DevTools
+    19001   // Expo bundler/Websocket
+  ]
+}

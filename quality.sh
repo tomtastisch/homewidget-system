@@ -1,8 +1,7 @@
 if [[ "${MODE}" == "fix" ]]; then
   log "Ruff: auto-fix (imports, simple, pyupgrade, format)"
-  # Hinweis: ruff check --fix gibt Exit-Code > 0 zurück, wenn unfixbare Verstöße
-  # verbleiben. Das ist während der Fix-Phase akzeptabel, da wir danach nochmal prüfen.
-  # Wir erfassen den Exit-Code für Transparenz, stoppen aber nicht den Workflow.
+  # Info für mich: ruff check --fix gibt Exit-Code > 0 zurück, wenn
+  # unfixbare Verstöße verbleiben.
   set +e
   ruff check backend/app --fix
   FIX_EXIT_CODE=$?

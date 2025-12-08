@@ -20,7 +20,7 @@ login_rule = parse_rule(settings.LOGIN_RATE_LIMIT)
 @router.post("/signup", response_model=UserRead)
 def signup(payload: SignupRequest, session: Session = Depends(get_session)):
     service = AuthService(session)
-    user = service.signup(payload.email, payload.password)
+    user = service.signup(str(payload.email), payload.password)
     return user
 
 

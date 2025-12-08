@@ -9,11 +9,14 @@ from ...schemas.widget import WidgetRead
 from ...services.home_feed_service import HomeFeedService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
 
+from logging import getLogger as logger
+
 router = APIRouter(prefix="/api/home", tags=["home"])
 
 rate_limiter = InMemoryRateLimiter()
 feed_rule = parse_rule(settings.FEED_RATE_LIMIT)
 
+LOG = request.app.state.logger
 
 @router.get("/feed", response_model=list[WidgetRead])
 @cache(expire=30)
@@ -26,6 +29,11 @@ def get_feed(
     key = f"feed:{user.id}"
     if not rate_limiter.allow(key, feed_rule):
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests")
+
+    LOG.debug(f"Fetching feed for user {user.email}")
+    LOG.debug(f"Request: {request}")
+
     service = HomeFeedService(session)
     widgets = service.get_user_widgets(user)
+
     return widgets

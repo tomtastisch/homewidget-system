@@ -30,7 +30,10 @@ def signup(payload: SignupRequest, session: Session = Depends(get_session)):
 # Alias endpoint to match ticket naming
 @router.post("/register", response_model=UserRead)
 def register(payload: SignupRequest, session: Session = Depends(get_session)):
-    return signup(payload, session)
+    service = AuthService(session)
+    user = service.signup(str(payload.email), payload.password)
+    LOG.info("user_signed_up", extra={"user_id": user.id})
+    return user
 
 
 @router.post("/login", response_model=TokenPair)

@@ -63,8 +63,14 @@ class AuthService:
                 cast(Any, RefreshToken.revoked).is_(False),
             )
         ).first()
-        if not rt or rt.expires_at < now:
+        if not rt:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        
+        # Ensure expires_at is timezone-aware for comparison
+        expires_at = rt.expires_at.replace(tzinfo=UTC) if rt.expires_at.tzinfo is None else rt.expires_at
+        if expires_at < now:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        
         user = self.session.get(User, rt.user_id)
         if not user or not user.is_active:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")

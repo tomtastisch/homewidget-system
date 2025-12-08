@@ -83,8 +83,8 @@ def setup_logging(
     output_str: str = output if output is not None else (os.getenv("LOG_OUTPUT") or "stdout")
     output = output_str.lower()
     file_path = file_path or os.getenv("LOG_FILE", "logs/backend.log")
-    max_bytes = int(max_bytes if max_bytes is not None else int(os.getenv("LOG_FILE_MAX_BYTES", "5242880")))
-    backup_count = int(backup_count if backup_count is not None else int(os.getenv("LOG_FILE_BACKUP_COUNT", "5")))
+    max_bytes = max_bytes if max_bytes is not None else int(os.getenv("LOG_FILE_MAX_BYTES", "5242880"))
+    backup_count = backup_count if backup_count is not None else int(os.getenv("LOG_FILE_BACKUP_COUNT", "5"))
 
     # Handlers
     handlers: Dict[str, Dict[str, Any]] = {}

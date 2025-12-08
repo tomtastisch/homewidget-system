@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
@@ -8,9 +9,14 @@ from .api.routes import home as home_routes
 from .api.routes import widgets as widget_routes
 from .core.config import settings
 from .core.database import init_db
+from .core.logging_config import setup_logging
+from .middleware.logging_middleware import RequestLoggingMiddleware
 
 
 def create_app() -> FastAPI:
+    # configure logging early
+    setup_logging()
+
     app = FastAPI(title=settings.PROJECT_NAME)
 
     # CORS for mobile dev
@@ -26,6 +32,10 @@ def create_app() -> FastAPI:
     def on_startup():
         init_db()
         FastAPICache.init(InMemoryBackend(), prefix="homewidget")
+
+    # Request/Response logging middleware (enable/disable via env)
+    if os.getenv("REQUEST_LOGGING_ENABLED", "1") not in ("0", "false", "False"):
+        app.add_middleware(RequestLoggingMiddleware)
 
     app.include_router(auth_routes.router)
     app.include_router(widget_routes.router)

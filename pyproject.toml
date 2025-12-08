@@ -1,0 +1,5 @@
+ignore = [
+  "D",    # pydocstyle (docstring rules) — off unless requested
+  "ANN",  # flake8-annotations — do not require type hints everywhere
+  "B008", # FastAPI: Depends() in function parameter defaults is idiomatic
+]

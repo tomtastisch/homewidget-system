@@ -1,4 +1,4 @@
-from typing import List
+from collections.abc import Sequence
 
 from sqlmodel import Session, select
 
@@ -10,7 +10,7 @@ class WidgetSelectionService:
     def __init__(self, session: Session):
         self.session = session
 
-    def list_for_user(self, user: User) -> List[Widget]:
+    def list_for_user(self, user: User) -> Sequence[Widget]:
         return self.session.exec(select(Widget).where(Widget.owner_id == user.id)).all()
 
     def add_widget(self, user: User, name: str, config_json: str = "{}") -> Widget:

@@ -11,7 +11,7 @@ class RateRule:
 
 
 class InMemoryRateLimiter:
-    def __init__(self):
+    def __init__(self) -> None:
         # key -> deque[timestamps]
         self._events: dict[str, deque[float]] = defaultdict(deque)
 

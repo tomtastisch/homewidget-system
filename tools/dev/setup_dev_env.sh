@@ -55,8 +55,15 @@ setup_backend() {
 
   # Editable-Install über pyproject.toml
   if [[ -f "${BACKEND_DIR}/pyproject.toml" ]]; then
-    log "[Backend] Installiere Backend (editable) aus pyproject.toml"
-    (cd "${BACKEND_DIR}" && python -m pip install -e .)
+    log "[Backend] Installiere Backend (editable) inkl. Dev-Extras"
+    set +e
+    (cd "${BACKEND_DIR}" && python -m pip install -e .[dev])
+    rc=$?
+    set -e
+    if [[ $rc -ne 0 ]]; then
+      log "[Backend] Dev-Extras nicht installierbar → fallback auf '-e .'"
+      (cd "${BACKEND_DIR}" && python -m pip install -e .)
+    fi
   elif [[ -f "${BACKEND_DIR}/requirements.txt" ]]; then
     log "[Backend] Installiere requirements.txt"
     python -m pip install -r "${BACKEND_DIR}/requirements.txt"

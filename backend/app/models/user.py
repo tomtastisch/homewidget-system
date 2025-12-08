@@ -1,13 +1,13 @@
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from sqlmodel import SQLModel, Field, Relationship
+from sqlmodel import Field, Relationship, SQLModel
 
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     email: str = Field(index=True, unique=True)
     password_hash: str
     is_active: bool = Field(default=True)
@@ -16,4 +16,5 @@ class User(SQLModel, table=True):
     widgets: list["Widget"] = Relationship(back_populates="owner")
 
 
-from .widget import Widget  # circular type hint resolution
+if TYPE_CHECKING:  # circular type hint resolution for type checkers only
+    from .widget import Widget

@@ -3,11 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.inmemory import InMemoryBackend
 
+from .api.routes import auth as auth_routes
+from .api.routes import home as home_routes
+from .api.routes import widgets as widget_routes
 from .core.config import settings
 from .core.database import init_db
-from .api.routes import auth as auth_routes
-from .api.routes import widgets as widget_routes
-from .api.routes import home as home_routes
 
 
 def create_app() -> FastAPI:

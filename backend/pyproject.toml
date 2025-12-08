@@ -3,7 +3,7 @@ name = "homewidget-backend"
 version = "0.1.0"
 description = "FastAPI/SQLModel backend for the homewidget-system"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
   "fastapi>=0.124",
   "sqlmodel>=0.0.27",
@@ -49,7 +49,7 @@ check_untyped_defs = true
 
 [tool.ruff]
 line-length = 120
-target-version = "py312"
+target-version = "py313"
 
 [tool.ruff.lint]
 # B008: FastAPI Depends() in Defaults ist idiomatisch und sicher

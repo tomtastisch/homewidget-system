@@ -145,7 +145,7 @@ Hinweise für neue Teammitglieder
 - **CI/CD-Pipeline**: Siehe [docs/ci-cd.md](docs/ci-cd.md) für Details zur Continuous Integration, lokalen Reproduktion und Fehlerbehandlung.
 
 Devcontainer & Setup
-- Der Devcontainer (VS Code/JetBrains Gateway) ist in `.devcontainer/devcontainer.json` definiert. Er enthält Python 3.12+ und Node 18.
+- Der Devcontainer (VS Code/JetBrains Gateway) ist in `.devcontainer/devcontainer.json` definiert. Er enthält Python 3.13 und Node 18.
 - Beim Öffnen/Starten im Devcontainer wird automatisch das Setup‑Skript ausgeführt:
   - `postCreateCommand: bash -lc 'bash tools/dev/setup_dev_env.sh'`
   - `postStartCommand:  bash -lc 'bash tools/dev/setup_dev_env.sh'`

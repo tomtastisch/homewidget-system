@@ -25,9 +25,7 @@ def get_feed(
     # rate limit per user id
     key = f"feed:{user.id}"
     if not rate_limiter.allow(key, feed_rule):
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests"
-        )
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests")
     service = HomeFeedService(session)
     widgets = service.get_user_widgets(user)
     return widgets

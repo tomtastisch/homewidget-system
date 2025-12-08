@@ -10,9 +10,7 @@ router = APIRouter(prefix="/api/widgets", tags=["widgets"])
 
 
 @router.get("/", response_model=list[WidgetRead])
-def list_widgets(
-    session: Session = Depends(get_session), user=Depends(get_current_user)
-):
+def list_widgets(session: Session = Depends(get_session), user=Depends(get_current_user)):
     widgets = session.exec(select(Widget).where(Widget.owner_id == user.id)).all()
     return widgets
 
@@ -23,9 +21,7 @@ def create_widget(
     session: Session = Depends(get_session),
     user=Depends(get_current_user),
 ):
-    widget = Widget(
-        name=payload.name, config_json=payload.config_json, owner_id=user.id
-    )
+    widget = Widget(name=payload.name, config_json=payload.config_json, owner_id=user.id)
     session.add(widget)
     session.commit()
     session.refresh(widget)
@@ -40,9 +36,7 @@ def delete_widget(
 ):
     widget = session.get(Widget, widget_id)
     if not widget or widget.owner_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")
     session.delete(widget)
     session.commit()
     return None

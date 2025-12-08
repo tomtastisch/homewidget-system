@@ -11,7 +11,5 @@ class HomeFeedService:
         self.session = session
 
     def get_user_widgets(self, user: User) -> Sequence[Widget]:
-        widgets = self.session.exec(
-            select(Widget).where(Widget.owner_id == user.id)
-        ).all()
+        widgets = self.session.exec(select(Widget).where(Widget.owner_id == user.id)).all()
         return widgets

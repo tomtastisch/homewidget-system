@@ -11,9 +11,7 @@ class Widget(SQLModel, table=True):
     name: str = Field(index=True)
     config_json: str = Field(default="{}")
     owner_id: int = Field(foreign_key="users.id")
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(tz=UTC), nullable=False
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC), nullable=False)
 
     owner: "User" = Relationship(back_populates="widgets")
 
@@ -25,9 +23,7 @@ class RefreshToken(SQLModel, table=True):
     user_id: int = Field(foreign_key="users.id", index=True)
     token: str = Field(index=True, unique=True)
     expires_at: datetime = Field(index=True)
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(tz=UTC), nullable=False
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC), nullable=False)
     revoked: bool = Field(default=False)
 
 

@@ -48,9 +48,7 @@ def login(
 def refresh(payload: RefreshRequest, session: Session = Depends(get_session)):
     service = AuthService(session)
     access, refresh_token, expires_in = service.rotate_refresh(payload.refresh_token)
-    return TokenPair(
-        access_token=access, refresh_token=refresh_token, expires_in=expires_in
-    )
+    return TokenPair(access_token=access, refresh_token=refresh_token, expires_in=expires_in)
 
 
 @router.get("/me", response_model=UserRead)

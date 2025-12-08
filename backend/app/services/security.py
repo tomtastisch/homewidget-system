@@ -16,9 +16,7 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     return pwd_context.verify(plain_password, password_hash)
 
 
-def create_jwt(
-    subject: str, expires_delta: timedelta, token_type: str = "access"
-) -> str:
+def create_jwt(subject: str, expires_delta: timedelta, token_type: str = "access") -> str:
     now = datetime.now(tz=UTC)
     expire = now + expires_delta
     to_encode = {"sub": subject, "exp": int(expire.timestamp()), "type": token_type}
@@ -27,9 +25,7 @@ def create_jwt(
 
 def decode_jwt(token: str) -> dict | None:
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except JWTError:
         return None

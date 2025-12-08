@@ -31,25 +31,17 @@ class AuthService:
     def authenticate(self, email: str, password: str) -> User:
         user = self.session.exec(select(User).where(User.email == email)).first()
         if not user or not verify_password(password, user.password_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
         return user
 
     def issue_tokens(self, user: User) -> tuple[str, str, int]:
-        access = create_jwt(
-            user.email, settings.access_token_expire, token_type="access"
-        )
+        access = create_jwt(user.email, settings.access_token_expire, token_type="access")
         # persistent refresh token stored server-side for revocation
         refresh_token_plain = secrets.token_urlsafe(48)
         expires_at = datetime.now(tz=UTC) + settings.refresh_token_expire
-        rt = RefreshToken(
-            user_id=user.id, token=refresh_token_plain, expires_at=expires_at
-        )
+        rt = RefreshToken(user_id=user.id, token=refresh_token_plain, expires_at=expires_at)
         self.session.add(rt)
         self.session.commit()
         return (
@@ -67,14 +59,10 @@ class AuthService:
             )
         ).first()
         if not rt or rt.expires_at < now:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
         user = self.session.get(User, rt.user_id)
         if not user or not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")
         # revoke old token and issue a new one
         rt.revoked = True
         self.session.add(rt)

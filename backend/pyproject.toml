@@ -21,6 +21,8 @@ dev = [
   "mypy>=1.11",
   "types-python-jose",
   "types-passlib",
+  # Für Tests: Starlette/FastAPI TestClient benötigt httpx
+  "httpx>=0.24",
 ]
 
 [build-system]

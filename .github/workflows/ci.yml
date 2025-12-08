@@ -128,7 +128,7 @@ jobs:
         working-directory: mobile
         run: |
           echo "::group::Mobile Build Check"
-          if grep -q '"build"' package.json; then
+          if jq -e '.scripts.build' package.json > /dev/null 2>&1; then
             echo "✓ Build script found, running build..."
             npm run build || {
               echo "::error::Mobile build failed"

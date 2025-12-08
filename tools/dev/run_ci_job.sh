@@ -13,10 +13,6 @@ set -Eeuo pipefail
 #   tools/dev/run_ci_job.sh quality       # nur Ruff + MyPy
 #   tools/dev/run_ci_job.sh tests|test    # nur Pytest
 #   tools/dev/run_ci_job.sh mobile        # nur Mobile (npm ci, lint, tsc, optional build)
-#
-# Optional: Falls eine .gitlab-ci.yml existiert und als Argument ein unbekannter
-#           Task übergeben wird, versucht das Skript, den angegebenen Namen als
-#           GitLab-Job via gitlab-runner (im Docker-Container) auszuführen.
 
 log() { echo "[ci-local] $*"; }
 err() { echo "[ci-local][ERROR] $*" >&2; }

@@ -2,7 +2,6 @@ import json
 import logging
 import logging.config
 import os
-import sys
 from contextvars import ContextVar
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
@@ -86,8 +85,6 @@ def setup_logging(
 
     # Handlers
     handlers: Dict[str, Dict[str, Any]] = {}
-
-    context_filter = ContextFilter()
 
     if output in ("stdout", "both"):
         handlers["console"] = {

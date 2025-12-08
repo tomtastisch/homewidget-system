@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
@@ -17,7 +18,14 @@ def create_app() -> FastAPI:
     # configure logging early
     setup_logging()
 
-    app = FastAPI(title=settings.PROJECT_NAME)
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Startup
+        init_db()
+        FastAPICache.init(InMemoryBackend(), prefix="homewidget")
+        yield
+
+    app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
     # CORS for mobile dev
     app.add_middleware(
@@ -27,11 +35,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    @app.on_event("startup")
-    def on_startup():
-        init_db()
-        FastAPICache.init(InMemoryBackend(), prefix="homewidget")
 
     # Request/Response logging middleware (enable/disable via env)
     if os.getenv("REQUEST_LOGGING_ENABLED", "1") not in ("0", "false", "False"):

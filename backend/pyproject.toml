@@ -21,6 +21,7 @@ dev = [
   "mypy>=1.11",
   "types-python-jose",
   "types-passlib",
+  "pytest>=7.0",
 ]
 
 [build-system]

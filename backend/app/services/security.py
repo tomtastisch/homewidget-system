@@ -29,3 +29,28 @@ def decode_jwt(token: str) -> dict | None:
         return payload
     except JWTError:
         return None
+
+
+# Convenience wrappers expected by ticket spec
+def create_access_token(data: dict, expires_delta: timedelta) -> str:
+    """Create an access JWT from provided data.
+
+    Expects either a pre-set "sub" in data or a "email" key to derive subject.
+    Other keys are ignored to avoid leaking sensitive data.
+    """
+    subject = data.get("sub") or data.get("email") or data.get("username")
+    if not subject:
+        raise ValueError("subject missing for access token")
+    return create_jwt(str(subject), expires_delta, token_type="access")
+
+
+def create_refresh_token(data: dict, expires_delta: timedelta) -> str:
+    """Create a refresh JWT from provided data.
+
+    Note: Service currently uses opaque refresh tokens stored in DB. This
+    function is provided for compatibility and potential future switch.
+    """
+    subject = data.get("sub") or data.get("email") or data.get("username")
+    if not subject:
+        raise ValueError("subject missing for refresh token")
+    return create_jwt(str(subject), expires_delta, token_type="refresh")

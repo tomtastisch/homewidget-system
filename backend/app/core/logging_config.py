@@ -75,37 +75,40 @@ def setup_logging(
     - ENV: "dev" | "prod" influences defaults
     """
 
-    env = os.getenv("ENV", "dev").lower()
-    level = (level or os.getenv("LOG_LEVEL", "INFO")).upper()
-    fmt = (fmt or os.getenv("LOG_FORMAT") or ("text" if env == "dev" else "json")).lower()
-    output = (output or os.getenv("LOG_OUTPUT", "stdout")).lower()
-    file_path = file_path or os.getenv("LOG_FILE", "logs/backend.log")
-    max_bytes = int(max_bytes or os.getenv("LOG_FILE_MAX_BYTES", "5242880"))
-    backup_count = int(backup_count or os.getenv("LOG_FILE_BACKUP_COUNT", "5"))
+    # Normalize environment/config values to non-None, properly typed locals
+    env = (os.getenv("ENV") or "dev").lower()
+    level_str = (level or os.getenv("LOG_LEVEL") or "INFO").upper()
+    fmt_str = (fmt or os.getenv("LOG_FORMAT") or ("text" if env == "dev" else "json")).lower()
+    output_str = (output or os.getenv("LOG_OUTPUT") or "stdout").lower()
+    file_path_str = file_path or os.getenv("LOG_FILE") or "logs/backend.log"
+    max_bytes_val = max_bytes if max_bytes is not None else int(os.getenv("LOG_FILE_MAX_BYTES") or "5242880")
+    backup_count_val = (
+        backup_count if backup_count is not None else int(os.getenv("LOG_FILE_BACKUP_COUNT") or "5")
+    )
 
     # Handlers
     handlers: Dict[str, Dict[str, Any]] = {}
 
-    if output in ("stdout", "both"):
+    if output_str in ("stdout", "both"):
         handlers["console"] = {
             "class": "logging.StreamHandler",
-            "level": level,
+            "level": level_str,
             "stream": "ext://sys.stdout",
             "filters": ["context"],
-            "formatter": "dev_text" if fmt == "text" else "json",
+            "formatter": "dev_text" if fmt_str == "text" else "json",
         }
 
-    if output in ("file", "both"):
-        _ensure_log_dir(file_path)
+    if output_str in ("file", "both"):
+        _ensure_log_dir(file_path_str)
         handlers["file"] = {
             "()": RotatingFileHandler,
-            "level": level,
-            "filename": file_path,
-            "maxBytes": max_bytes,
-            "backupCount": backup_count,
+            "level": level_str,
+            "filename": file_path_str,
+            "maxBytes": max_bytes_val,
+            "backupCount": backup_count_val,
             "encoding": "utf-8",
             "filters": ["context"],
-            "formatter": "text" if fmt == "text" else "json",
+            "formatter": "text" if fmt_str == "text" else "json",
         }
 
     # Formatters
@@ -149,14 +152,14 @@ def setup_logging(
             # Fallback if misconfigured
             "console": {
                 "class": "logging.StreamHandler",
-                "level": level,
+                "level": level_str,
                 "stream": "ext://sys.stdout",
                 "filters": ["context"],
-                "formatter": "dev_text" if fmt == "text" else "json",
+                "formatter": "dev_text" if fmt_str == "text" else "json",
             }
         },
         "loggers": loggers,
-        "root": {"level": level, "handlers": root_handlers or ["console"]},
+        "root": {"level": level_str, "handlers": root_handlers or ["console"]},
     }
 
     logging.config.dictConfig(config)
@@ -164,7 +167,7 @@ def setup_logging(
     # Basic banner in dev to confirm configuration
     if env == "dev":
         logging.getLogger("backend.app").debug(
-            "Logging configured (level=%s, fmt=%s, output=%s)", level, fmt, output
+            "Logging configured (level=%s, fmt=%s, output=%s)", level_str, fmt_str, output_str
         )
 
 

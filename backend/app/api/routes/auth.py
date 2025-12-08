@@ -27,6 +27,12 @@ def signup(payload: SignupRequest, session: Session = Depends(get_session)):
     return user
 
 
+# Alias endpoint to match ticket naming
+@router.post("/register", response_model=UserRead)
+def register(payload: SignupRequest, session: Session = Depends(get_session)):
+    return signup(payload, session)
+
+
 @router.post("/login", response_model=TokenPair)
 def login(
     request: Request,
@@ -46,15 +52,25 @@ def login(
     user = service.authenticate(form_data.username, form_data.password)
     LOG.info("login_success", extra={"user_id": user.id, "client": ip})
     access, refresh, expires_in = service.issue_tokens(user)
-    return TokenPair(access_token=access, refresh_token=refresh, expires_in=expires_in)
+    return TokenPair(
+        access_token=access,
+        refresh_token=refresh,
+        expires_in=expires_in,
+        role=user.role.value if hasattr(user.role, "value") else str(user.role),
+    )
 
 
 @router.post("/refresh", response_model=TokenPair)
 def refresh(payload: RefreshRequest, session: Session = Depends(get_session)):
     service = AuthService(session)
-    access, refresh_token, expires_in = service.rotate_refresh(payload.refresh_token)
-    LOG.info("token_refreshed")
-    return TokenPair(access_token=access, refresh_token=refresh_token, expires_in=expires_in)
+    access, refresh_token, expires_in, user = service.rotate_refresh(payload.refresh_token)
+    LOG.info("token_refreshed", extra={"user_id": user.id})
+    return TokenPair(
+        access_token=access,
+        refresh_token=refresh_token,
+        expires_in=expires_in,
+        role=user.role.value if hasattr(user.role, "value") else str(user.role),
+    )
 
 
 @router.get("/me", response_model=UserRead)

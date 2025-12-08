@@ -1,7 +1,10 @@
 {
   "name": "homewidget-system-dev",
-  "image": "mcr.microsoft.com/devcontainers/python:1-3.13-bookworm",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
   "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.13"
+    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "18"
     }
@@ -11,7 +14,11 @@
       "backend": "intellij"
     }
   },
+  "containerEnv": {
+    "PYTHON_BIN": "python3.13"
+  },
   "postCreateCommand": "bash -lc 'bash tools/dev/setup_dev_env.sh'",
+  "postStartCommand": "bash -lc 'bash tools/dev/setup_dev_env.sh'",
   "forwardPorts": [
     8000,
     8081,

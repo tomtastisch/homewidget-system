@@ -145,11 +145,12 @@ Hinweise für neue Teammitglieder
 
 Devcontainer & Setup
 - Der Devcontainer (VS Code/JetBrains Gateway) ist in `.devcontainer/devcontainer.json` definiert. Er enthält Python 3.13 und Node 18.
-- Beim Öffnen im Devcontainer wird automatisch das Setup‑Skript ausgeführt:
+- Beim Öffnen/Starten im Devcontainer wird automatisch das Setup‑Skript ausgeführt:
   - `postCreateCommand: bash -lc 'bash tools/dev/setup_dev_env.sh'`
+  - `postStartCommand:  bash -lc 'bash tools/dev/setup_dev_env.sh'`
 - Manuelle Ausführung lokal/außerhalb des Devcontainers:
   - `bash tools/dev/setup_dev_env.sh`
-  - Wirkung:
-    - Backend: erzeugt/aktualisiert `backend/.venv` und installiert Dependencies (editable `-e .[dev]`).
-    - Mobile: führt in `mobile/` ein `npm install` aus.
-  - Das Skript ist idempotent und kann gefahrlos mehrfach ausgeführt werden.
+  - Wirkung (idempotent):
+    - Backend: erzeugt/aktualisiert `backend/.venv`, aktualisiert `pip/setuptools/wheel`, installiert Dependencies via `pyproject.toml` als editable (`-e .[dev]`, Fallback: `-e .`). Außerdem kurzer Import‑Smoke‑Test inkl. `app`‑Paket.
+    - Mobile: initialisiert falls verfügbar `nvm` und setzt Node `18` (`nvm use 18`), danach `npm install` in `mobile/`.
+  - Das Skript ist idempotent und kann gefahrlos mehrfach ausgeführt werden (Exit‑Code `0` bei Erfolg, `≠0` bei harten Fehlern).

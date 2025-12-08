@@ -71,19 +71,12 @@ setup_backend() {
     log "[Backend] Keine Dependency-Definition gefunden (pyproject/requirements)."
   fi
 
-  # Smoke-Tests: Kernlibs und Paket-Import (app)
+  # Smoke-Test inkl. EmailStr
   python - <<'PY'
 from fastapi import FastAPI  # noqa: F401
 from sqlmodel import SQLModel  # noqa: F401
 from pydantic import EmailStr  # noqa: F401
 print("Backend-Imports OK.")
-PY
-
-  # Sicherstellen, dass das Projektpaket importierbar ist (Paket-Layout/PYTHONPATH)
-  python - <<'PY'
-import importlib, sys
-mod = importlib.import_module("app")
-print("Import app OK:", getattr(mod, "__file__", None))
 PY
 
   log "[Backend] Backend-Environment OK."
@@ -101,35 +94,8 @@ setup_mobile() {
 
   log "[Mobile] Projektverzeichnis: ${MOBILE_DIR}"
 
-  # Optional: nvm initialisieren und Node 18 verwenden, wenn verfügbar
-  # Dies stellt sicher, dass lokal wie im Devcontainer Node 18 genutzt wird.
-  local want_node_major="18"
-  local nvm_inited=0
-  if [[ -n "${NVM_DIR:-}" && -s "${NVM_DIR}/nvm.sh" ]]; then
-    # shellcheck disable=SC1090
-    . "${NVM_DIR}/nvm.sh" && nvm_inited=1 || true
-  elif [[ -s "/usr/local/share/nvm/nvm.sh" ]]; then
-    # shellcheck disable=SC1091
-    . "/usr/local/share/nvm/nvm.sh" && nvm_inited=1 || true
-  elif [[ -s "/usr/local/nvm/nvm.sh" ]]; then
-    # shellcheck disable=SC1091
-    . "/usr/local/nvm/nvm.sh" && nvm_inited=1 || true
-  elif [[ -s "${HOME}/.nvm/nvm.sh" ]]; then
-    # shellcheck disable=SC1090
-    . "${HOME}/.nvm/nvm.sh" && nvm_inited=1 || true
-  fi
-
-  if [[ ${nvm_inited} -eq 1 ]]; then
-    log "[Mobile] nvm gefunden – setze Node ${want_node_major}"
-    # Installiere die gewünschte Major-Version, falls nicht vorhanden; nutze sie dann.
-    nvm install ${want_node_major}
-    nvm use ${want_node_major}
-  else
-    log "[Mobile] nvm nicht verfügbar – verwende systemweiten Node."
-  fi
-
   if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
-    log "[Mobile] Node/npm nicht im PATH (auf Host ok; im Devcontainer MUSS Node-Feature aktiv sein)."
+    log "[Mobile] Node/npm nicht im PATH (auf Host ok, im Devcontainer MUSS Node-Feature aktiv sein)."
     return 0
   fi
 

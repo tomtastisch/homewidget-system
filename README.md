@@ -142,9 +142,10 @@ Hinweise für neue Teammitglieder
 - Starte dann das Backend (uvicorn) und die Mobile‑App (Expo) lokal, prüfe Login/Feed.
 - Verfolge den Auth‑Flow im Code: services/security.py → services/auth_service.py → api/routes/auth.py.
 - Prüfe, wie Tokens im Client gespeichert/geladen werden: mobile/src/storage/tokens.ts und der zentrale API‑Client.
+- **CI/CD-Pipeline**: Siehe [docs/ci-cd.md](docs/ci-cd.md) für Details zur Continuous Integration, lokalen Reproduktion und Fehlerbehandlung.
 
 Devcontainer & Setup
-- Der Devcontainer (VS Code/JetBrains Gateway) ist in `.devcontainer/devcontainer.json` definiert. Er enthält Python 3.13 und Node 18.
+- Der Devcontainer (VS Code/JetBrains Gateway) ist in `.devcontainer/devcontainer.json` definiert. Er enthält Python 3.12+ und Node 18.
 - Beim Öffnen/Starten im Devcontainer wird automatisch das Setup‑Skript ausgeführt:
   - `postCreateCommand: bash -lc 'bash tools/dev/setup_dev_env.sh'`
   - `postStartCommand:  bash -lc 'bash tools/dev/setup_dev_env.sh'`
@@ -154,3 +155,11 @@ Devcontainer & Setup
     - Backend: erzeugt/aktualisiert `backend/.venv`, aktualisiert `pip/setuptools/wheel`, installiert Dependencies via `pyproject.toml` als editable (`-e .[dev]`, Fallback: `-e .`). Außerdem kurzer Import‑Smoke‑Test inkl. `app`‑Paket.
     - Mobile: initialisiert falls verfügbar `nvm` und setzt Node `18` (`nvm use 18`), danach `npm install` in `mobile/`.
   - Das Skript ist idempotent und kann gefahrlos mehrfach ausgeführt werden (Exit‑Code `0` bei Erfolg, `≠0` bei harten Fehlern).
+
+Quality Checks & Testing
+- **Lokale Quality Checks** (Backend):
+  - `bash tools/dev/quality.sh` - Ruff linting + MyPy type checking
+  - `bash tools/dev/quality.sh fix` - Auto-fix + checks
+- **Backend Tests**: `source backend/.venv/bin/activate && pytest backend/tests -v`
+- **Mobile Checks**: `cd mobile && npm run lint && npx tsc --noEmit`
+- Die CI-Pipeline führt alle Checks automatisch aus - siehe [docs/ci-cd.md](docs/ci-cd.md)

@@ -11,64 +11,139 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- Backend: Python env + install ---
-      - name: Set up Python 3.12+
+      # =================================================================
+      # BACKEND CHECKS
+      # =================================================================
+      
+      - name: 🐍 Set up Python 3.12+
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
           cache-dependency-path: 'backend/pyproject.toml'
 
-      - name: Backend dev env setup (parity with local)
+      - name: 🔍 Verify Python version
         run: |
+          echo "::group::Python Environment Info"
+          python3 --version
+          pip --version
+          echo "::endgroup::"
+
+      - name: 📦 Backend dev env setup (parity with local)
+        run: |
+          echo "::group::Backend Setup"
           bash tools/dev/setup_dev_env.sh
+          echo "::endgroup::"
+        env:
+          PYTHON_BIN: python3
 
-      - name: Backend quality (ruff + mypy)
+      - name: ✨ Backend quality (ruff + mypy)
         run: |
+          echo "::group::Backend Quality Checks"
           bash tools/dev/quality.sh
+          echo "::endgroup::"
+        shell: bash
 
-      - name: Backend tests (pytest if tests exist)
+      - name: 🧪 Backend tests (pytest)
         run: |
           set -euo pipefail
-          if ls backend/**/*_test.py backend/**/test_*.py backend/tests 1>/dev/null 2>&1; then
-            if [ -x backend/.venv/bin/pytest ]; then
-              backend/.venv/bin/pytest -q
+          echo "::group::Backend Tests"
+          
+          # Check if tests exist
+          if [ -d "backend/tests" ] || ls backend/**/*_test.py backend/**/test_*.py 2>/dev/null | grep -q .; then
+            echo "✓ Tests found, running pytest..."
+            
+            # Activate venv and run pytest
+            source backend/.venv/bin/activate
+            
+            if command -v pytest >/dev/null 2>&1; then
+              pytest backend/tests -v --tb=short || {
+                echo "::error::Backend tests failed"
+                exit 1
+              }
             else
-              pytest -q
+              echo "::error::pytest not found in venv"
+              exit 1
             fi
           else
-            echo "Keine Tests gefunden – Schritt übersprungen."
+            echo "ℹ️  No tests found – skipping test step"
           fi
+          
+          echo "::endgroup::"
 
-      # --- Mobile: Node env + checks ---
-      - name: Set up Node 18
+      # =================================================================
+      # MOBILE CHECKS
+      # =================================================================
+      
+      - name: 📱 Set up Node 18
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: 'mobile/package-lock.json'
 
-      - name: Mobile install
-        working-directory: mobile
-        run: npm ci --no-fund --no-audit
+      - name: 🔍 Verify Node version
+        run: |
+          echo "::group::Node Environment Info"
+          node --version
+          npm --version
+          echo "::endgroup::"
 
-      - name: Mobile lint
-        working-directory: mobile
-        run: npm run lint
-
-      - name: Mobile typecheck
-        working-directory: mobile
-        run: npx tsc --noEmit
-
-      - name: Mobile build (if script exists)
+      - name: 📦 Mobile install dependencies
         working-directory: mobile
         run: |
-          if npm run | grep -q " build"; then
-            npm run build
+          echo "::group::Mobile Dependencies"
+          npm ci --no-fund --no-audit || {
+            echo "::error::Failed to install mobile dependencies"
+            exit 1
+          }
+          echo "::endgroup::"
+
+      - name: ✨ Mobile lint
+        working-directory: mobile
+        run: |
+          echo "::group::Mobile Linting"
+          npm run lint || {
+            echo "::error::Mobile linting failed"
+            exit 1
+          }
+          echo "::endgroup::"
+
+      - name: 🔍 Mobile typecheck
+        working-directory: mobile
+        run: |
+          echo "::group::Mobile TypeScript Check"
+          npx tsc --noEmit || {
+            echo "::error::Mobile type checking failed"
+            exit 1
+          }
+          echo "::endgroup::"
+
+      - name: 📦 Mobile build check (if script exists)
+        working-directory: mobile
+        run: |
+          echo "::group::Mobile Build Check"
+          if npm run 2>&1 | grep -q "^\s*build$"; then
+            echo "✓ Build script found, running build..."
+            npm run build || {
+              echo "::error::Mobile build failed"
+              exit 1
+            }
           else
-            echo "Kein build-Script definiert – Schritt übersprungen."
+            echo "ℹ️  No build script defined – skipping build step"
           fi
+          echo "::endgroup::"
+      
+      # =================================================================
+      # SUMMARY
+      # =================================================================
+      
+      - name: ✅ CI Pipeline Complete
+        if: success()
+        run: |
+          echo "::notice::All CI checks passed successfully! 🎉"

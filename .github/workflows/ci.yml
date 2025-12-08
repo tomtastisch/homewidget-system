@@ -20,12 +20,15 @@ jobs:
       # BACKEND CHECKS
       # =================================================================
       
-      - name: 🐍 Set up Python 3.12+
+      - name: 🐍 Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
           cache: 'pip'
-          cache-dependency-path: 'backend/pyproject.toml'
+          cache-dependency-path: |
+            backend/pyproject.toml
+            backend/setup.py
+            backend/requirements*.txt
 
       - name: 🔍 Verify Python version
         run: |
@@ -55,7 +58,7 @@ jobs:
           echo "::group::Backend Tests"
           
           # Check if tests exist
-          if [ -d "backend/tests" ] || find backend -name '*_test.py' -o -name 'test_*.py' | grep -q .; then
+          if [ -d "backend/tests" ] || find backend \( -name '*_test.py' -o -name 'test_*.py' \) | grep -q .; then
             echo "✓ Tests found, running pytest..."
             
             # Activate venv and run pytest
@@ -128,7 +131,7 @@ jobs:
         working-directory: mobile
         run: |
           echo "::group::Mobile Build Check"
-          if grep -q '"build"' package.json; then
+          if jq -e '.scripts.build' package.json > /dev/null 2>&1; then
             echo "✓ Build script found, running build..."
             npm run build || {
               echo "::error::Mobile build failed"

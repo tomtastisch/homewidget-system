@@ -21,7 +21,7 @@ Die CI-Pipeline besteht aus zwei Hauptbereichen mit klarer Trennung:
 
 ```
 ┌─────────────────────────────────────────┐
-│  🐍 Python 3.12+ Setup                   │
+│  🐍 Python 3.13 Setup                    │
 │  - Setup-Python Action mit pip-Cache    │
 └─────────────────────────────────────────┘
                   ↓
@@ -78,7 +78,7 @@ Die CI-Pipeline besteht aus zwei Hauptbereichen mit klarer Trennung:
 ### Voraussetzungen
 
 **Backend:**
-- Python 3.12 oder höher
+- Python 3.13 oder höher
 - pip und venv
 
 **Mobile:**
@@ -180,15 +180,15 @@ ruff check backend/app --fix
 
 **Symptom:**
 ```
-ERROR: Package 'homewidget-backend' requires a different Python: 3.11.x not in '>=3.12'
+ERROR: Package 'homewidget-backend' requires a different Python: 3.11.x not in '>=3.13'
 ```
 
 **Lösung:**
-- Installiere Python 3.12 oder höher
+- Installiere Python 3.13 oder höher
 - Prüfe Version: `python3 --version`
 - Alternativ: spezifische Python-Binary verwenden:
   ```bash
-  PYTHON_BIN=python3.12 bash tools/dev/setup_dev_env.sh
+  PYTHON_BIN=python3.13 bash tools/dev/setup_dev_env.sh
   ```
 
 #### 4. Mobile TypeScript Errors
@@ -199,7 +199,7 @@ error TS2304: Cannot find name 'process'
 ```
 
 **Lösung:**
-- Prüfe ob `@types/node` in `devDependencies` vorhanden
+- Prüfe, ob `@types/node` in `devDependencies` vorhanden
 - Reinstalliere Dependencies: `cd mobile && rm -rf node_modules && npm ci`
 - Prüfe `tsconfig.json` - sollte `"node"` in `types` Array haben
 
@@ -226,7 +226,7 @@ CI ist langsam oder Dependencies werden nicht gecacht
 PYTHON_BIN=python3 bash tools/dev/setup_dev_env.sh
 
 # Oder für spezifische Version
-PYTHON_BIN=python3.12 bash tools/dev/setup_dev_env.sh
+PYTHON_BIN=python3.13 bash tools/dev/setup_dev_env.sh
 ```
 
 ## CI-Konfiguration
@@ -234,7 +234,7 @@ PYTHON_BIN=python3.12 bash tools/dev/setup_dev_env.sh
 ### Wichtige Settings
 
 **Backend:**
-- Python Version: 3.12+ (definiert in `backend/pyproject.toml`: `requires-python = ">=3.12"`)
+- Python Version: 3.13 (definiert in `backend/pyproject.toml`: `requires-python = ">=3.13"`)
 - Pip Caching: aktiviert via `cache-dependency-path: 'backend/pyproject.toml'`
 - Quality Tools: Ruff (linting/format), MyPy (typing)
 
@@ -283,7 +283,7 @@ Success: no issues found in 20 source files
 3. **Type Annotations:**
    - MyPy-Enforcement für `app/services`, `app/core`, `app/models`
    - Explizite Type Hints für öffentliche Funktionen/Methoden
-   - `Optional[T]` statt `T | None` für Konsistenz (Python <3.10 Kompatibilität)
+   - `Optional[T]` statt `T | None` für Konsistenz im Code-Stil (beide sind ab Python 3.10+ gültig)
 
 4. **Ruff Ignore-Rules:**
    - Aktuell ignoriert: `D` (Docstrings), `ANN` (Type Annotations überall), `B008` (FastAPI Depends())

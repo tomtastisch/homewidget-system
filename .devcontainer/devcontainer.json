@@ -13,9 +13,9 @@
   },
   "postCreateCommand": "bash -lc 'bash tools/dev/setup_dev_env.sh'",
   "forwardPorts": [
-    8000,   // FastAPI / Uvicorn
-    8081,   // Metro / React Native
-    19000,  // Expo DevTools
-    19001   // Expo bundler/Websocket
+    8000,
+    8081,
+    19000,
+    19001
   ]
 }

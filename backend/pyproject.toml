@@ -1,3 +1,42 @@
+[project]
+name = "homewidget-backend"
+version = "0.1.0"
+description = "FastAPI/SQLModel backend for the homewidget-system"
+readme = "../README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi>=0.115",
+  "sqlmodel>=0.0.22",
+  "uvicorn[standard]>=0.30",
+  "argon2-cffi>=23.1",
+  "passlib>=1.7",
+  "python-jose[cryptography]>=3.3",
+  "fastapi-cache2>=0.2",
+  "fastapi-limiter>=0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6",
+  "mypy>=1.11",
+  "types-python-jose",
+  "types-passlib",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.mypy]
+ignore_missing_imports = true
+
 [tool.mypy."app.services.*"]
 check_untyped_defs = true
 
@@ -7,4 +46,10 @@ check_untyped_defs = true
 [tool.mypy."app.models.*"]
 check_untyped_defs = true
 
-# type: ignore[annotation-unchecked]`
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+# B008: FastAPI Depends() in Defaults ist idiomatisch und sicher – daher hier bewusst ignoriert.
+ignore = ["D", "ANN", "B008"]

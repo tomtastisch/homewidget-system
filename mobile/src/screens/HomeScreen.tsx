@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Button, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Button, StyleSheet, RefreshControl, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { getFeed } from '../api/client';
+import { getFeed, ApiError } from '../api/client';
+import { clearTokens } from '../storage/tokens';
 import type { RootStackParamList } from '../App';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -21,6 +22,14 @@ export default function HomeScreen({ navigation }: Props) {
     try {
       const data = await getFeed();
       setWidgets(data);
+    } catch (e: any) {
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
+        // Token ungültig oder Zugriff verboten -> Logout und zurück zum Login
+        await clearTokens();
+        navigation.replace('Login');
+      } else {
+        Alert.alert('Fehler', e?.message || 'Unbekannter Fehler beim Laden.');
+      }
     } finally {
       setLoading(false);
     }

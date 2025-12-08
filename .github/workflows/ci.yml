@@ -15,12 +15,58 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Dev Container CI
-        uses: devcontainers/ci@v0.3
+      # --- Backend: Python env + install ---
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
         with:
-          runCmd: |
-            bash -lc 'echo Python: $(python --version) && echo Node: $(node --version) && echo NPM: $(npm --version)'
-            # Backend: Dependencies sicherstellen und Import-/Smoke-Test
-            bash -lc 'python -m venv .venv && source .venv/bin/activate && pip install -r backend/requirements.txt && python -c "import backend.app.main as m; app=m.create_app(); print(\"APP_OK:\", app.title)"'
-            # Mobile: Typecheck
-            bash -lc 'cd mobile && npm ci && npx tsc --noEmit'
+          python-version: '3.13'
+
+      - name: Backend dev env setup (parity with local)
+        run: |
+          bash tools/dev/setup_dev_env.sh
+
+      - name: Backend quality (ruff + mypy)
+        run: |
+          bash tools/dev/quality.sh
+
+      - name: Backend tests (pytest if tests exist)
+        run: |
+          set -euo pipefail
+          if ls backend/**/*_test.py backend/**/test_*.py backend/tests 1>/dev/null 2>&1; then
+            if [ -x backend/.venv/bin/pytest ]; then
+              backend/.venv/bin/pytest -q
+            else
+              pytest -q
+            fi
+          else
+            echo "Keine Tests gefunden – Schritt übersprungen."
+          fi
+
+      # --- Mobile: Node env + checks ---
+      - name: Set up Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'mobile/package-lock.json'
+
+      - name: Mobile install
+        working-directory: mobile
+        run: npm ci --no-fund --no-audit
+
+      - name: Mobile lint
+        working-directory: mobile
+        run: npm run lint
+
+      - name: Mobile typecheck
+        working-directory: mobile
+        run: npx tsc --noEmit
+
+      - name: Mobile build (if script exists)
+        working-directory: mobile
+        run: |
+          if npm run | grep -q " build"; then
+            npm run build
+          else
+            echo "Kein build-Script definiert – Schritt übersprungen."
+          fi

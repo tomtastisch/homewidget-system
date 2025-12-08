@@ -1,5 +1,10 @@
-ignore = [
-  "D",    # pydocstyle (docstring rules) — off unless requested
-  "ANN",  # flake8-annotations — do not require type hints everywhere
-  "B008", # FastAPI: Depends() in function parameter defaults is idiomatic
-]
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+# Lint-Regeln:
+# - D: pydocstyle (Docstring-Regeln) deaktiviert, bis explizit gewünscht
+# - ANN: keine harte Pflicht auf Typannotationen überall (Policy regelt Details)
+# - B008: FastAPI Depends() in Parameter-Defaults ist idiomatisch
+ignore = ["D", "ANN", "B008"]

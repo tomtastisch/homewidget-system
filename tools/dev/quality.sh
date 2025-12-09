@@ -90,7 +90,7 @@ set +e
 TIMEZONE_ISSUES_FOUND=0
 
 # 1. Prüfe auf datetime.now() ohne tz-Parameter (sollte datetime.now(tz=UTC) sein)
-NAIVE_NOW_USAGE=$(grep -rn "datetime\.now()" backend/app --include="*.py" | grep -v "datetime.now(tz=" || true)
+NAIVE_NOW_USAGE=$(grep -rnP "datetime\.now\(\s*\)" backend/app --include="*.py" || true)
 if [[ -n "${NAIVE_NOW_USAGE}" ]]; then
   echo "❌ Naive datetime.now() gefunden - bitte datetime.now(tz=UTC) verwenden:"
   echo "${NAIVE_NOW_USAGE}"

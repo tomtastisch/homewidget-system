@@ -3,6 +3,24 @@
 from fastapi.testclient import TestClient
 
 
+def _register_user(client: TestClient, email: str, password: str) -> dict:
+    """Helper function to register a user and return response data."""
+    response = client.post(
+        "/api/auth/register",
+        json={"email": email, "password": password},
+    )
+    return response.json()
+
+
+def _login_user(client: TestClient, email: str, password: str) -> dict:
+    """Helper function to login a user and return response data."""
+    response = client.post(
+        "/api/auth/login",
+        data={"username": email, "password": password},
+    )
+    return response.json()
+
+
 def test_register_happy_path(client: TestClient) -> None:
     """Test successful user registration (POST /auth/register)."""
     response = client.post(
@@ -39,10 +57,7 @@ def test_signup_endpoint_works(client: TestClient) -> None:
 def test_register_duplicate_email(client: TestClient) -> None:
     """Test that registering with duplicate email returns 409 Conflict."""
     # First registration
-    client.post(
-        "/api/auth/register",
-        json={"email": "duplicate@example.com", "password": "SecurePassword123!"},
-    )
+    _register_user(client, "duplicate@example.com", "SecurePassword123!")
 
     # Second registration with same email
     response = client.post(
@@ -67,10 +82,7 @@ def test_register_invalid_email(client: TestClient) -> None:
 def test_login_happy_path(client: TestClient) -> None:
     """Test successful login (POST /auth/login) with OAuth2 Password Flow."""
     # Register a user first
-    client.post(
-        "/api/auth/register",
-        json={"email": "login@example.com", "password": "SecurePassword123!"},
-    )
+    _register_user(client, "login@example.com", "SecurePassword123!")
 
     # Login with OAuth2 Password Flow (form data)
     response = client.post(
@@ -93,10 +105,7 @@ def test_login_happy_path(client: TestClient) -> None:
 def test_login_invalid_credentials(client: TestClient) -> None:
     """Test that login with wrong password returns 401 Unauthorized."""
     # Register a user first
-    client.post(
-        "/api/auth/register",
-        json={"email": "wrongpass@example.com", "password": "SecurePassword123!"},
-    )
+    _register_user(client, "wrongpass@example.com", "SecurePassword123!")
 
     # Try to login with wrong password
     response = client.post(
@@ -122,16 +131,9 @@ def test_login_nonexistent_user(client: TestClient) -> None:
 def test_refresh_token_flow(client: TestClient) -> None:
     """Test refresh token endpoint (POST /auth/refresh)."""
     # Register and login to get tokens
-    client.post(
-        "/api/auth/register",
-        json={"email": "refresh@example.com", "password": "SecurePassword123!"},
-    )
-
-    login_response = client.post(
-        "/api/auth/login",
-        data={"username": "refresh@example.com", "password": "SecurePassword123!"},
-    )
-    refresh_token = login_response.json()["refresh_token"]
+    _register_user(client, "refresh@example.com", "SecurePassword123!")
+    login_data = _login_user(client, "refresh@example.com", "SecurePassword123!")
+    refresh_token = login_data["refresh_token"]
 
     # Use refresh token to get new tokens
     response = client.post(
@@ -161,16 +163,9 @@ def test_refresh_token_invalid(client: TestClient) -> None:
 def test_me_endpoint_with_valid_token(client: TestClient) -> None:
     """Test /auth/me endpoint with valid access token."""
     # Register and login
-    client.post(
-        "/api/auth/register",
-        json={"email": "me@example.com", "password": "SecurePassword123!"},
-    )
-
-    login_response = client.post(
-        "/api/auth/login",
-        data={"username": "me@example.com", "password": "SecurePassword123!"},
-    )
-    access_token = login_response.json()["access_token"]
+    _register_user(client, "me@example.com", "SecurePassword123!")
+    login_data = _login_user(client, "me@example.com", "SecurePassword123!")
+    access_token = login_data["access_token"]
 
     # Call /auth/me with token
     response = client.get(

@@ -25,13 +25,6 @@ def ensure_utc_aware(dt: datetime) -> datetime:
     Returns:
         A timezone-aware datetime in UTC. If input is naive, assumes UTC.
         If input is already timezone-aware, returns it unchanged.
-
-    Example:
-        >>> from datetime import datetime, UTC
-        >>> naive_dt = datetime(2024, 1, 1, 12, 0, 0)
-        >>> aware_dt = ensure_utc_aware(naive_dt)
-        >>> aware_dt.tzinfo == UTC
-        True
     """
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
 

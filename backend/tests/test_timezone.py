@@ -12,21 +12,23 @@ from app.models.widget import RefreshToken
 
 def test_ensure_utc_aware_with_naive_datetime():
     """Test that ensure_utc_aware adds UTC timezone to naive datetimes."""
-    naive_dt = datetime(2025, 12, 9, 12, 0, 0)
+    now = datetime.now()
+    naive_dt = datetime(now.year, now.month, now.day, 12, 0, 0)
     assert naive_dt.tzinfo is None
     
     aware_dt = ensure_utc_aware(naive_dt)
     
     assert aware_dt.tzinfo is not None
     assert aware_dt.tzinfo == UTC
-    assert aware_dt.year == 2025
-    assert aware_dt.month == 12
-    assert aware_dt.day == 9
+    assert aware_dt.year == now.year
+    assert aware_dt.month == now.month
+    assert aware_dt.day == now.day
 
 
 def test_ensure_utc_aware_with_aware_datetime():
     """Test that ensure_utc_aware preserves already timezone-aware datetimes."""
-    aware_dt = datetime(2025, 12, 9, 12, 0, 0, tzinfo=UTC)
+    now = datetime.now()
+    aware_dt = datetime(now.year, now.month, now.day, 12, 0, 0, tzinfo=UTC)
     assert aware_dt.tzinfo == UTC
     
     result_dt = ensure_utc_aware(aware_dt)

@@ -1,7 +1,6 @@
 """Tests for authentication endpoints (Ticket 3-E requirements)."""
 
 from fastapi.testclient import TestClient
-import pytest
 
 
 def test_register_happy_path(client: TestClient) -> None:
@@ -17,6 +16,22 @@ def test_register_happy_path(client: TestClient) -> None:
     assert data["is_active"] is True
     assert "id" in data
     assert "created_at" in data
+    assert "password" not in data
+    assert "password_hash" not in data
+
+
+def test_signup_endpoint_works(client: TestClient) -> None:
+    """Test that /signup endpoint also works (not just /register)."""
+    response = client.post(
+        "/api/auth/signup",
+        json={"email": "signup@example.com", "password": "SecurePassword123!"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["email"] == "signup@example.com"
+    assert data["is_active"] is True
+    assert "id" in data
     assert "password" not in data
     assert "password_hash" not in data
 

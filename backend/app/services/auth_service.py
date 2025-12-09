@@ -35,13 +35,15 @@ class AuthService:
         self.log = get_logger("services.auth")
 
     def signup(self, email: str, password: str) -> User:
-        existing = self.session.exec(select(User).where(User.email == email)).first()
+        # Normalize emails to enforce case-insensitive uniqueness
+        normalized_email = email.strip().lower()
+        existing = self.session.exec(select(User).where(User.email == normalized_email)).first()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email already registered",
             )
-        user = User(email=email, password_hash=hash_password(password))
+        user = User(email=normalized_email, password_hash=hash_password(password))
         self.session.add(user)
         self.session.commit()
         self.session.refresh(user)
@@ -49,7 +51,8 @@ class AuthService:
         return user
 
     def authenticate(self, email: str, password: str) -> User:
-        user = self.session.exec(select(User).where(User.email == email)).first()
+        normalized_email = email.strip().lower()
+        user = self.session.exec(select(User).where(User.email == normalized_email)).first()
         if not user or not verify_password(password, user.password_hash):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
         if not user.is_active:

@@ -13,9 +13,9 @@ dependencies = [
   "python-jose[cryptography]>=3.5.0",
   "fastapi-cache2>=0.2",
   "fastapi-limiter>=0.1",
-  "pydantic[email]>=2.9",
+  "pydantic[email]>=2.12.5",
   # Required by FastAPI when using form data (e.g., OAuth2PasswordRequestForm)
-  "python-multipart>=0.0.9",
+  "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]
@@ -27,6 +27,12 @@ dev = [
   # Für Tests: Starlette/FastAPI TestClient benötigt httpx
   "pytest>=7.0",
   "httpx>=0.24",
+  # Async-Test-Support (einige Utils/Endpoints können async sein)
+  "pytest-asyncio>=0.23",
+  # Deterministische Zeitmanipulation für Token-Expiry-Tests
+  "freezegun>=1.5",
+  # Realistischere Testdaten (z. B. E-Mails) – optional genutzt
+  "faker>=26.0",
 ]
 
 [build-system]

@@ -60,14 +60,22 @@ run_backend_quality() {
   bash "${PROJECT_ROOT}/tools/dev/quality.sh"
 }
 
-run_backend_tests() {
-  log "Starte Backend-Tests"
-  if [[ -d "${BACKEND_DIR}/tests" ]] || find backend \( -name '*_test.py' -o -name 'test_*.py' \) | grep -q .; then
-    pytest backend/tests -v --tb=short
-  else
-    log "Keine Backend-Tests gefunden – Schritt übersprungen."
-  fi
+# --- Tests getrennt in Unit / Integration ---
+run_backend_unit_tests() {
+  log "Starte Backend-Unit-Tests"
+  pytest backend/tests -m "unit" -v --tb=short
 }
+
+run_backend_integration_tests() {
+  log "Starte Backend-Integrationstests"
+  pytest backend/tests -m "integration" -v --tb=short
+}
+
+run_backend_tests() {
+  run_backend_unit_tests
+  run_backend_integration_tests
+}
+# --- Update Ende ---
 
 run_mobile_pipeline() {
   if [[ ! -d "${MOBILE_DIR}" ]]; then

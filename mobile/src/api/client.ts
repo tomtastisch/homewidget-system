@@ -128,12 +128,10 @@ export class ApiClient {
     const h = { 'Content-Type': 'application/json', ...(headers || {}) };
     return this.json<T>(path, { method: 'POST', headers: h, body: body != null ? JSON.stringify(body) : undefined });
   }
-
   put<T = any>(path: string, body?: any, headers?: Record<string, string>) {
     const h = { 'Content-Type': 'application/json', ...(headers || {}) };
     return this.json<T>(path, { method: 'PUT', headers: h, body: body != null ? JSON.stringify(body) : undefined });
   }
-
   del<T = any>(path: string, headers?: Record<string, string>) {
     return this.json<T>(path, { method: 'DELETE', headers });
   }

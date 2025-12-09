@@ -52,13 +52,13 @@ def client(engine: Engine) -> Generator[TestClient, None, None]:
     # Produktive App-Erzeugungslogik verwenden
     app = create_app()
 
-    # Nur die Datenbank-Session-Dependency überschreiben, damit alle denselben Engine nutzen
-    from app.core.database import get_session as _prod_get_session
+    from app.core.database import get_session as prod_get_session
 
     def _get_test_session():
         with Session(engine) as session:
             yield session
 
+    app.dependency_overrides[prod_get_session] = _get_test_session
     app.dependency_overrides[_prod_get_session] = _get_test_session
 
     with TestClient(app, raise_server_exceptions=True) as c:

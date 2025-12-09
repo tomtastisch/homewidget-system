@@ -40,7 +40,8 @@ def test_ensure_utc_aware_with_aware_datetime():
 def test_ensure_utc_aware_comparison():
     """Test that timezone-aware comparison works correctly after conversion."""
     # Simulate what happens in SQLite: datetime stored with timezone becomes naive on retrieval
-    stored_dt = datetime(2025, 12, 9, 12, 0, 0)  # Naive, as if from SQLite
+    now_naive = datetime.now()
+    stored_dt = datetime(now_naive.year, now_naive.month, now_naive.day, 12, 0, 0)  # Naive, as if from SQLite
     now = datetime.now(tz=UTC)
     
     # This would raise TypeError without ensure_utc_aware

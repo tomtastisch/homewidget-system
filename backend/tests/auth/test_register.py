@@ -12,7 +12,7 @@ from typing import Any, TypeAlias
 import pytest
 from fastapi.testclient import TestClient
 from ..utils.passwords import valid_password
-from ..utils.emails import email_for_user, invalid_email_missing_at, invalid_email_missing_domain
+from ..utils.emails import email_for_user, invalid_email_missing_at
 
 REGISTER_URL = "/api/auth/register"
 

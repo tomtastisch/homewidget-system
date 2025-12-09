@@ -70,6 +70,11 @@ run_backend_integration_tests() {
   log "Starte Backend-Integrationstests"
   pytest backend/tests -m "integration" -v --tb=short
 }
+
+run_backend_tests() {
+  run_backend_unit_tests
+  run_backend_integration_tests
+}
 # --- Update Ende ---
 
 run_mobile_pipeline() {

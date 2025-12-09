@@ -89,7 +89,6 @@ class AuthService:
         ).first()
         if not rt:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-        
         # Ensure timezone-aware comparison using our utility
         expires_at = ensure_utc_aware(rt.expires_at)
         if expires_at < now:

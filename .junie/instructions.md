@@ -1,8 +1,8 @@
-# Richtlinien für umzusetzen­den Code (Tomtastisch)
+# Richtlinien für umzuset­zenden Code (Tomtastisch)
 
 Für alle von mir erwarteten Implementierungen gelten folgende Vorgaben:
 
-- Produktiv nutzbarer, klar strukturierter Code, kein Demo-/Script-Stil; realistische, dynamische Berechnungen statt Magic Numbers oder `+1/-1`-Inkremente.
+- Produktiv nutzbarer, klar strukturierter Code, kein Demo-/Script-Stil; realistische, dynamische Berechnungen statt Magic Numbers oder `+1`/`−1`-Inkremente.
 - Klare Trennung von:
   - Kernlogik / Domäne,
   - I/O und UI/Framework,
@@ -13,11 +13,15 @@ Für alle von mir erwarteten Implementierungen gelten folgende Vorgaben:
 - Konsequente Nutzung von Typannotationen (inkl. `from __future__ import annotations`) mit präzisen Typen aus `typing`; keine unnötigen `Any`-Typen oder untypisierte Sammelparameter.
 - PEP-8-konformer Stil:
   - `snake_case` für Funktionen/Variablen,
-  - `CapWords` für Klassen,
+  - CapWords für Klassen,
   - 4 Leerzeichen Einrückung, keine Tabs.
 - Sprechende, konsistente Namen; möglichst geringe Komplexität pro Funktion, Vermeidung von Redundanz.
 - Öffentliche Module/Klassen/Funktionen mit präzisen, deutschen Docstrings (Zweck, Parameter, Rückgabewerte, Besonderheiten); Modul-Übersichten zentral im jeweiligen `__init__.py` statt redundanter Wiederholungen in allen Dateien.
 - Kommentare nur für nicht offensichtliche Aspekte (z. B. Numerik, Physik/Geometrie, Zustandsmaschinen, Threading/Concurrency, komplexe Algorithmen); keine Codebeispiele, kein Pseudocode und keine How-To-Anleitungen in Kommentaren.
+- Sprache:
+  - Kommentare, Docstrings, In-Code-Dokumentation und erläuternde Textausgaben sind grundsätzlich auf Deutsch zu verfassen.
+  - Antworten und technische Erläuterungen, die im Rahmen dieses Projekts von KI-Systemen generiert werden, haben ebenfalls in deutscher Sprache zu erfolgen.
+  - Ausnahmen sind nur zulässig, wenn externe Spezifikationen, APIs oder Protokolle explizit englische Bezeichnungen oder Meldungen vorgeben (z. B. standardisierte Fehlermeldungen, Protokoll-Namen, RFC-konforme Konstanten).
 - Fehlerbehandlung mit spezifischen Exceptions (`ValueError`, `TypeError`, `RuntimeError`, …) und klaren Fehlermeldungen; kein pauschales `except Exception` ohne triftigen Grund, kein `sys.exit()` in Kernlogik.
 - Logging über das `logging`-Modul statt `print()`; Fokus auf relevante Ereignisse (Fehler/Warnungen, wichtige Statuswechsel, gezielte Debug-Information).
 - Nebenläufigkeit (`threading`, `concurrent.futures`, `asyncio`) nur gezielt einsetzen; gemeinsam genutzter Zustand wird synchronisiert oder über immutable Strukturen / Message-Passing gehandhabt; keine stillen Race-Conditions.
@@ -38,8 +42,10 @@ Für alle von mir erwarteten Implementierungen gelten folgende Vorgaben:
   - zusätzliche Libraries nur bei klarem technischen Mehrwert,
   - kein „Library-Zoo“ für triviale Hilfsfunktionen.
 - Kein toter Code, keine ungenutzten Parameter, keine leeren Platzhalter; TODO-Kommentare nur als konkrete, umsetzbare Aufgaben.
-- Innerhalb dieser Grenzen sind verschiedene Stile (funktional vs. objektorientiert, alternative Algorithmen) ausdrücklich erlaubt, solange:
-  - Lesbarkeit und Wartbarkeit verbessert werden,
-  - fachliches Verhalten plausibel bleibt,
-  - Tests bestehen und
-  - bestehende öffentliche APIs nicht ohne Not gebrochen werden.
+
+Innerhalb dieser Grenzen sind verschiedene Stile (funktional vs. objektorientiert, alternative Algorithmen) ausdrücklich erlaubt, solange:
+
+- Lesbarkeit und Wartbarkeit verbessert werden,
+- fachliches Verhalten plausibel bleibt,
+- Tests bestehen und
+- bestehende öffentliche APIs nicht ohne Not gebrochen werden.

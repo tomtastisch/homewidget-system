@@ -26,7 +26,7 @@ class ResponseLike(Protocol):
 
 
 LoginUserFixture = Callable[[str, str], ResponseLike]
-RegisterUserFixture = Callable[[str, str], ResponseLike]
+RegisterUserFixture = Callable[[str, str], dict[str, Any]]
 
 
 def test_refresh_token_flow(

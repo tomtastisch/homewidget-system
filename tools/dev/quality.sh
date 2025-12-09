@@ -85,4 +85,52 @@ if [[ ${MYPY_EXIT_CODE} -ne 0 ]]; then
   exit ${MYPY_EXIT_CODE}
 fi
 
+log "Timezone-Check: Validierung korrekter Zeitzonennutzung"
+set +e
+TIMEZONE_ISSUES_FOUND=0
+
+# 1. Prüfe auf datetime.now() ohne tz-Parameter (sollte datetime.now(tz=UTC) sein)
+NAIVE_NOW_USAGE=$(grep -rnP "datetime\.now\(\s*\)" backend/app --include="*.py" || true)
+if [[ -n "${NAIVE_NOW_USAGE}" ]]; then
+  echo "❌ Naive datetime.now() gefunden - bitte datetime.now(tz=UTC) verwenden:"
+  echo "${NAIVE_NOW_USAGE}"
+  TIMEZONE_ISSUES_FOUND=1
+fi
+
+# 2. Prüfe auf datetime.utcnow() (deprecated, sollte datetime.now(tz=UTC) sein)
+UTCNOW_USAGE=$(grep -rn "datetime\.utcnow()" backend/app --include="*.py" || true)
+if [[ -n "${UTCNOW_USAGE}" ]]; then
+  echo "❌ Deprecated datetime.utcnow() gefunden - bitte datetime.now(tz=UTC) verwenden:"
+  echo "${UTCNOW_USAGE}"
+  TIMEZONE_ISSUES_FOUND=1
+fi
+
+# 3. Prüfe auf fehlende UTC-Imports in Dateien mit datetime-Nutzung
+# (außer in Tests und Beispielen)
+while IFS= read -r file; do
+  if grep -q "from datetime import.*datetime" "${file}"; then
+    if ! grep -q "from datetime import.*UTC\|import.*datetime.UTC" "${file}"; then
+      # Prüfe ob die Datei tatsächlich datetime-Operationen hat
+      if grep -q "datetime\.now\|datetime\.utcnow" "${file}"; then
+        echo "⚠️  Datei nutzt datetime ohne UTC-Import: ${file}"
+        echo "   Bitte 'from datetime import UTC, datetime' verwenden"
+        TIMEZONE_ISSUES_FOUND=1
+      fi
+    fi
+  fi
+done < <(find backend/app -name "*.py" -type f | grep -v "__pycache__")
+
+set -e
+
+if [[ ${TIMEZONE_ISSUES_FOUND} -eq 1 ]]; then
+  echo ""
+  echo "Timezone-Check fehlgeschlagen!"
+  echo "Alle datetime-Operationen müssen timezone-aware sein (UTC)."
+  echo "Verwendung: datetime.now(tz=UTC) statt datetime.now()"
+  echo ""
+  exit 1
+fi
+
+log "Timezone-Check erfolgreich - alle datetime-Operationen sind timezone-aware ✓"
+
 log "Quality-Run abgeschlossen (Mode=${MODE})."

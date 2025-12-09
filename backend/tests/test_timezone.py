@@ -133,7 +133,7 @@ def test_auth_service_handles_naive_refresh_token_expiration():
         expired_token = RefreshToken(
             user_id=user.id,
             token="expired-refresh-token",
-            expires_at=datetime(2025, 1, 1, 0, 0, 0),  # Naive, in the past
+            expires_at=datetime.now() - timedelta(days=30),  # Naive, in the past
             revoked=False
         )
         session.add(expired_token)

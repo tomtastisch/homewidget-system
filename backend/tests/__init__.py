@@ -1,17 +1,4 @@
-from __future__ import annotations
+"""This file marks the tests directory as a Python package.
 
-from .conftest import (
-    engine,
-    db_session,
-    client,
-    register_user,
-    login_user,
-)
-
-__all__ = [
-    "engine",
-    "db_session",
-    "client",
-    "register_user",
-    "login_user",
-]
+Pytest automatically discovers fixtures in conftest.py; no imports or exports are needed here.
+"""

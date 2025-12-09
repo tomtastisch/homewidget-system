@@ -1,8 +1,19 @@
 from __future__ import annotations
+"""
+Integrationstests für die Datenpersistenz und Zeitzonenbehandlung. Diese
+Tests prüfen die Utility‑Funktion ensure_utc_aware sowie das Verhalten der
+AuthService.rotate_refresh‑Methode bei abgelaufenen Tokens und SQLite‑
+Datumsformaten.
+"""
 
 from datetime import UTC, datetime, timedelta
 
 import pytest
+
+# Dieser Satz von Tests nutzt eine In‑Memory‑Datenbank und testet die
+# Interaktion mit persistierten Objekten sowie die Behandlung von
+# Datums‑Konvertierungen.
+pytestmark = pytest.mark.integration
 from fastapi import HTTPException
 from sqlmodel import Session, SQLModel, create_engine
 

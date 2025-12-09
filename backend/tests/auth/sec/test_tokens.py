@@ -1,12 +1,23 @@
 from __future__ import annotations
+"""
+Tests zur Erstellung und Verifikation von JWT‑Tokens. Die meisten Tests
+prüfen die Claims und das Ablaufverhalten der Access‑ und Refresh‑Tokens.
+Ein gesonderter Test am Ende verwendet den FastAPI‑TestClient, um das
+Verhalten eines abgelaufenen Access‑Tokens am /auth/me‑Endpunkt zu
+überprüfen.
+"""
 
 from datetime import UTC, datetime, timedelta
 from freezegun import freeze_time
 from jose import JWTError, jwt
 
+import pytest
+
 from app.core.config import settings
 from app.services.security import create_access_token, create_refresh_token
 from fastapi.testclient import TestClient
+
+pytestmark = pytest.mark.unit
 
 
 def test_access_token_has_claims() -> None:
@@ -104,6 +115,7 @@ def test_create_token_missing_subject() -> None:
         create_access_token({}, expires_delta=timedelta(minutes=1))
 
 
+@pytest.mark.integration
 def test_me_with_expired_access_token_returns_401(client: TestClient) -> None:
     """
     Ein abgelaufener Access‑Token soll beim Aufruf eines geschützten Endpunkts (GET /api/auth/me)

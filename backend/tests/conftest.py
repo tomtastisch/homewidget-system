@@ -10,6 +10,7 @@ Die Modelle werden importiert, damit ihre Tabellen in SQLModel-Metadaten registr
 import tempfile
 from collections.abc import Generator, Callable
 from pathlib import Path
+from typing import Any, Protocol
 
 import pytest
 from fastapi.testclient import TestClient
@@ -23,6 +24,20 @@ from app.models.user import User  # noqa: F401
 from app.models.widget import RefreshToken, Widget  # noqa: F401
 
 
+class ResponseLike(Protocol):
+    """
+    Minimales Interface für HTTP-Antwortobjekte im Testkontext.
+
+    Dient ausschließlich der Typisierung in Tests; jede Response mit
+    `status_code` und einer `json()`-Methode erfüllt dieses Protokoll.
+    """
+
+    status_code: int
+
+    def json(self) -> Any:  # pragma: no cover - reine Typunterstützung
+        ...
+
+
 @pytest.fixture(scope="function")
 def engine() -> Generator[Engine, None, None]:
     """Erzeugt eine temporäre SQLite-Engine für genau eine Testfunktion."""
@@ -31,10 +46,9 @@ def engine() -> Generator[Engine, None, None]:
 
     try:
         test_engine = create_engine(f"sqlite:///{db_path}", echo=False)
-        # ensure schema is present
+        # Schema für alle registrierten Modelle erzeugen
         SQLModel.metadata.create_all(test_engine)
         yield test_engine
-
     finally:
         Path(db_path).unlink(missing_ok=True)
 
@@ -54,25 +68,26 @@ def client(engine: Engine) -> Generator[TestClient, None, None]:
 
     from app.core.database import get_session as prod_get_session
 
-    def _get_test_session():
+    def _get_test_session() -> Generator[Session, None, None]:
         with Session(engine) as session:
             yield session
 
+    # DB-Session-Dependency für Tests überschreiben
     app.dependency_overrides[prod_get_session] = _get_test_session
-    app.dependency_overrides[_prod_get_session] = _get_test_session
 
     with TestClient(app, raise_server_exceptions=True) as c:
         yield c
 
 
 @pytest.fixture()
-def register_user(client: TestClient) -> Callable[[str, str], dict]:
+def register_user(client: TestClient) -> Callable[[str, str], dict[str, Any]]:
     """
     Hilfs-Fixture, die einen Benutzer registriert und die JSON-Antwort zurückgibt.
 
     Verwendung in Tests: data = register_user(email, password)
     """
-    def _register(email: str, password: str) -> dict:
+
+    def _register(email: str, password: str) -> dict[str, Any]:
         resp = client.post(
             "/api/auth/register",
             json={"email": email, "password": password},
@@ -84,13 +99,14 @@ def register_user(client: TestClient) -> Callable[[str, str], dict]:
 
 
 @pytest.fixture()
-def login_user(client: TestClient) -> Callable[[str, str], object]:
+def login_user(client: TestClient) -> Callable[[str, str], ResponseLike]:
     """
     Hilfs-Fixture für den OAuth2-Passwort-Login; gibt die HTTP-Antwort zurück.
 
     Verwendung in Tests: resp = login_user(email, password)
     """
-    def _login(email: str, password: str):
+
+    def _login(email: str, password: str) -> ResponseLike:
         return client.post(
             "/api/auth/login",
             data={

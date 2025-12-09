@@ -1,14 +1,23 @@
 from __future__ import annotations
+"""
+Diese Datei prüft, dass der OAuth2‑Password‑Flow funktioniert und falsche
+Eingaben korrekt abgelehnt werden. Die Tests verwenden das FastAPI‑TestClient
+und eine echte Testdatenbank über die Fixtures.
+"""
 
 from collections.abc import Callable
-from typing import Any
-from conftest import ResponseLike
+import pytest
 from fastapi.testclient import TestClient
+from ..utils.passwords import valid_password
+from ..utils.emails import email_for_user
+from ..conftest import ResponseLike
 
 LOGIN_URL = "/api/auth/login"
 REGISTER_URL = "/api/auth/register"
 LoginUserFixture = Callable[[str, str], ResponseLike]
-RegisterUserFixture = Callable[[str, str], ResponseLike]
+RegisterUserFixture = Callable[[str, str], dict]
+
+pytestmark = pytest.mark.integration
 
 
 def test_login_returns_token_pair(
@@ -17,9 +26,10 @@ def test_login_returns_token_pair(
         login_user: LoginUserFixture,
 ) -> None:
     """Login mit korrekten Zugangsdaten liefert ein vollständiges Token-Paar."""
-    email = "login-success@example.com"
-    password = "SecurePassword123!"
+    email = email_for_user(1)
+    password = valid_password()
 
+    # Benutzer registrieren und anschließend einloggen
     register_user(email, password)
 
     response = login_user(email, password)
@@ -40,12 +50,14 @@ def test_login_rejects_wrong_password(
         register_user: RegisterUserFixture,
         login_user: LoginUserFixture,
 ) -> None:
-    email = "login-wrong-password@example.com"
-    password = "CorrectPassword123!"
+    email = email_for_user(2)
+    password = valid_password()
     wrong_password = "WrongPassword999!"
 
+    # Benutzer registrieren
     register_user(email, password)
 
+    # Login-Versuch mit falschem Passwort
     response = login_user(email, wrong_password)
 
     assert response.status_code == 401
@@ -59,9 +71,10 @@ def test_login_rejects_unknown_user(
         client: TestClient,
         login_user: LoginUserFixture,
 ) -> None:
-    email = "unknown-user@example.com"
-    password = "SomePassword123!"
+    email = email_for_user(99)
+    password = valid_password()
 
+    # Benutzer existiert nicht; Login muss scheitern
     response = login_user(email, password)
 
     assert response.status_code == 401
@@ -75,10 +88,12 @@ def test_login_with_json_body_rejected(
         register_user: RegisterUserFixture,
 ) -> None:
     """Login erwartet Form-URL-Encoded Daten; JSON-Body wird mit 400/422 abgelehnt."""
-    email = "json-login@example.com"
-    password = "SomePassword123!"
+    email = email_for_user(3)
+    password = valid_password()
+    # Benutzer registrieren
     register_user(email, password)
 
+    # Login erwartet Form-Encoded-Daten; JSON-Body wird abgelehnt
     response = client.post(
         LOGIN_URL,
         json={

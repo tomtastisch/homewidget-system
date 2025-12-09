@@ -9,15 +9,14 @@ from app.services.auth_service import ensure_utc_aware, AuthService
 from app.models.user import User
 from app.models.widget import RefreshToken
 
-
 def test_ensure_utc_aware_with_naive_datetime():
     """Test that ensure_utc_aware adds UTC timezone to naive datetimes."""
     now = datetime.now()
     naive_dt = datetime(now.year, now.month, now.day, 12, 0, 0)
+
     assert naive_dt.tzinfo is None
     
     aware_dt = ensure_utc_aware(naive_dt)
-    
     assert aware_dt.tzinfo is not None
     assert aware_dt.tzinfo == UTC
     assert aware_dt.year == now.year

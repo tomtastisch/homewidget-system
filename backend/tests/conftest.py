@@ -1,12 +1,10 @@
-"""Test configuration and fixtures for the backend test suite.
-
-Provides a shared temporary SQLite database per test function via the
-`engine` and `db_session` fixtures, and a FastAPI `client` that uses the
-same database through dependency overrides. Models are imported here to
-ensure their tables are registered in SQLModel metadata before schema
-creation.
-"""
 from __future__ import annotations
+"""Test-Konfiguration und Fixtures für die Backend-Test-Suite.
+
+Stellt pro Testfunktion eine temporäre SQLite-Datenbank (`engine`, `db_session`)
+und einen FastAPI-`client` bereit, der dieselbe Datenbank über Dependency-Overrides nutzt.
+Die Modelle werden importiert, damit ihre Tabellen in SQLModel-Metadaten registriert sind.
+"""
 
 import tempfile
 from collections.abc import Generator, Callable
@@ -15,17 +13,18 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, Session, create_engine
+from sqlalchemy.engine import Engine
 
 from app.main import create_app
 
-# Import models FIRST to register with SQLModel metadata
+# Modelle zuerst importieren, damit sie in den SQLModel-Metadaten registriert werden
 from app.models.user import User  # noqa: F401
 from app.models.widget import RefreshToken, Widget  # noqa: F401
 
 
 @pytest.fixture(scope="function")
-def engine() -> Generator[object, None, None]:
-    """Create a temporary SQLite engine for a single test function."""
+def engine() -> Generator[Engine, None, None]:
+    """Erzeugt eine temporäre SQLite-Engine für genau eine Testfunktion."""
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
         db_path = tmp.name
 
@@ -34,24 +33,25 @@ def engine() -> Generator[object, None, None]:
         # ensure schema is present
         SQLModel.metadata.create_all(test_engine)
         yield test_engine
+
     finally:
         Path(db_path).unlink(missing_ok=True)
 
 
 @pytest.fixture(scope="function")
-def db_session(engine) -> Generator[Session, None, None]:
-    """Yield a SQLModel Session bound to the test engine."""
+def db_session(engine: Engine) -> Generator[Session, None, None]:
+    """Gibt eine SQLModel-Session zurück, die an die Test-Engine gebunden ist."""
     with Session(engine) as session:
         yield session
 
 
 @pytest.fixture(scope="function")
-def client(engine) -> Generator[TestClient, None, None]:
-    """Create a FastAPI TestClient that uses the provided test engine."""
-    # Use production app creation logic
+def client(engine: Engine) -> Generator[TestClient, None, None]:
+    """Erzeugt einen FastAPI-TestClient, der die bereitgestellte Test-Engine verwendet."""
+    # Produktive App-Erzeugungslogik verwenden
     app = create_app()
 
-    # Override only the database session dependency to use the same engine
+    # Nur die Datenbank-Session-Dependency überschreiben, damit alle denselben Engine nutzen
     from app.core.database import get_session as _prod_get_session
 
     def _get_test_session():
@@ -66,9 +66,10 @@ def client(engine) -> Generator[TestClient, None, None]:
 
 @pytest.fixture()
 def register_user(client: TestClient) -> Callable[[str, str], dict]:
-    """Helper fixture to register a user and return JSON response.
+    """
+    Hilfs-Fixture, die einen Benutzer registriert und die JSON-Antwort zurückgibt.
 
-    Usage in tests: data = register_user(email, password)
+    Verwendung in Tests: data = register_user(email, password)
     """
     def _register(email: str, password: str) -> dict:
         resp = client.post(
@@ -83,9 +84,10 @@ def register_user(client: TestClient) -> Callable[[str, str], dict]:
 
 @pytest.fixture()
 def login_user(client: TestClient) -> Callable[[str, str], object]:
-    """Helper fixture to perform OAuth2 password login and return Response.
+    """
+    Hilfs-Fixture für den OAuth2-Passwort-Login; gibt die HTTP-Antwort zurück.
 
-    Usage in tests: resp = login_user(email, password)
+    Verwendung in Tests: resp = login_user(email, password)
     """
     def _login(email: str, password: str):
         return client.post(

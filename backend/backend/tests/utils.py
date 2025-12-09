@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Iterable
-
 from fastapi.testclient import TestClient
 
 LOGIN_URL = "/api/auth/login"

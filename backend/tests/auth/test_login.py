@@ -1,21 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol
-
+from typing import Any
+from conftest import ResponseLike
 from fastapi.testclient import TestClient
 
 LOGIN_URL = "/api/auth/login"
 REGISTER_URL = "/api/auth/register"
-
-
-class ResponseLike(Protocol):
-    status_code: int
-
-    def json(self) -> Any:  # pragma: no cover - Protocol typing helper
-        """Parst und liefert den JSON-Body der Antwort."""
-
-
 LoginUserFixture = Callable[[str, str], ResponseLike]
 RegisterUserFixture = Callable[[str, str], ResponseLike]
 

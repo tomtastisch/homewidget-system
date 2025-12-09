@@ -14,10 +14,24 @@ from .security import create_jwt, hash_password, verify_password
 
 def ensure_utc_aware(dt: datetime) -> datetime:
     """Ensure a datetime object is timezone-aware (UTC).
-    
-    SQLite doesn't preserve timezone info, so we need to ensure all datetime
-    comparisons use UTC-aware datetimes. This helper assumes naive datetimes
-    are in UTC (which is our application standard).
+
+    SQLite doesn't preserve timezone info, so datetimes retrieved from the database
+    are naive. This helper assumes naive datetimes are in UTC (per application standard)
+    and converts them to timezone-aware UTC datetimes for safe comparison.
+
+    Args:
+        dt: A datetime object that may be naive or timezone-aware.
+
+    Returns:
+        A timezone-aware datetime in UTC. If input is naive, assumes UTC.
+        If input is already timezone-aware, returns it unchanged.
+
+    Example:
+        >>> from datetime import datetime, UTC
+        >>> naive_dt = datetime(2024, 1, 1, 12, 0, 0)
+        >>> aware_dt = ensure_utc_aware(naive_dt)
+        >>> aware_dt.tzinfo == UTC
+        True
     """
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
 

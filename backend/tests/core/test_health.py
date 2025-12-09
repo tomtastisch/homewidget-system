@@ -1,4 +1,4 @@
-"""Tests for the health check endpoint (Ticket 1-E requirement)."""
+from __future__ import annotations
 
 from fastapi.testclient import TestClient
 

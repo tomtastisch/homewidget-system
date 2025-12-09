@@ -1,20 +1,21 @@
+from __future__ import annotations
+
 from sqlalchemy import inspect
 from sqlmodel import SQLModel, create_engine
 
-# Import models to ensure they are registered with SQLModel.metadata
+# Modelle importieren, damit sie in SQLModel.metadata registriert sind
 from app.models.user import User  # noqa: F401
 from app.models.widget import RefreshToken, Widget  # noqa: F401
-from app.core.db import init_db
 
 
 def test_db_init_creates_tables() -> None:
-    # Use in-memory SQLite for fast isolated schema tests
+    # In-Memory-SQLite für schnelle, isolierte Schema-Tests
     engine = create_engine("sqlite://", echo=False)
 
-    # Run schema creation
-    init_db(engine)
+    # Schema über SQLModel-Metadaten erzeugen
+    SQLModel.metadata.create_all(engine)
 
-    # Verify tables exist
+    # Prüfen, welche Tabellen existieren
     inspector = inspect(engine)
     table_names = set(inspector.get_table_names())
 

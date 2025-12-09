@@ -93,7 +93,6 @@ class AuthService:
         expires_at = ensure_utc_aware(rt.expires_at)
         if expires_at < now:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-        
         user = self.session.get(User, rt.user_id)
         if not user or not user.is_active:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")

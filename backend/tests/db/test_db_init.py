@@ -9,7 +9,6 @@ from sqlmodel import SQLModel, create_engine
 import pytest
 
 # Modelle importieren, damit sie in SQLModel.metadata registriert sind
-from app.models.user import User  # noqa: F401
 from app.models.widget import RefreshToken, Widget  # noqa: F401
 
 # Dieser Test verwendet eine In-Memory-Datenbank und benötigt keine

@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from tests.conftest import ResponseLike
+
 """
 Integrationstests für die Auth‑Endpunkte. Diese Datei testet vorrangig den
 Refresh‑Token‑Flow sowie den Zugriff auf den geschützten /auth/me‑Endpunkt.
@@ -12,17 +15,9 @@ from freezegun import freeze_time
 from datetime import UTC, datetime, timedelta
 from app.core.config import settings
 from collections.abc import Callable
-from typing import Any, Protocol
+from typing import Any
 
 pytestmark = pytest.mark.integration
-
-
-
-class ResponseLike(Protocol):
-    status_code: int
-
-    def json(self) -> Any:  # pragma: no cover - Protocol typing helper
-        """Parst und liefert den JSON-Body der Antwort."""
 
 
 LoginUserFixture = Callable[[str, str], ResponseLike]

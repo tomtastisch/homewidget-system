@@ -109,7 +109,7 @@ fi
 # (außer in Tests und Beispielen)
 while IFS= read -r file; do
   if grep -q "from datetime import.*datetime" "${file}"; then
-    if ! grep -q "from datetime import.*UTC\|datetime.UTC\|tz=UTC" "${file}"; then
+    if ! grep -q "from datetime import.*UTC\|import.*datetime.UTC" "${file}"; then
       # Prüfe ob die Datei tatsächlich datetime-Operationen hat
       if grep -q "datetime\.now\|datetime(20" "${file}"; then
         echo "⚠️  Datei nutzt datetime ohne UTC-Import: ${file}"

@@ -34,7 +34,7 @@ def purge_expired_refresh_tokens(
 
     stmt = delete(RefreshToken).where(
         or_(
-            RefreshToken.expires_at < now,
+            RefreshToken.expires_at < now,  # type: ignore[arg-type]
             RefreshToken.revoked.is_(True),  # type: ignore[attr-defined]  # noqa: E712
         )
     )

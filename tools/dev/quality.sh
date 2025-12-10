@@ -90,7 +90,7 @@ set +e
 TIMEZONE_ISSUES_FOUND=0
 
 # 1. Prüfe auf datetime.now() ohne tz-Parameter (sollte datetime.now(tz=UTC) sein)
-NAIVE_NOW_USAGE=$(grep -rnP "datetime\.now\(\s*\)" backend/app --include="*.py" || true)
+NAIVE_NOW_USAGE=$(grep -RIn --include="*.py" -E 'datetime\.now\([[:space:]]*\)' backend/app || true)
 if [[ -n "${NAIVE_NOW_USAGE}" ]]; then
   echo "❌ Naive datetime.now() gefunden - bitte datetime.now(tz=UTC) verwenden:"
   echo "${NAIVE_NOW_USAGE}"
@@ -98,7 +98,7 @@ if [[ -n "${NAIVE_NOW_USAGE}" ]]; then
 fi
 
 # 2. Prüfe auf datetime.utcnow() (deprecated, sollte datetime.now(tz=UTC) sein)
-UTCNOW_USAGE=$(grep -rn "datetime\.utcnow()" backend/app --include="*.py" || true)
+UTCNOW_USAGE=$(grep -RIn --include="*.py" "datetime\.utcnow()" backend/app || true)
 if [[ -n "${UTCNOW_USAGE}" ]]; then
   echo "❌ Deprecated datetime.utcnow() gefunden - bitte datetime.now(tz=UTC) verwenden:"
   echo "${UTCNOW_USAGE}"

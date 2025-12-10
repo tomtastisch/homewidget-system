@@ -16,23 +16,35 @@ dependencies = [
   "pydantic[email]>=2.12.5",
   # Required by FastAPI when using form data (e.g., OAuth2PasswordRequestForm)
   "python-multipart>=0.0.20",
+    "loguru>=0.7",
 ]
 
 [project.optional-dependencies]
 dev = [
+    # Linting / Typing
   "ruff>=0.6",
   "mypy>=1.11",
   "types-python-jose",
   "types-passlib",
-  # Für Tests: Starlette/FastAPI TestClient benötigt httpx
+    # Tests / Test-Runner
   "pytest>=7.0",
-  "httpx>=0.24",
-  # Async-Test-Support (einige Utils/Endpoints können async sein)
   "pytest-asyncio>=0.23",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-socket",
+    # HTTP / API-Testing
+    # Starlette/FastAPI TestClient benötigt httpx
+    "httpx>=0.24",
+    "respx",
+    "schemathesis",
+    # Zeitmanipulation / Testdaten / Property-based Tests
   # Deterministische Zeitmanipulation für Token-Expiry-Tests
   "freezegun>=1.5",
   # Realistischere Testdaten (z. B. E-Mails) – optional genutzt
   "faker>=26.0",
+    "hypothesis",
+    # Security / Dependencies
+    "pip-audit",
 ]
 
 [build-system]
@@ -66,6 +78,8 @@ target-version = "py312"
 # B008: FastAPI Depends() in Defaults ist idiomatisch und sicher
 # Info: Hier bewusst ignoriert.
 ignore = ["D", "ANN", "B008"]
+# Security-Regeln (Bandit-kompatibel) zusätzlich aktivieren
+extend-select = ["S"]
 
 [tool.pytest.ini_options]
 # Silence a third-party deprecation inside passlib's Argon2 handler that queries

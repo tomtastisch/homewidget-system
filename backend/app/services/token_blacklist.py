@@ -6,7 +6,6 @@ from typing import Final
 from fastapi_cache import FastAPICache
 
 from ..core.logging_config import get_logger
-from .auth_service import ensure_utc_aware
 
 LOG = get_logger("services.token_blacklist")
 
@@ -35,12 +34,13 @@ async def blacklist_access_token(jti: str, expires_at: datetime) -> None:
     try:
         backend = FastAPICache.get_backend()
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # bewusstes Catch-All: Cache-Ausfall soll API nicht crashen (Fail‑open)
         LOG.warning("blacklist_no_cache_backend", exc_info=exc)
         return
 
     now = datetime.now(tz=UTC)
-    exp_at = ensure_utc_aware(expires_at)
+    # Lokale, schlanke Variante von ensure_utc_aware, um Zyklen zu vermeiden
+    exp_at = expires_at.replace(tzinfo=UTC) if expires_at.tzinfo is None else expires_at
     ttl_seconds = int((exp_at - now).total_seconds())
 
     if ttl_seconds < 0:
@@ -52,7 +52,7 @@ async def blacklist_access_token(jti: str, expires_at: datetime) -> None:
         await backend.set(key, b"1", expire=ttl_seconds)
         LOG.info("token_blacklisted", extra={"jti": jti, "ttl": ttl_seconds})
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # bewusstes Catch-All: Cache-Schreibfehler → Fail‑open, nur warnen
         LOG.warning("blacklist_set_failed", extra={"jti": jti}, exc_info=exc)
 
 
@@ -72,7 +72,7 @@ async def is_access_token_blacklisted(jti: str) -> bool:
     try:
         backend = FastAPICache.get_backend()
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # bewusstes Catch-All: Cache nicht verfügbar → Fail‑open (nicht geblacklistet)
         LOG.warning("blacklist_no_cache_backend", exc_info=exc)
         return False
 
@@ -84,6 +84,6 @@ async def is_access_token_blacklisted(jti: str) -> bool:
 
         return hit
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001  # bewusstes Catch-All: Cache-Leseproblem → Fail‑open
         LOG.warning("blacklist_get_failed", extra={"jti": jti}, exc_info=exc)
         return False

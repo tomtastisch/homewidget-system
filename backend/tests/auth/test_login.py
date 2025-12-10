@@ -1,40 +1,39 @@
-"""
-Diese Datei prüft, dass der OAuth2‑Password‑Flow funktioniert und falsche
-Eingaben korrekt abgelehnt werden. Die Tests verwenden das FastAPI‑TestClient
-und eine echte Testdatenbank über die Fixtures.
-"""
 from __future__ import annotations
 
 from collections.abc import Callable
+
 import pytest
 from fastapi.testclient import TestClient
-from ..utils.passwords import valid_password
-from ..utils.emails import email_for_user
+
 from ..conftest import ResponseLike
+from ..utils import auth as auth_utils
+from ..utils.emails import email_for_user
+from ..utils.passwords import valid_password
 
 LOGIN_URL = "/api/auth/login"
 REGISTER_URL = "/api/auth/register"
 LoginUserFixture = Callable[[str, str], ResponseLike]
 RegisterUserFixture = Callable[[str, str], dict]
 
+"""
+Diese Datei prüft, dass der OAuth2‑Password‑Flow funktioniert und falsche
+Eingaben korrekt abgelehnt werden. Die Tests verwenden das FastAPI‑TestClient
+und eine echte Testdatenbank über die Fixtures.
+"""
 pytestmark = pytest.mark.integration
 
 
 def test_login_returns_token_pair(
         client: TestClient,
-        register_user: RegisterUserFixture,
-        login_user: LoginUserFixture,
 ) -> None:
     """Login mit korrekten Zugangsdaten liefert ein vollständiges Token-Paar."""
     email = email_for_user(1)
     password = valid_password()
 
     # Benutzer registrieren und anschließend einloggen
-    register_user(email, password)
+    auth_utils.register(client, email, password)
 
-    response = login_user(email, password)
-
-    assert response.status_code == 200
+    response = auth_utils.login(client, email, password)
     data = response.json()
 
     # TokenPair-Schema: access_token, refresh_token, token_type, expires_in, role
@@ -47,18 +46,22 @@ def test_login_returns_token_pair(
 
 def test_login_rejects_wrong_password(
         client: TestClient,
-        register_user: RegisterUserFixture,
-        login_user: LoginUserFixture,
 ) -> None:
     email = email_for_user(2)
     password = valid_password()
     wrong_password = "WrongPassword999!"
 
     # Benutzer registrieren
-    register_user(email, password)
+    auth_utils.register(client, email, password)
 
     # Login-Versuch mit falschem Passwort
-    response = login_user(email, wrong_password)
+    response = client.post(
+        LOGIN_URL,
+        data={
+            "username": email,
+            "password": wrong_password,
+        },
+    )
 
     assert response.status_code == 401
     body = response.json()

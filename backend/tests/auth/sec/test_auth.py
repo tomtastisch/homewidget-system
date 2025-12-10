@@ -1,37 +1,28 @@
-"""
-Integrationstests für die Auth‑Endpunkte. Diese Datei testet vorrangig den
-Refresh‑Token‑Flow sowie den Zugriff auf den geschützten /auth/me‑Endpunkt.
-Registrierungs‑ und Login‑Szenarien befinden sich in den spezifischen
-Testmodulen test_register und test_login.
-"""
 from __future__ import annotations
 
-from tests.conftest import ResponseLike
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
-from datetime import UTC, datetime, timedelta
-from app.core.config import settings
-from collections.abc import Callable
-from typing import Any
 
+from app.core.config import settings
+from tests.utils import auth as auth_utils
+
+"""
+Integrationstests für die Auth-Endpunkte.
+
+Diese Datei testet vorrangig den Refresh-Token-Flow sowie den Zugriff auf den
+geschützten /auth/me-Endpunkt. Registrierungs- und Login-Szenarien befinden
+sich in den spezifischen Testmodulen test_register und test_login.
+"""
 pytestmark = pytest.mark.integration
 
 
-LoginUserFixture = Callable[[str, str], ResponseLike]
-RegisterUserFixture = Callable[[str, str], dict[str, Any]]
-
-
-def test_refresh_token_flow(
-        client: TestClient,
-        register_user: RegisterUserFixture,
-        login_user: LoginUserFixture
-) -> None:
+def test_refresh_token_flow(client: TestClient) -> None:
     """Prüft den Refresh-Flow über POST /auth/refresh mit gültigem Refresh-Token."""
     # Benutzer registrieren und einloggen, um Tokens zu erhalten
-    register_user("refresh@example.com", "SecurePassword123!")
-    login_data = login_user("refresh@example.com", "SecurePassword123!").json()
+    login_data = auth_utils.register_and_login(client, "refresh@example.com", "SecurePassword123!").json()
     refresh_token = login_data["refresh_token"]
 
     # Refresh-Token verwenden, um neue Tokens zu erhalten
@@ -52,6 +43,7 @@ def test_refresh_token_flow(
 
 
 def test_refresh_token_invalid(client: TestClient) -> None:
+    """Ungültiger Refresh-Token führt zu 401."""
     response = client.post(
         "/api/auth/refresh",
         json={"refresh_token": "invalid-token-12345"},
@@ -60,15 +52,13 @@ def test_refresh_token_invalid(client: TestClient) -> None:
     assert response.status_code == 401
 
 
-def test_refresh_token_reuse_denied(
-        client: TestClient,
-        register_user: RegisterUserFixture,
-        login_user: LoginUserFixture
-) -> None:
-    """Stellt sicher, dass ein alter Refresh-Token nach Rotation nicht erneut verwendet werden kann (401)."""
+def test_refresh_token_reuse_denied(client: TestClient) -> None:
+    """
+    Stellt sicher, dass ein alter Refresh-Token nach Rotation
+    nicht erneut verwendet werden kann (401).
+    """
     # Benutzer registrieren und einloggen, um Tokens zu erhalten
-    register_user("reuse@example.com", "SecurePassword123!")
-    login_data = login_user("reuse@example.com", "SecurePassword123!").json()
+    login_data = auth_utils.register_and_login(client, "reuse@example.com", "SecurePassword123!").json()
     old_refresh = login_data["refresh_token"]
 
     # Erste Rotation ist erfolgreich
@@ -89,14 +79,9 @@ def test_refresh_token_reuse_denied(
     assert response2.status_code == 401
 
 
-def test_refresh_with_expired_token_returns_401(
-        client: TestClient,
-        register_user: RegisterUserFixture,
-        login_user: LoginUserFixture
-) -> None:
+def test_refresh_with_expired_token_returns_401(client: TestClient) -> None:
     """Abgelaufene Refresh-Tokens werden von der API mit 401 abgelehnt."""
-    register_user("expired-refresh@example.com", "SecurePassword123!")
-    login_data = login_user("expired-refresh@example.com", "SecurePassword123!").json()
+    login_data = auth_utils.register_and_login(client, "expired-refresh@example.com", "SecurePassword123!").json()
     refresh_token = login_data["refresh_token"]
 
     # Zeit über das konfigurierte Refresh-Token-Ablaufdatum hinaus vorspulen
@@ -106,27 +91,17 @@ def test_refresh_with_expired_token_returns_401(
             "/api/auth/refresh",
             json={"refresh_token": refresh_token},
         )
-        assert response.status_code == 401
+
+    assert response.status_code == 401
 
 
-
-
-def test_me_endpoint_with_valid_token(
-        client: TestClient,
-        register_user: RegisterUserFixture,
-        login_user: LoginUserFixture
-) -> None:
+def test_me_endpoint_with_valid_token(client: TestClient) -> None:
     """Prüft /auth/me mit gültigem Access-Token."""
     # Registrieren und einloggen
-    register_user("me@example.com", "SecurePassword123!")
-    login_data = login_user("me@example.com", "SecurePassword123!").json()
-    access_token = login_data["access_token"]
+    access_token = auth_utils.register_and_login(client, "me@example.com", "SecurePassword123!").json()["access_token"]
 
     # /auth/me mit Token aufrufen
-    response = client.get(
-        "/api/auth/me",
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
+    response = auth_utils.get_me(client, access_token)
 
     assert response.status_code == 200
 
@@ -137,14 +112,27 @@ def test_me_endpoint_with_valid_token(
 
 
 def test_me_endpoint_without_token(client: TestClient) -> None:
+    """/auth/me ohne Token führt zu 401."""
     response = client.get("/api/auth/me")
     assert response.status_code == 401
 
 
 def test_me_endpoint_with_invalid_token(client: TestClient) -> None:
+    """/auth/me mit ungültigem Token führt zu 401."""
     response = client.get(
         "/api/auth/me",
         headers={"Authorization": "Bearer invalid-token-12345"},
     )
 
     assert response.status_code == 401
+
+
+def test_me_with_expired_access_token_returns_401(client: TestClient) -> None:
+    """Abgelaufene Access-Tokens werden bei /auth/me mit 401 abgelehnt."""
+    login_data = auth_utils.register_and_login(client, "expired-access@example.com", "SecurePassword123!").json()
+    access_token = login_data["access_token"]
+
+    future = datetime.now(tz=UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES + 1)
+    with freeze_time(future, tz_offset=0):
+        resp = auth_utils.get_me(client, access_token)
+    assert resp.status_code == 401

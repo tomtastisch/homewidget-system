@@ -1,9 +1,10 @@
-"""Utility-Funktionen für Test-E-Mail-Adressen."""
 from __future__ import annotations
 
 from typing import Final
+
 from faker import Faker
 
+"""Utility-Funktionen für Test-E-Mail-Adressen."""
 
 _fake: Final = Faker()
 DEFAULT_DOMAIN: Final = "example.com"

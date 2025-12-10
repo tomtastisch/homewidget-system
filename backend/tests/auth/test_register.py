@@ -1,9 +1,3 @@
-"""
-Integrationstests für die Registrierung: Diese Datei enthält sowohl
-Validierungstests für fehlende/ungültige Felder als auch Happy‑Path‑Tests.
-Die Tests verwenden Hilfsfunktionen aus utils.passwords und utils.emails für
-zufällige und deterministische Testdaten.
-"""
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Callable
@@ -11,15 +5,20 @@ from typing import Any, TypeAlias
 
 import pytest
 from fastapi.testclient import TestClient
-from ..utils.passwords import valid_password
+
 from ..utils.emails import email_for_user, invalid_email_missing_at
+from ..utils.passwords import valid_password
 
 REGISTER_URL = "/api/auth/register"
 
 JsonMapping: TypeAlias = Mapping[str, Any]
 
-# Alle Tests in dieser Datei laufen gegen die echte FastAPI‑App und nutzen
-# die Testdatenbank via Fixtures. Daher sind sie Integrationstests.
+"""
+Integrationstests für die Registrierung: Diese Datei enthält sowohl
+Validierungstests für fehlende/ungültige Felder als auch Happy‑Path‑Tests.
+Die Tests verwenden Hilfsfunktionen aus utils.passwords und utils.emails für
+zufällige und deterministische Testdaten.
+"""
 pytestmark = pytest.mark.integration
 
 

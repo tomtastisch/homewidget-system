@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from enum import Enum
+from typing import TYPE_CHECKING, List
 
 from sqlalchemy import func
+from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
-
-from enum import Enum
 
 
 class UserRole(str, Enum):
@@ -30,17 +30,30 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     email: str = Field(index=True, unique=True)
     password_hash: str
-    role: UserRole = Field(default=UserRole.demo, description="User role (demo/common/premium)")
+    role: UserRole = Field(
+        default=UserRole.demo,
+        description="User role (demo/common/premium)",
+    )
+
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC), nullable=False)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(tz=UTC),
+        nullable=False,
+    )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(tz=UTC),
         sa_column_kwargs={"onupdate": func.now()},
         nullable=False,
     )
 
-    widgets: list["Widget"] = Relationship(back_populates="owner")
-    refresh_tokens: list["RefreshToken"] = Relationship(back_populates="user")
+    # Forward-referenced relationship collections must use list["Type"] (not a single quoted string)
+    # Use explicit SQLAlchemy relationship to avoid forward-ref parsing issues
+    widgets: List["Widget"] = Relationship(
+        sa_relationship=relationship("Widget", back_populates="owner")
+    )
+    refresh_tokens: List["RefreshToken"] = Relationship(
+        sa_relationship=relationship("RefreshToken", back_populates="user")
+    )
 
 
 if TYPE_CHECKING:

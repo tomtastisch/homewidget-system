@@ -1,3 +1,15 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
+from freezegun import freeze_time
+from jose import JWTError, jwt
+
+from app.core.config import settings
+from app.core.security import create_access_token, create_refresh_token
+
 """
 Tests zur Erstellung und Verifikation von JWT‑Tokens. Die meisten Tests
 prüfen die Claims und das Ablaufverhalten der Access‑ und Refresh‑Tokens.
@@ -5,18 +17,6 @@ Ein gesonderter Test am Ende verwendet den FastAPI‑TestClient, um das
 Verhalten eines abgelaufenen Access‑Tokens am /auth/me‑Endpunkt zu
 überprüfen.
 """
-from __future__ import annotations
-
-from datetime import UTC, datetime, timedelta
-from freezegun import freeze_time
-from jose import JWTError, jwt
-
-import pytest
-
-from app.core.config import settings
-from app.services.security import create_access_token, create_refresh_token
-from fastapi.testclient import TestClient
-
 pytestmark = pytest.mark.unit
 
 

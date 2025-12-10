@@ -14,14 +14,43 @@ from typing import Any, Protocol
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel, Session, create_engine
 from sqlalchemy.engine import Engine
+from sqlmodel import SQLModel, Session, create_engine
 
 from app.main import create_app
-
 # Modelle zuerst importieren, damit sie in den SQLModel-Metadaten registriert werden
 from app.models.user import User  # noqa: F401
 from app.models.widget import RefreshToken, Widget  # noqa: F401
+
+try:  # Optional: block real network connections if pytest-socket is available
+    from pytest_socket import disable_socket as _disable_socket  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    _disable_socket = None  # type: ignore
+
+# Configure Hypothesis to suppress health check about function-scoped fixtures used with @given
+try:  # pragma: no cover - test-only configuration
+    from hypothesis import HealthCheck, settings
+
+    settings.register_profile(
+        "ci",
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+        deadline=None,
+    )
+    settings.load_profile("ci")
+except Exception:
+    pass
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _block_real_network() -> None:
+    """
+    Blockiert ausgehende Netzwerkverbindungen in Tests (Fail-Fast gegen versehentliche
+    HTTP‑Calls). Wir nutzen dies nur, wenn das Plugin `pytest-socket` installiert ist.
+    Der FastAPI TestClient arbeitet rein in‑process und bleibt davon unberührt.
+    """
+    if _disable_socket is not None:
+        # Allow UNIX domain sockets so AnyIO/Starlette can create event loops and self-pipes
+        _disable_socket(allow_unix_socket=True)
 
 
 class ResponseLike(Protocol):

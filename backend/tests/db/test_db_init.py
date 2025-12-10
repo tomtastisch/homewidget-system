@@ -1,18 +1,16 @@
-"""
-Unit‑Test für die initiale Datenbankerstellung. Hier wird sichergestellt,
-dass alle erwarteten Tabellen durch SQLModel angelegt werden.
-"""
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import inspect
 from sqlmodel import SQLModel, create_engine
-import pytest
 
 # Modelle importieren, damit sie in SQLModel.metadata registriert sind
 from app.models.widget import RefreshToken, Widget  # noqa: F401
 
-# Dieser Test verwendet eine In-Memory-Datenbank und benötigt keine
-# externen Ressourcen oder Dienste.
+"""
+Unit‑Test für die initiale Datenbankerstellung. Hier wird sichergestellt,
+dass alle erwarteten Tabellen durch SQLModel angelegt werden.
+"""
 pytestmark = pytest.mark.unit
 
 

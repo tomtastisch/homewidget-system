@@ -9,9 +9,15 @@ from sqlmodel import Session, select
 
 from ..core.config import settings
 from ..core.logging_config import get_logger
+from ..core.security import (
+    create_jwt,
+    hash_password,
+    verify_password,
+    compute_refresh_token_digest,
+)
+from ..core.types.token import ACCESS
 from ..models.user import User
 from ..models.widget import RefreshToken
-from .security import create_jwt, hash_password, verify_password
 
 
 def ensure_utc_aware(dt: datetime) -> datetime:
@@ -58,20 +64,25 @@ class AuthService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email already registered",
             )
+
         user = User(email=normalized_email, password_hash=hash_password(password))
         self.session.add(user)
         self.session.commit()
         self.session.refresh(user)
         self.log.info("user_created", extra={"user_id": user.id})
+
         return user
 
     def authenticate(self, email: str, password: str) -> User:
         normalized_email = email.strip().lower()
         user = self.session.exec(select(User).where(User.email == normalized_email)).first()
+
         if not user or not verify_password(password, user.password_hash):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+
         if not user.is_active:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+
         self.log.debug("user_authenticated", extra={"user_id": user.id})
         return user
 
@@ -85,10 +96,14 @@ class AuthService:
         Returns:
             Tuple aus (access_token, refresh_token, expires_in_seconds).
         """
-        access = create_jwt(user.email, settings.access_token_expire, token_type="access")
+        access = create_jwt(user.email, settings.access_token_expire, token_type=ACCESS)
         refresh_token_plain = secrets.token_urlsafe(48)
         expires_at = datetime.now(tz=UTC) + settings.refresh_token_expire
-        rt = RefreshToken(user_id=user.id, token=refresh_token_plain, expires_at=expires_at)
+        rt = RefreshToken(
+            user_id=user.id,
+            token_digest=compute_refresh_token_digest(refresh_token_plain),
+            expires_at=expires_at,
+        )
         self.session.add(rt)
         self.session.commit()
         self.log.info("tokens_issued", extra={"user_id": user.id})
@@ -112,9 +127,10 @@ class AuthService:
             HTTPException: Falls Token ungültig, abgelaufen oder widerrufen ist.
         """
         now = datetime.now(tz=UTC)
+        token_digest = compute_refresh_token_digest(token)
         rt = self.session.exec(
             select(RefreshToken).where(
-                RefreshToken.token == token,
+                RefreshToken.token_digest == token_digest,
                 cast(Any, RefreshToken.revoked).is_(False),
             )
         ).first()

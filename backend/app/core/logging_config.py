@@ -1,183 +1,141 @@
 """
-Zentrale Logging-Konfiguration für das Backend.
+Zentrale Logging-Konfiguration für das Backend mit loguru.
 
-Bietet strukturiertes Logging mit Context-Variablen (request_id, user_id),
-JSON- und Text-Formatierung sowie Log-Rotation.
+Stellt `get_logger(name)` bereit, der einen loguru-basierten Logger-Adapter
+zur Verfügung stellt. Dieser Adapter unterstützt weiterhin Aufrufe wie
+`logger.info("msg", extra={...}, exc_info=...)` und injiziert ContextVars
+(`request_id_var`, `user_id_var`) als strukturierte Felder in jedes Log.
 """
 from __future__ import annotations
 
-import json
-import logging
-import logging.config
 import os
+import sys
 from contextvars import ContextVar
-from datetime import datetime, timezone
-from logging.handlers import RotatingFileHandler
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+
+from loguru import logger as _loguru
 
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
 user_id_var: ContextVar[str | None] = ContextVar("user_id", default=None)
 
 
-class ContextFilter(logging.Filter):
-    """Injiziert request_id und user_id in Log-Records."""
-
-    def filter(self, record: logging.LogRecord) -> bool:  # noqa: D401
-        rid = request_id_var.get()
-        uid = user_id_var.get()
-        setattr(record, "request_id", rid or "-")
-        setattr(record, "user_id", uid or "-")
-        return True
+def _get_env_level() -> str:
+    lvl = (os.getenv("LOG_LEVEL") or "INFO").upper()
+    return lvl
 
 
-class JsonFormatter(logging.Formatter):
-    """Minimaler JSON-Formatter ohne externe Abhängigkeiten."""
-
-    def format(self, record: logging.LogRecord) -> str:  # noqa: D401
-        payload: Dict[str, Any] = {
-            "ts": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "request_id": getattr(record, "request_id", "-"),
-            "user_id": getattr(record, "user_id", "-"),
-        }
-        for key in ("method", "path", "status", "duration_ms", "client"):
-            val = getattr(record, key, None)
-            if val is not None:
-                payload[key] = val
-
-        if record.exc_info:
-            payload["exc_info"] = self.formatException(record.exc_info)
-
-        return json.dumps(payload, ensure_ascii=False)
-
-
-def _ensure_log_dir(path: str) -> None:
-    directory = os.path.dirname(path)
-    if directory and not os.path.exists(directory):
-        os.makedirs(directory, exist_ok=True)
-
-
-def setup_logging(
-    *,
-    level: str | None = None,
-    fmt: str | None = None,
-    output: str | None = None,
-    file_path: str | None = None,
-    max_bytes: int | None = None,
-    backup_count: int | None = None,
-) -> None:
+def setup_logging(*, level: Optional[str] = None) -> None:
     """
-    Konfiguriert das Logging für das Backend nach log4j-ähnlichem Schema via dictConfig.
+    Konfiguriert loguru als zentrale Logging-Bibliothek.
 
-    Parameter können explizit übergeben oder über Umgebungsvariablen gesetzt werden:
-    - LOG_LEVEL (default: INFO)
-    - LOG_FORMAT: "text" | "json" (default: text in dev, json in prod)
-    - LOG_OUTPUT: "stdout" | "file" | "both" (default: stdout)
-    - LOG_FILE: Dateipfad für File-Output (default: logs/backend.log)
-    - LOG_FILE_MAX_BYTES: (default: 5_242_880 ~ 5MB)
-    - LOG_FILE_BACKUP_COUNT: (default: 5)
-    - ENV: "dev" | "prod" beeinflusst Defaults
+    - Ausgabe auf STDOUT
+    - Format enthält Zeitstempel, Level, Logger-Name sowie ContextVars (request_id, user_id)
+    - Level via Parameter oder `LOG_LEVEL`
     """
 
-    env = (os.getenv("ENV") or "dev").lower()
-    level_str = (level or os.getenv("LOG_LEVEL") or "INFO").upper()
-    fmt_str = (fmt or os.getenv("LOG_FORMAT") or ("text" if env == "dev" else "json")).lower()
-    output_str = (output or os.getenv("LOG_OUTPUT") or "stdout").lower()
-    file_path_str = file_path or os.getenv("LOG_FILE") or "logs/backend.log"
-    max_bytes_val = max_bytes if max_bytes is not None else int(os.getenv("LOG_FILE_MAX_BYTES") or "5242880")
-    backup_count_val = (
-        backup_count if backup_count is not None else int(os.getenv("LOG_FILE_BACKUP_COUNT") or "5")
+    # Entferne bestehende Sinks, setze Patch zum Injizieren der ContextVars
+    _loguru.remove()
+
+    def _patch(record: Dict[str, Any]) -> None:
+        extra = record.setdefault("extra", {})
+        # ContextVars injizieren, falls nicht explizit gesetzt
+        extra.setdefault("request_id", request_id_var.get())
+        extra.setdefault("user_id", user_id_var.get())
+        # Fallbacks, damit Formatierung robust ist
+        extra.setdefault("logger", extra.get("logger", "backend.app"))
+
+    # Loguru übergibt hier ein Dict für record, die Typstubs erwarten einen Record-Typ.
+    # Laufzeitverhalten ist korrekt, daher gezieltes Ignore für MyPy.
+    patched = _loguru.patch(_patch)  # type: ignore[arg-type]
+
+    level_str = (level or _get_env_level()).upper()
+    fmt = (
+        "{time:YYYY-MM-DD HH:mm:ss.SSS} {level:<8} {extra[logger]} "
+        "[rid={extra[request_id]} uid={extra[user_id]}] {message}"
+    )
+    patched.add(
+        sink=sys.stdout,
+        level=level_str,
+        format=fmt,
+        backtrace=False,
+        diagnose=False,
     )
 
-    handlers: Dict[str, Dict[str, Any]] = {}
-
-    if output_str in ("stdout", "both"):
-        handlers["console"] = {
-            "class": "logging.StreamHandler",
-            "level": level_str,
-            "stream": "ext://sys.stdout",
-            "filters": ["context"],
-            "formatter": "dev_text" if fmt_str == "text" else "json",
-        }
-
-    if output_str in ("file", "both"):
-        _ensure_log_dir(file_path_str)
-        handlers["file"] = {
-            "()": RotatingFileHandler,
-            "level": level_str,
-            "filename": file_path_str,
-            "maxBytes": max_bytes_val,
-            "backupCount": backup_count_val,
-            "encoding": "utf-8",
-            "filters": ["context"],
-            "formatter": "text" if fmt_str == "text" else "json",
-        }
-
-    # Formatters
-    formatters: Dict[str, Dict[str, Any]] = {
-        "text": {
-            "format": "%(asctime)s %(levelname)s %(name)s [request_id=%(request_id)s user_id=%(user_id)s] %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S%z",
-        },
-        "dev_text": {
-            "format": "%(levelname)s %(name)s: %(message)s [rid=%(request_id)s uid=%(user_id)s]",
-        },
-        "json": {
-            "()": JsonFormatter,
-        },
-    }
-
-    loggers: Dict[str, Dict[str, Any]] = {
-        "backend.app.api": {"level": level, "propagate": True},
-        "backend.app.services": {"level": level, "propagate": True},
-        "backend.app.infrastructure": {"level": level, "propagate": True},
-    }
-
-    root_handlers = []
-    if "console" in handlers:
-        root_handlers.append("console")
-
-    if "file" in handlers:
-        root_handlers.append("file")
-
-    config: Dict[str, Any] = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "filters": {"context": {"()": ContextFilter}},
-        "formatters": formatters,
-        "handlers": handlers or {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": level_str,
-                "stream": "ext://sys.stdout",
-                "filters": ["context"],
-                "formatter": "dev_text" if fmt_str == "text" else "json",
-            }
-        },
-        "loggers": loggers,
-        "root": {"level": level_str, "handlers": root_handlers or ["console"]},
-    }
-
-    logging.config.dictConfig(config)
-
-    if env == "dev":
-        logging.getLogger("backend.app").debug(
-            "Logging configured (level=%s, fmt=%s, output=%s)", level_str, fmt_str, output_str
-        )
+    # Speichere den gepatchten Logger im Modul-Namespace, damit get_logger ihn nutzt
+    globals()["_LOGURU"] = patched
 
 
-def get_logger(name: str) -> logging.Logger:
+class _LoguruAdapter:
+    """Adapter, der eine stdlib-ähnliche API über loguru bereitstellt.
+
+    Unterstützt `extra={...}` und `exc_info=...` Parameter, damit bestehende
+    Aufrufer unverändert funktionieren.
     """
-    Hilfsfunktion zum Erzeugen namensraum-spezifischer Logger unter backend.app.*
 
-    Args:
-        name: Logger-Name (wird automatisch mit "backend.app." gepräfixt falls nötig).
+    def __init__(self, name: str):
+        if not name.startswith("backend.app."):
+            name = f"backend.app.{name}"
+        self._name = name
+        # Binde den Logger-Namen in die Extra-Felder
+        base = globals().get("_LOGURU", _loguru).bind(logger=name)
+        self._logger = base
 
-    Returns:
-        Konfigurierter Logger.
-    """
-    if not name.startswith("backend.app."):
-        name = f"backend.app.{name}"
-    return logging.getLogger(name)
+    def _log(
+            self,
+            level: str,
+            msg: str,
+            *args: Any,
+            extra: Optional[Dict[str, Any]] = None,
+            exc_info: Any = None,
+            **kwargs: Any,
+    ) -> None:  # noqa: D401,E501
+        log = self._logger
+        if extra:
+            log = log.bind(**extra)
+
+        # exc_info=True | Exception | tuple
+        if exc_info:
+            log = log.opt(exception=True)
+
+        elif exc_info:
+            log = log.opt(exception=exc_info)
+
+        # stdlib-Style %-Formatierung emulieren, falls args übergeben
+        if args:
+            try:
+                msg = msg % args
+            except (TypeError, ValueError):
+                # Falls %-Format/Args nicht passen, gebe unverändert aus
+                pass
+
+        getattr(log, level.lower())(msg, **kwargs)
+
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self._log("DEBUG", msg, *args, **kwargs)
+
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self._log("INFO", msg, *args, **kwargs)
+
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self._log("WARNING", msg, *args, **kwargs)
+
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        self._log("ERROR", msg, *args, **kwargs)
+
+    def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        # Erzwinge Exception-Stacktrace
+        kwargs = dict(kwargs)
+        if "exc_info" not in kwargs:
+            kwargs["exc_info"] = True
+        self._log("ERROR", msg, *args, **kwargs)
+
+    # Optional: kompatibel zur stdlib
+    def bind(self, **extra: Any) -> "_LoguruAdapter":
+        new = _LoguruAdapter(self._name)
+        new._logger = self._logger.bind(**extra)
+        return new
+
+
+def get_logger(name: str) -> _LoguruAdapter:
+    """Gibt einen loguru-basierten Logger-Adapter zurück (Signatur unverändert)."""
+    return _LoguruAdapter(name)

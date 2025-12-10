@@ -1,9 +1,4 @@
-"""
-Integrationstests für `ensure_utc_aware`, um konsistente UTC-Zeitpunkte sicherzustellen
-und Fehler bei Vergleichen zwischen naiven und timezone-aware Datumswerten zu vermeiden.
-"""
 from __future__ import annotations
-
 
 from datetime import UTC, datetime
 
@@ -11,6 +6,10 @@ import pytest
 
 from app.services.auth_service import ensure_utc_aware
 
+"""
+Integrationstests für `ensure_utc_aware`, um konsistente UTC-Zeitpunkte sicherzustellen
+und Fehler bei Vergleichen zwischen naiven und timezone-aware Datumswerten zu vermeiden.
+"""
 pytestmark = pytest.mark.integration
 
 def test_ensure_utc_aware_with_naive_datetime() -> None:

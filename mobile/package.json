@@ -9,7 +9,9 @@
         "ios": "expo run:ios",
         "web": "expo start --web",
         "lint": "eslint .",
-        "test": "jest"
+        "test": "jest",
+        "e2e:build:ios": "detox build -c ios.sim.debug",
+        "e2e:test:ios": "detox test -c ios.sim.debug"
     },
     "dependencies": {
         "@expo/metro-runtime": "~4.0.1",
@@ -17,6 +19,7 @@
         "@react-navigation/native-stack": "^6.11.0",
         "expo": "~52.0.16",
         "expo-asset": "~11.0.2",
+        "expo-dev-client": "~5.0.4",
         "expo-secure-store": "~14.0.0",
         "loglevel": "^1.9.1",
         "react": "18.3.1",
@@ -39,7 +42,9 @@
         "@testing-library/jest-native": "^5.4.3",
         "react-test-renderer": "18.3.1",
         "ts-node": "^10.9.2",
-        "@types/jest": "^29.5.14"
+        "@types/jest": "^29.5.14",
+        "detox": "^20.17.0",
+        "@types/detox": "^20.12.6"
     },
     "overrides": {
         "@xmldom/xmldom": "^0.8.10"
@@ -52,5 +57,8 @@
         "transformIgnorePatterns": [
             "node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|expo(nent)?|@expo(nent)?|@expo-google-fonts|react-native-svg|react-native-vector-icons|react-clone-referenced-element|@testing-library))"
         ]
+    },
+    "detox": {
+        "testRunner": "jest"
     }
 }

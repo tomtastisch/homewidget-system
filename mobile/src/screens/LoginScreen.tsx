@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import {View, Text, TextInput, Button, StyleSheet, TouchableOpacity} from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../App';
+import React, {useState} from 'react';
+import {Button, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -41,6 +41,7 @@ export default function LoginScreen({ navigation }: Props) {
 				keyboardType="email-address"
 				value={email}
 				onChangeText={setEmail}
+				testID="login.email"
 			/>
 			<TextInput
 				style={styles.input}
@@ -48,8 +49,14 @@ export default function LoginScreen({ navigation }: Props) {
 				secureTextEntry
 				value={password}
 				onChangeText={setPassword}
+				testID="login.password"
 			/>
-			<Button title={loading ? 'Bitte warten…' : 'Login'} onPress={onLogin} disabled={loading}/>
+			<Button
+				title={loading ? 'Bitte warten…' : 'Login'}
+				onPress={onLogin}
+				disabled={loading}
+				testID="login.submit"
+			/>
 			<View style={styles.switchRow}>
 				<Text>Noch kein Konto?</Text>
 				<TouchableOpacity onPress={() => navigation.replace('Register')}>

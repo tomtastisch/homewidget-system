@@ -1,11 +1,11 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {View, Text, FlatList, Button, StyleSheet, RefreshControl, TouchableOpacity, Alert} from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import {getHomeWidgets, type BackendWidget} from '../api/homeApi';
-import type { RootStackParamList } from '../App';
+import {Alert, Button, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {type BackendWidget, getHomeWidgets} from '../api/homeApi';
+import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
 import {parseBackendWidget, type ParsedWidget} from '../types/widgets';
-import {WidgetCard, WidgetBanner} from '../components/widgets';
+import {WidgetBanner, WidgetCard} from '../components/widgets';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -69,7 +69,7 @@ export default function HomeScreen({ navigation }: Props) {
 				{isAuthed ? (
 					<Button title="Account" onPress={() => navigation.navigate('Account')}/>
 				) : (
-					<TouchableOpacity onPress={() => navigation.navigate('Login')}>
+					<TouchableOpacity onPress={() => navigation.navigate('Login')} testID="home.loginLink">
 						<Text style={styles.link}>Einloggen oder Registrieren</Text>
 					</TouchableOpacity>
 				)}

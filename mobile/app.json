@@ -30,7 +30,8 @@
             "bundler": "metro"
         },
         "plugins": [
-            "expo-asset"
+            "expo-asset",
+            "expo-dev-client"
         ]
     }
 }

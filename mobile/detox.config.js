@@ -2,7 +2,7 @@
  * Detox configuration for iOS Simulator using Expo Dev Client
  * Requires: `expo prebuild -p ios` once to generate the ios project.
  */
-/** @type {Detox.DetoxConfig} */
+/** @type {import('detox').DetoxConfig} */
 module.exports = {
     testRunner: {
         args: {

@@ -1,3 +1,10 @@
+from __future__ import annotations
+
+"""Einstiegspunkt für die FastAPI-Anwendung.
+
+Konfiguriert Middleware, Router und Lifecycle-Events für das Backend.
+"""
+
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -15,19 +22,22 @@ from .middleware.logging_middleware import RequestLoggingMiddleware
 
 
 def create_app() -> FastAPI:
-    # configure logging early
+    """
+    Erzeugt und konfiguriert die FastAPI-Anwendung.
+
+    Returns:
+        Vollständig konfigurierte FastAPI-Instanz mit Middleware, Routern und Lifecycle.
+    """
     setup_logging()
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        # Startup
+    async def lifespan(_: FastAPI):
         init_db()
         FastAPICache.init(InMemoryBackend(), prefix="homewidget")
         yield
 
     app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
-    # CORS for mobile dev
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -36,7 +46,6 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Request/Response logging middleware (enable/disable via env)
     if os.getenv("REQUEST_LOGGING_ENABLED", "1") not in ("0", "false", "False"):
         app.add_middleware(RequestLoggingMiddleware)
 

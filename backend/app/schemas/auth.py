@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, ConfigDict
@@ -12,36 +14,41 @@ class TokenPair(BaseModel):
 
 
 class TokenPayload(BaseModel):
+    """Payload eines Access-Tokens."""
     sub: str
     exp: int
     type: str = "access"
 
 
 class RefreshTokenPayload(BaseModel):
+    """Payload eines Refresh-Tokens."""
     sub: str
     exp: int
     type: str = "refresh"
 
 
 class LoginRequest(BaseModel):
+    """Anfrage für Benutzer-Login."""
     username: EmailStr
     password: str
 
 
 class SignupRequest(BaseModel):
+    """Anfrage für Benutzer-Registrierung."""
     email: EmailStr
     password: str
 
 
 class RefreshRequest(BaseModel):
+    """Anfrage zum Erneuern eines Tokens."""
     refresh_token: str
 
 
 class UserRead(BaseModel):
+    """Benutzer-Daten für API-Antworten."""
     id: int
     email: EmailStr
     is_active: bool
     created_at: datetime
 
-    # Pydantic v2 style configuration (replaces inner Config class)
     model_config = ConfigDict(from_attributes=True)

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+"""API-Endpunkte für Home-Feed und Widget-Bereitstellung."""
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_cache.decorator import cache
 from sqlmodel import Session
@@ -23,7 +27,11 @@ def get_feed(
     session: Session = Depends(get_session),
     user=Depends(get_current_user),
 ):
-    # rate limit per user id
+    """
+    Ruft den Widget-Feed für den aktuellen Benutzer ab.
+
+    Rate-Limiting pro Benutzer-ID. Antwort wird 30 Sekunden gecacht.
+    """
     key = f"feed:{user.id}"
     if not rate_limiter.allow(key, feed_rule):
         LOG.warning("feed_rate_limited")

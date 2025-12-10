@@ -40,6 +40,8 @@ def test_access_token_has_claims() -> None:
 
         assert decoded.get("sub") == email
         assert decoded.get("type") == "access"
+        # jti is present for access tokens (used for blacklist/revocation)
+        assert isinstance(decoded.get("jti"), str) and decoded.get("jti")
         # exp ist ein Integer-Timestamp, berechnet aus der eingefrorenen Zeit + TTL
         assert isinstance(decoded.get("exp"), int)
         expected_exp = int((datetime.now(tz=UTC) + expires_delta).timestamp())

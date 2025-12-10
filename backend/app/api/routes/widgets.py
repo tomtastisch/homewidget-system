@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+"""API-Endpunkte für Widget-Verwaltung."""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 
@@ -13,6 +17,9 @@ LOG = get_logger("api.widgets")
 
 @router.get("/", response_model=list[WidgetRead])
 def list_widgets(session: Session = Depends(get_session), user=Depends(get_current_user)):
+    """
+    Listet alle Widgets des aktuellen Benutzers auf.
+    """
     widgets = session.exec(select(Widget).where(Widget.owner_id == user.id)).all()
     LOG.info("widgets_listed", extra={"count": len(widgets)})
     return widgets
@@ -24,6 +31,9 @@ def create_widget(
     session: Session = Depends(get_session),
     user=Depends(get_current_user),
 ):
+    """
+    Erstellt ein neues Widget für den aktuellen Benutzer.
+    """
     widget = Widget(name=payload.name, config_json=payload.config_json, owner_id=user.id)
     session.add(widget)
     session.commit()
@@ -38,6 +48,9 @@ def delete_widget(
     session: Session = Depends(get_session),
     user=Depends(get_current_user),
 ):
+    """
+    Löscht ein Widget des aktuellen Benutzers.
+    """
     widget = session.get(Widget, widget_id)
     if not widget or widget.owner_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget not found")

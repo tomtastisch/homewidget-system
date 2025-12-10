@@ -1,9 +1,10 @@
-"""Database initialization helpers.
+from __future__ import annotations
 
-This module provides a controlled entry point to create database schema via
-SQLModel.metadata.create_all(engine). It can be used at app startup or in
-separate initialization flows and simplifies testing by allowing a custom
-engine to be passed in.
+"""Hilfsfunktionen für Datenbankinitialisierung.
+
+Bietet kontrollierten Zugriff auf Schema-Erstellung via SQLModel.metadata.create_all(engine).
+Kann bei App-Start oder in separaten Initialisierungs-Flows verwendet werden und vereinfacht
+Tests durch Übergabe einer benutzerdefinierten Engine.
 """
 
 from typing import Optional, Union
@@ -17,9 +18,10 @@ EngineLike = Union[Engine, Connection]
 
 def init_db(engine: Optional[EngineLike] = None) -> None:
     """
-    Create all tables defined by SQLModel models.
+    Erzeugt alle von SQLModel-Modellen definierten Tabellen.
 
-    If no engine is provided, the application engine is used.
+    Args:
+        engine: Optional. Falls nicht angegeben, wird die Anwendungs-Engine verwendet.
     """
 
     target: EngineLike = engine or app_engine  # type: ignore[assignment]

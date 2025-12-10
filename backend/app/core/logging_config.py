@@ -1,3 +1,11 @@
+from __future__ import annotations
+
+"""Zentrale Logging-Konfiguration für das Backend.
+
+Bietet strukturiertes Logging mit Context-Variablen (request_id, user_id),
+JSON- und Text-Formatierung sowie Log-Rotation.
+"""
+
 import json
 import logging
 import logging.config
@@ -7,28 +15,25 @@ from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from typing import Any, Dict
 
-# Context for cross-cutting request/user correlation
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
 user_id_var: ContextVar[str | None] = ContextVar("user_id", default=None)
 
 
 class ContextFilter(logging.Filter):
-    """Injects request_id and user_id into log records."""
+    """Injiziert request_id und user_id in Log-Records."""
 
     def filter(self, record: logging.LogRecord) -> bool:  # noqa: D401
         rid = request_id_var.get()
         uid = user_id_var.get()
-        # Provide defaults for formatter fields
         setattr(record, "request_id", rid or "-")
         setattr(record, "user_id", uid or "-")
         return True
 
 
 class JsonFormatter(logging.Formatter):
-    """Minimal JSON formatter without extra dependencies."""
+    """Minimaler JSON-Formatter ohne externe Abhängigkeiten."""
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D401
-        # Base attributes
         payload: Dict[str, Any] = {
             "ts": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
             "level": record.levelname,
@@ -37,13 +42,14 @@ class JsonFormatter(logging.Formatter):
             "request_id": getattr(record, "request_id", "-"),
             "user_id": getattr(record, "user_id", "-"),
         }
-        # Optional common HTTP fields
         for key in ("method", "path", "status", "duration_ms", "client"):
             val = getattr(record, key, None)
             if val is not None:
                 payload[key] = val
+
         if record.exc_info:
             payload["exc_info"] = self.formatException(record.exc_info)
+
         return json.dumps(payload, ensure_ascii=False)
 
 
@@ -63,19 +69,18 @@ def setup_logging(
     backup_count: int | None = None,
 ) -> None:
     """
-    Configure logging for the backend in a log4j-like style using dictConfig.
+    Konfiguriert das Logging für das Backend nach log4j-ähnlichem Schema via dictConfig.
 
-    Parameters may be provided explicitly or via environment variables:
+    Parameter können explizit übergeben oder über Umgebungsvariablen gesetzt werden:
     - LOG_LEVEL (default: INFO)
     - LOG_FORMAT: "text" | "json" (default: text in dev, json in prod)
     - LOG_OUTPUT: "stdout" | "file" | "both" (default: stdout)
-    - LOG_FILE: path for file output (default: logs/backend.log)
+    - LOG_FILE: Dateipfad für File-Output (default: logs/backend.log)
     - LOG_FILE_MAX_BYTES: (default: 5_242_880 ~ 5MB)
     - LOG_FILE_BACKUP_COUNT: (default: 5)
-    - ENV: "dev" | "prod" influences defaults
+    - ENV: "dev" | "prod" beeinflusst Defaults
     """
 
-    # Normalize environment/config values to non-None, properly typed locals
     env = (os.getenv("ENV") or "dev").lower()
     level_str = (level or os.getenv("LOG_LEVEL") or "INFO").upper()
     fmt_str = (fmt or os.getenv("LOG_FORMAT") or ("text" if env == "dev" else "json")).lower()
@@ -86,7 +91,6 @@ def setup_logging(
         backup_count if backup_count is not None else int(os.getenv("LOG_FILE_BACKUP_COUNT") or "5")
     )
 
-    # Handlers
     handlers: Dict[str, Dict[str, Any]] = {}
 
     if output_str in ("stdout", "both"):
@@ -118,7 +122,6 @@ def setup_logging(
             "datefmt": "%Y-%m-%d %H:%M:%S%z",
         },
         "dev_text": {
-            # Slightly more compact for terminal in dev
             "format": "%(levelname)s %(name)s: %(message)s [rid=%(request_id)s uid=%(user_id)s]",
         },
         "json": {
@@ -126,20 +129,16 @@ def setup_logging(
         },
     }
 
-    # Logger hierarchy configuration
     loggers: Dict[str, Dict[str, Any]] = {
-        # API layer
         "backend.app.api": {"level": level, "propagate": True},
-        # Services/domain services (no domain entities)
         "backend.app.services": {"level": level, "propagate": True},
-        # Infrastructure: db, cache, security, rate-limit, etc.
         "backend.app.infrastructure": {"level": level, "propagate": True},
     }
 
-    # Root logger
     root_handlers = []
     if "console" in handlers:
         root_handlers.append("console")
+
     if "file" in handlers:
         root_handlers.append("file")
 
@@ -149,7 +148,6 @@ def setup_logging(
         "filters": {"context": {"()": ContextFilter}},
         "formatters": formatters,
         "handlers": handlers or {
-            # Fallback if misconfigured
             "console": {
                 "class": "logging.StreamHandler",
                 "level": level_str,
@@ -164,7 +162,6 @@ def setup_logging(
 
     logging.config.dictConfig(config)
 
-    # Basic banner in dev to confirm configuration
     if env == "dev":
         logging.getLogger("backend.app").debug(
             "Logging configured (level=%s, fmt=%s, output=%s)", level_str, fmt_str, output_str
@@ -173,7 +170,13 @@ def setup_logging(
 
 def get_logger(name: str) -> logging.Logger:
     """
-    Convenience helper to get namespaced loggers under backend.app.*
+    Hilfsfunktion zum Erzeugen namensraum-spezifischer Logger unter backend.app.*
+
+    Args:
+        name: Logger-Name (wird automatisch mit "backend.app." gepräfixt falls nötig).
+
+    Returns:
+        Konfigurierter Logger.
     """
     if not name.startswith("backend.app."):
         name = f"backend.app.{name}"

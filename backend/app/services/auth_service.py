@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import secrets
 from datetime import UTC, datetime
 from typing import Any, cast
@@ -13,18 +15,19 @@ from .security import create_jwt, hash_password, verify_password
 
 
 def ensure_utc_aware(dt: datetime) -> datetime:
-    """Ensure a datetime object is timezone-aware (UTC).
+    """
+    Stellt sicher, dass ein datetime-Objekt timezone-aware (UTC) ist.
 
-    SQLite doesn't preserve timezone info, so datetimes retrieved from the database
-    are naive. This helper assumes naive datetimes are in UTC (per application standard)
-    and converts them to timezone-aware UTC datetimes for safe comparison.
+    SQLite speichert keine Timezone-Information, sodass aus der Datenbank gelesene
+    Datetimes naive sind. Diese Funktion nimmt an, dass naive Datetimes im UTC-Format
+    vorliegen (gemäß Anwendungsstandard) und wandelt sie in timezone-aware UTC um.
 
     Args:
-        dt: A datetime object that may be naive or timezone-aware.
+        dt: Datetime-Objekt (kann naive oder timezone-aware sein).
 
     Returns:
-        A timezone-aware datetime in UTC. If input is naive, assumes UTC.
-        If input is already timezone-aware, returns it unchanged.
+        Timezone-aware Datetime in UTC. Falls Input naive ist, wird UTC angenommen.
+        Falls bereits timezone-aware, wird unverändert zurückgegeben.
     """
     return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
 
@@ -35,7 +38,19 @@ class AuthService:
         self.log = get_logger("services.auth")
 
     def signup(self, email: str, password: str) -> User:
-        # Normalize emails to enforce case-insensitive uniqueness
+        """
+        Registriert einen neuen Benutzer.
+
+        Args:
+            email: E-Mail-Adresse des Benutzers.
+            password: Passwort im Klartext (wird gehasht).
+
+        Returns:
+            Neu erstellter User.
+
+        Raises:
+            HTTPException: Falls E-Mail bereits registriert ist.
+        """
         normalized_email = email.strip().lower()
         existing = self.session.exec(select(User).where(User.email == normalized_email)).first()
         if existing:
@@ -61,8 +76,16 @@ class AuthService:
         return user
 
     def issue_tokens(self, user: User) -> tuple[str, str, int]:
+        """
+        Stellt Access- und Refresh-Token für einen Benutzer aus.
+
+        Args:
+            user: Benutzer, für den Tokens ausgestellt werden sollen.
+
+        Returns:
+            Tuple aus (access_token, refresh_token, expires_in_seconds).
+        """
         access = create_jwt(user.email, settings.access_token_expire, token_type="access")
-        # persistent refresh token stored server-side for revocation
         refresh_token_plain = secrets.token_urlsafe(48)
         expires_at = datetime.now(tz=UTC) + settings.refresh_token_expire
         rt = RefreshToken(user_id=user.id, token=refresh_token_plain, expires_at=expires_at)
@@ -76,6 +99,18 @@ class AuthService:
         )
 
     def rotate_refresh(self, token: str) -> tuple[str, str, int, User]:
+        """
+        Rotiert ein Refresh-Token und stellt neue Tokens aus.
+
+        Args:
+            token: Aktuelles Refresh-Token.
+
+        Returns:
+            Tuple aus (neuer_access_token, neuer_refresh_token, expires_in_seconds, user).
+
+        Raises:
+            HTTPException: Falls Token ungültig, abgelaufen oder widerrufen ist.
+        """
         now = datetime.now(tz=UTC)
         rt = self.session.exec(
             select(RefreshToken).where(
@@ -83,16 +118,20 @@ class AuthService:
                 cast(Any, RefreshToken.revoked).is_(False),
             )
         ).first()
+
         if not rt:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-        # Ensure timezone-aware comparison using our utility
+
         expires_at = ensure_utc_aware(rt.expires_at)
+
         if expires_at < now:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-        user = self.session.get(User, rt.user_id)
+
+        user: User | None = self.session.get(User, rt.user_id)
+
         if not user or not user.is_active:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")
-        # revoke old token and issue a new one
+
         rt.revoked = True
         self.session.add(rt)
         self.session.commit()

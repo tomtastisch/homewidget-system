@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+"""Middleware für Request-/Response-Logging mit Latenz und Korrelations-IDs."""
+
 import time
 import uuid
 from typing import Callable
@@ -13,10 +15,10 @@ from ..core.logging_config import get_logger, request_id_var, user_id_var
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
-    Logs each request and response with latency and status.
+    Loggt jeden Request und Response mit Latenz und Status.
 
-    Injects a request_id into the logging contextvars so all logs
-    for a given request can be correlated.
+    Injiziert eine request_id in die Logging-ContextVars, sodass alle Logs
+    für einen gegebenen Request korreliert werden können.
     """
 
     def __init__(self, app: ASGIApp):
@@ -34,7 +36,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         finally:
-            # compute latency and log response
             duration_ms = int((time.perf_counter() - start) * 1000)
             try:
                 status_code = getattr(locals().get("response", None), "status_code", None)
@@ -49,9 +50,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "duration_ms": duration_ms,
                 },
             )
-            # Always reset request id
             request_id_var.reset(token)
-            # Clear user context for safety
             try:
                 user_id_var.set(None)
             except Exception:

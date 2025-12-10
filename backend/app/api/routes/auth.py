@@ -1,8 +1,12 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
-from ...api.deps import get_current_user
+from ...api.deps import get_current_user, oauth2_scheme
 from ...core.config import settings
 from ...core.database import get_session
 from ...core.logging_config import get_logger
@@ -10,18 +14,21 @@ from ...models.user import User
 from ...schemas.auth import RefreshRequest, SignupRequest, TokenPair, UserRead
 from ...services.auth_service import AuthService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
+from ...services.security import decode_jwt
+from ...services.token_blacklist import blacklist_access_token
+
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 LOG = get_logger("api.auth")
 
-
-# Global in-memory rate limiter instance (will also be attached to app.state in main)
 rate_limiter = InMemoryRateLimiter()
 login_rule = parse_rule(settings.LOGIN_RATE_LIMIT)
 
 
 def _perform_signup(payload: SignupRequest, session: Session) -> User:
-    """Shared signup logic for both /signup and /register endpoints."""
+    """
+    Gemeinsame Signup-Logik für /signup und /register Endpunkte.
+    """
     service = AuthService(session)
     user = service.signup(str(payload.email), payload.password)
     LOG.info("user_signed_up", extra={"user_id": user.id})
@@ -30,14 +37,17 @@ def _perform_signup(payload: SignupRequest, session: Session) -> User:
 
 @router.post("/signup", response_model=UserRead)
 def signup(payload: SignupRequest, session: Session = Depends(get_session)):
-    """Register a new user account."""
+    """
+    Registriert ein neues Benutzerkonto.
+    """
     return _perform_signup(payload, session)
 
 
-# Alias endpoint to match ticket naming
 @router.post("/register", response_model=UserRead)
 def register(payload: SignupRequest, session: Session = Depends(get_session)):
-    """Register a new user account (alias for /signup)."""
+    """
+    Registriert ein neues Benutzerkonto (Alias für /signup).
+    """
     return _perform_signup(payload, session)
 
 
@@ -47,7 +57,11 @@ def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
 ):
-    # rate limit per username+ip to reduce brute force
+    """
+    Authentifiziert einen Benutzer und stellt Token-Paar aus.
+
+    Rate-Limiting pro Username+IP zur Reduzierung von Brute-Force-Angriffen.
+    """
     ip = request.client.host if request.client else "unknown"
     key = f"login:{ip}:{form_data.username}"
     if not rate_limiter.allow(key, login_rule):
@@ -79,6 +93,30 @@ def refresh(payload: RefreshRequest, session: Session = Depends(get_session)):
         expires_in=expires_in,
         role=user.role.value if hasattr(user.role, "value") else str(user.role),
     )
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(current_token: str = Depends(oauth2_scheme)):
+    """
+    Meldet die aktuelle Session ab durch Blacklisting des Access-Tokens.
+
+    Hinweis: Dies widerruft nur den präsentierten Access-Token. Refresh-Tokens bleiben
+    gültig, da sie in der Datenbank verwaltet werden (Source-of-Truth). Zukünftige Tickets
+    können dies erweitern, um Refresh-Tokens pro Session zu widerrufen/aufzuräumen.
+    """
+    payload = decode_jwt(current_token)
+    if not payload or payload.get("type") != "access":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    jti = payload.get("jti")
+    exp = payload.get("exp")
+
+    if not jti or not isinstance(exp, int):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    expires_at = datetime.fromtimestamp(exp, tz=UTC)
+    await blacklist_access_token(jti, expires_at)
+    LOG.info("logout_revoked_access_token", extra={"jti": jti})
+    return None
 
 
 @router.get("/me", response_model=UserRead)

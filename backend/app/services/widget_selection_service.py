@@ -1,4 +1,4 @@
-"""Service zur Verwaltung von Widget-Auswahl und -Operationen."""
+"""Service zur Verwaltung von BackendWidget-Auswahl und -Operationen."""
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -10,7 +10,7 @@ from ..models.widget import Widget
 
 
 class WidgetSelectionService:
-    """Service für Widget-Auswahl und CRUD-Operationen."""
+    """Service für BackendWidget-Auswahl und CRUD-Operationen."""
 
     def __init__(self, session: Session):
         self.session = session
@@ -29,15 +29,15 @@ class WidgetSelectionService:
 
     def add_widget(self, user: User, name: str, config_json: str = "{}") -> Widget:
         """
-        Fügt ein neues Widget für einen Benutzer hinzu.
+        Fügt ein neues BackendWidget für einen Benutzer hinzu.
 
         Args:
-            user: Benutzer, dem das Widget gehören soll.
+            user: Benutzer, dem das BackendWidget gehören soll.
             name: Name des Widgets.
             config_json: JSON-Konfiguration (default: "{}").
 
         Returns:
-            Neu erstelltes Widget.
+            Neu erstelltes BackendWidget.
         """
         widget = Widget(name=name, config_json=config_json, owner_id=user.id)
         self.session.add(widget)
@@ -47,10 +47,10 @@ class WidgetSelectionService:
 
     def delete_widget(self, user: User, widget_id: int) -> bool:
         """
-        Löscht ein Widget, falls es dem Benutzer gehört.
+        Löscht ein BackendWidget, falls es dem Benutzer gehört.
 
         Args:
-            user: Benutzer, der das Widget löschen möchte.
+            user: Benutzer, der das BackendWidget löschen möchte.
             widget_id: ID des zu löschenden Widgets.
 
         Returns:

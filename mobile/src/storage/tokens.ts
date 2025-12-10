@@ -1,15 +1,12 @@
 import * as SecureStore from 'expo-secure-store';
 
-const ACCESS_KEY = 'hw_access_token';
+// WICHTIG: Nur den Refresh‑Token sicher persistieren.
+// Der Access‑Token wird ausschließlich im Speicher (State) gehalten.
+
 const REFRESH_KEY = 'hw_refresh_token';
 
-export async function saveTokens(access: string, refresh: string) {
-  await SecureStore.setItemAsync(ACCESS_KEY, access);
+export async function saveRefreshToken(refresh: string) {
   await SecureStore.setItemAsync(REFRESH_KEY, refresh);
-}
-
-export async function getAccessToken(): Promise<string | null> {
-  return SecureStore.getItemAsync(ACCESS_KEY);
 }
 
 export async function getRefreshToken(): Promise<string | null> {
@@ -17,6 +14,6 @@ export async function getRefreshToken(): Promise<string | null> {
 }
 
 export async function clearTokens() {
-  await SecureStore.deleteItemAsync(ACCESS_KEY);
+	// Für Abwärtskompatibilität: löscht alle auth‑bezogenen Einträge.
   await SecureStore.deleteItemAsync(REFRESH_KEY);
 }

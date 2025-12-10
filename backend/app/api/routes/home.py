@@ -1,4 +1,4 @@
-"""API-Endpunkte für Home-Feed und Widget-Bereitstellung."""
+"""API-Endpunkte für Home-Feed und BackendWidget-Bereitstellung."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -27,7 +27,7 @@ def get_feed(
     user=Depends(get_current_user),
 ):
     """
-    Ruft den Widget-Feed für den aktuellen Benutzer ab.
+    Ruft den BackendWidget-Feed für den aktuellen Benutzer ab.
 
     Rate-Limiting pro Benutzer-ID. Antwort wird 30 Sekunden gecacht.
     """

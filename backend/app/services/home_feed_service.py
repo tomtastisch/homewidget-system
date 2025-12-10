@@ -11,7 +11,7 @@ from ..models.widget import Widget
 
 class HomeFeedService:
     """
-    Service zum Abrufen von Widget-Feeds für Benutzer.
+    Service zum Abrufen von BackendWidget-Feeds für Benutzer.
     """
 
     def __init__(self, session: Session):

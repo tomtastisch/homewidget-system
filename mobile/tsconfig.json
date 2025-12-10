@@ -16,7 +16,8 @@
     "types": [
       "react",
       "react-native",
-      "node"
+        "node",
+        "jest"
     ]
   },
   "include": [

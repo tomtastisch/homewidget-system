@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import {View, Text, TextInput, Button, StyleSheet, TouchableOpacity} from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../App';
+import React, {useState} from 'react';
+import {View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity} from 'react-native';
+import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
-export default function LoginScreen({ navigation }: Props) {
-	const {login, error} = useAuth();
+export default function RegisterScreen({navigation}: Props) {
+	const {register, error} = useAuth();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
 	
-	const onLogin = async () => {
+	const onSubmit = async () => {
 		setLocalError(null);
 		if (!email || !password) {
 			setLocalError('Bitte E‑Mail und Passwort ausfüllen.');
@@ -21,9 +21,12 @@ export default function LoginScreen({ navigation }: Props) {
 		}
 		try {
 			setLoading(true);
-			await login(email.trim(), password);
-			// Navigation wird durch Router/Status gesteuert
+			await register(email.trim(), password);
+			Alert.alert('Erfolg', 'Registrierung abgeschlossen. Bitte jetzt einloggen.', [
+				{text: 'OK', onPress: () => navigation.replace('Login')},
+			]);
 		} catch (e: any) {
+			// Fehler bereits im Context erfasst
 			if (e?.message) setLocalError(e.message);
 		} finally {
 			setLoading(false);
@@ -32,7 +35,7 @@ export default function LoginScreen({ navigation }: Props) {
 	
 	return (
 		<View style={styles.container}>
-			<Text style={styles.title}>HomeWidget Login</Text>
+			<Text style={styles.title}>Konto erstellen</Text>
 			{!!(localError || error) && <Text style={styles.error}>{localError || error}</Text>}
 			<TextInput
 				style={styles.input}
@@ -49,11 +52,11 @@ export default function LoginScreen({ navigation }: Props) {
 				value={password}
 				onChangeText={setPassword}
 			/>
-			<Button title={loading ? 'Bitte warten…' : 'Login'} onPress={onLogin} disabled={loading}/>
+			<Button title={loading ? 'Bitte warten…' : 'Registrieren'} onPress={onSubmit} disabled={loading}/>
 			<View style={styles.switchRow}>
-				<Text>Noch kein Konto?</Text>
-				<TouchableOpacity onPress={() => navigation.replace('Register')}>
-					<Text style={styles.link}> Jetzt registrieren</Text>
+				<Text>Bereits ein Konto?</Text>
+				<TouchableOpacity onPress={() => navigation.replace('Login')}>
+					<Text style={styles.link}> Zum Login</Text>
 				</TouchableOpacity>
 			</View>
 		</View>

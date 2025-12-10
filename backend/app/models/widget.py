@@ -17,7 +17,7 @@ LOG = get_logger("models.widget")
 
 class Widget(SQLModel, table=True):
     """
-    Content-Widget zur Anzeige in Client-Oberflächen.
+    Content-BackendWidget zur Anzeige in Client-Oberflächen.
 
     Enthält Präsentationsinformationen und ein flexibles JSON-Payload. Sichtbarkeitsregeln
     ermöglichen Targeting auf spezifische Benutzerrollen oder Kontexte.

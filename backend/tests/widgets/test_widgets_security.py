@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Sicherheitsrelevante Tests für Widget-Endpunkte.
+"""Sicherheitsrelevante Tests für BackendWidget-Endpunkte.
 
 Prüft Authentifizierungspflicht, Mandantentrennung (Ownership) und
 fehlerhafte Zugriffe.
@@ -15,7 +15,7 @@ pytestmark = pytest.mark.integration
 
 
 def test_widgets_requires_auth(client: TestClient) -> None:
-    """Alle Widget-Endpunkte müssen ein gültiges Access-Token verlangen."""
+    """Alle BackendWidget-Endpunkte müssen ein gültiges Access-Token verlangen."""
     assert client.get("/api/widgets/").status_code == 401
     assert client.post("/api/widgets/", json={"name": "x", "config_json": "{}"}).status_code == 401
     assert client.delete("/api/widgets/123").status_code == 401
@@ -37,7 +37,7 @@ def test_create_and_list_widgets_are_scoped_to_user(client: TestClient) -> None:
         )
         assert resp.status_code == 201
 
-    # B legt ein Widget an
+    # B legt ein BackendWidget an
     resp_b = client.post(
         "/api/widgets/",
         headers=auth_utils.auth_headers(b_access),
@@ -50,14 +50,14 @@ def test_create_and_list_widgets_are_scoped_to_user(client: TestClient) -> None:
     assert list_a.status_code == 200
     assert len(list_a.json()) == 2
 
-    # B sieht 1 Widget
+    # B sieht 1 BackendWidget
     list_b = client.get("/api/widgets/", headers=auth_utils.auth_headers(b_access))
     assert list_b.status_code == 200
     assert len(list_b.json()) == 1
 
 
 def test_delete_widget_only_by_owner(client: TestClient) -> None:
-    """Nur der Owner darf sein Widget löschen; andere sehen 404 (nicht gefunden)."""
+    """Nur der Owner darf sein BackendWidget löschen; andere sehen 404 (nicht gefunden)."""
     a_access = auth_utils.register_and_login(client, "owner@example.com", "Secret1234!").json()["access_token"]
     b_access = auth_utils.register_and_login(client, "other@example.com", "Secret1234!").json()["access_token"]
 

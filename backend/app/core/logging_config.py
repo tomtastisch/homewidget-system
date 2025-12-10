@@ -1,11 +1,3 @@
-"""
-Zentrale Logging-Konfiguration für das Backend mit loguru.
-
-Stellt `get_logger(name)` bereit, der einen loguru-basierten Logger-Adapter
-zur Verfügung stellt. Dieser Adapter unterstützt weiterhin Aufrufe wie
-`logger.info("msg", extra={...}, exc_info=...)` und injiziert ContextVars
-(`request_id_var`, `user_id_var`) als strukturierte Felder in jedes Log.
-"""
 from __future__ import annotations
 
 import os
@@ -14,6 +6,15 @@ from contextvars import ContextVar
 from typing import Any, Dict, Optional
 
 from loguru import logger as _loguru
+
+"""
+Zentrale Logging-Konfiguration für das Backend mit loguru.
+
+Stellt `get_logger(name)` bereit, der einen loguru-basierten Logger-Adapter
+zur Verfügung stellt. Dieser Adapter unterstützt weiterhin Aufrufe wie
+`logger.info("msg", extra={...}, exc_info=...)` und injiziert ContextVars
+(`request_id_var`, `user_id_var`) als strukturierte Felder in jedes Log.
+"""
 
 request_id_var: ContextVar[str | None] = ContextVar("request_id", default=None)
 user_id_var: ContextVar[str | None] = ContextVar("user_id", default=None)
@@ -32,28 +33,26 @@ def setup_logging(*, level: Optional[str] = None) -> None:
     - Format enthält Zeitstempel, Level, Logger-Name sowie ContextVars (request_id, user_id)
     - Level via Parameter oder `LOG_LEVEL`
     """
-
-    # Entferne bestehende Sinks, setze Patch zum Injizieren der ContextVars
+    # Alle existierenden Sinks entfernen
     _loguru.remove()
 
     def _patch(record: Dict[str, Any]) -> None:
         extra = record.setdefault("extra", {})
         # ContextVars injizieren, falls nicht explizit gesetzt
-        extra.setdefault("request_id", request_id_var.get())
-        extra.setdefault("user_id", user_id_var.get())
-        # Fallbacks, damit Formatierung robust ist
+        extra.setdefault("request_id", request_id_var.get() or "-")
+        extra.setdefault("user_id", user_id_var.get() or "-")
+        # Fallback für Logger-Namen
         extra.setdefault("logger", extra.get("logger", "backend.app"))
 
-    # Loguru übergibt hier ein Dict für record, die Typstubs erwarten einen Record-Typ.
-    # Laufzeitverhalten ist korrekt, daher gezieltes Ignore für MyPy.
-    patched = _loguru.patch(_patch)  # type: ignore[arg-type]
+    # Gepatchten Logger erstellen
+    logger = _loguru.patch(_patch)  # type: ignore[arg-type]
 
     level_str = (level or _get_env_level()).upper()
     fmt = (
         "{time:YYYY-MM-DD HH:mm:ss.SSS} {level:<8} {extra[logger]} "
         "[rid={extra[request_id]} uid={extra[user_id]}] {message}"
     )
-    patched.add(
+    logger.add(
         sink=sys.stdout,
         level=level_str,
         format=fmt,
@@ -61,12 +60,13 @@ def setup_logging(*, level: Optional[str] = None) -> None:
         diagnose=False,
     )
 
-    # Speichere den gepatchten Logger im Modul-Namespace, damit get_logger ihn nutzt
-    globals()["_LOGURU"] = patched
+    # Gepatchten Logger global merken, damit Adapter ihn nutzen
+    globals()["_LOGURU"] = logger
 
 
 class _LoguruAdapter:
-    """Adapter, der eine stdlib-ähnliche API über loguru bereitstellt.
+    """
+    Adapter, der eine stdlib-ähnliche API über loguru bereitstellt.
 
     Unterstützt `extra={...}` und `exc_info=...` Parameter, damit bestehende
     Aufrufer unverändert funktionieren.
@@ -76,9 +76,19 @@ class _LoguruAdapter:
         if not name.startswith("backend.app."):
             name = f"backend.app.{name}"
         self._name = name
-        # Binde den Logger-Namen in die Extra-Felder
-        base = globals().get("_LOGURU", _loguru).bind(logger=name)
-        self._logger = base
+
+    @property
+    def _logger(self):
+        """
+        Liefert immer den aktuell konfigurierten Logger.
+
+        Falls `setup_logging()` noch nicht aufgerufen wurde, wird der rohe
+        loguru-Logger genutzt (ohne ContextVars im Format).
+        """
+        base = globals().get("_LOGURU")
+        if base is None:
+            return _loguru.bind(logger=self._name)
+        return base.bind(logger=self._name)
 
     def _log(
             self,
@@ -88,24 +98,25 @@ class _LoguruAdapter:
             extra: Optional[Dict[str, Any]] = None,
             exc_info: Any = None,
             **kwargs: Any,
-    ) -> None:  # noqa: D401,E501
+    ) -> None:
         log = self._logger
+
         if extra:
             log = log.bind(**extra)
 
-        # exc_info=True | Exception | tuple
+        # exc_info wie bei stdlib: True oder Exception/tuple
         if exc_info:
-            log = log.opt(exception=True)
-
-        elif exc_info:
-            log = log.opt(exception=exc_info)
+            if exc_info is True:
+                log = log.opt(exception=True)
+            else:
+                log = log.opt(exception=exc_info)
 
         # stdlib-Style %-Formatierung emulieren, falls args übergeben
         if args:
             try:
                 msg = msg % args
             except (TypeError, ValueError):
-                # Falls %-Format/Args nicht passen, gebe unverändert aus
+                # Falls %-Format/Args nicht passen, Nachricht unverändert lassen
                 pass
 
         getattr(log, level.lower())(msg, **kwargs)
@@ -123,16 +134,19 @@ class _LoguruAdapter:
         self._log("ERROR", msg, *args, **kwargs)
 
     def exception(self, msg: str, *args: Any, **kwargs: Any) -> None:
-        # Erzwinge Exception-Stacktrace
+        # Erzwinge Exception-Stacktrace, wenn nicht explizit gesetzt
         kwargs = dict(kwargs)
         if "exc_info" not in kwargs:
             kwargs["exc_info"] = True
         self._log("ERROR", msg, *args, **kwargs)
 
-    # Optional: kompatibel zur stdlib
     def bind(self, **extra: Any) -> "_LoguruAdapter":
+        """
+        Optional: kompatibel zur stdlib-API, gibt neuen Adapter mit gebundenen Extras zurück.
+        """
         new = _LoguruAdapter(self._name)
-        new._logger = self._logger.bind(**extra)
+        # Hier reicht es, die Extras bei jedem Log-Aufruf neu zu binden,
+        # daher speichern wir nur den Namen und nutzen `_logger`-Property.
         return new
 
 

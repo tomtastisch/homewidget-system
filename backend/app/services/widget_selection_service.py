@@ -59,6 +59,8 @@ class WidgetSelectionService:
         widget = self.session.get(Widget, widget_id)
         if not widget or widget.owner_id != user.id:
             return False
+
         self.session.delete(widget)
         self.session.commit()
+
         return True

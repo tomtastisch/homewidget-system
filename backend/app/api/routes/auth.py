@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session
 
+from app.services.token.blacklist import blacklist_access_token
 from ...api.deps import get_current_user, oauth2_scheme
 from ...core.config import settings
 from ...core.database import get_session
@@ -16,7 +17,6 @@ from ...models.user import User
 from ...schemas.auth import RefreshRequest, SignupRequest, TokenPair, UserRead
 from ...services.auth_service import AuthService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
-from ...services.token_blacklist import blacklist_access_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 LOG = get_logger("api.auth")

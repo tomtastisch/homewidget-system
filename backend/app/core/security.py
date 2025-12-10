@@ -23,17 +23,17 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlmodel import Session, select
 
+from app.services.token.blacklist import is_access_token_blacklisted
 from .config import settings
 from .database import get_session
 from .logging_config import user_id_var
 from .types.token import ACCESS, REFRESH
-from ..services.token_blacklist import is_access_token_blacklisted
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..models.user import User
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -93,16 +93,14 @@ def create_refresh_token(data: dict, expires_delta: timedelta) -> str:
 
 
 def compute_refresh_token_digest(token: str) -> str:
-    """Erzeugt einen HMAC-SHA256-Digest für den gegebenen Refresh-Token.
+    """
+    Erzeugt einen HMAC-SHA256-Digest für den gegebenen Refresh-Token.
 
     Speichert nur den Digest in der Datenbank, um Klartext-Tokens zu vermeiden.
     """
     key = settings.SECRET_KEY.encode("utf-8")
     msg = token.encode("utf-8")
     return hmac.new(key, msg=msg, digestmod=hashlib.sha256).hexdigest()
-
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
 async def get_current_user(

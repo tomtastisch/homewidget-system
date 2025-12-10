@@ -8,7 +8,7 @@ from freezegun import freeze_time
 
 from app.core.config import settings
 from app.core.security import decode_jwt
-from app.services.token_blacklist import blacklist_access_token
+from app.services.token.blacklist import blacklist_access_token
 from tests.utils import auth as auth_utils
 from tests.utils.emails import email_for_user
 from tests.utils.passwords import valid_password

@@ -1,4 +1,3 @@
-from __future__ import annotations
 """
 Test-Konfiguration und Fixtures für die Backend-Test-Suite.
 
@@ -6,6 +5,7 @@ Stellt pro Testfunktion eine temporäre SQLite-Datenbank (`engine`, `db_session`
 und einen FastAPI-`client` bereit, der dieselbe Datenbank über Dependency-Overrides nutzt.
 Die Modelle werden importiert, damit ihre Tabellen in SQLModel-Metadaten registriert sind.
 """
+from __future__ import annotations
 
 import tempfile
 from collections.abc import Generator, Callable

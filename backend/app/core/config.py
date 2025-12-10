@@ -1,9 +1,8 @@
-from __future__ import annotations
-
-"""Zentrale Konfiguration der Anwendung.
-
+"""
+Zentrale Konfiguration der Anwendung.
 Lädt Einstellungen aus Umgebungsvariablen und stellt sie als Settings-Instanz bereit.
 """
+from __future__ import annotations
 
 import os
 from datetime import timedelta
@@ -12,7 +11,6 @@ from datetime import timedelta
 class Settings:
     """
     Konfigurationseinstellungen für das Backend.
-
     Alle Parameter können über Umgebungsvariablen überschrieben werden.
     """
     PROJECT_NAME: str = "homewidget-backend"

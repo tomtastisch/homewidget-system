@@ -1,9 +1,8 @@
-from __future__ import annotations
-
-"""Datenbank-Engine und Session-Verwaltung.
-
-Konfiguriert SQLModel-Engine und stellt Hilfsfunktionen für Schema-Initialisierung bereit.
 """
+Datenbank-Engine und Session-Verwaltung.
+Konfiguriert die SQLModel-Engine und stellt Hilfsfunktionen für Schema-Initialisierung bereit.
+"""
+from __future__ import annotations
 
 from sqlmodel import Session, SQLModel, create_engine
 

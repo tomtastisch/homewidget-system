@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """Pydantic-Schemas für Widget-Operationen."""
+from __future__ import annotations
 
 from datetime import datetime
 

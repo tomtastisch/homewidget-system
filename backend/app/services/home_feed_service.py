@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """Service zur Bereitstellung von Home-Feed-Widgets für Benutzer."""
+from __future__ import annotations
 
 from collections.abc import Sequence
 

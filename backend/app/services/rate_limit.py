@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """In-Memory Rate-Limiting für API-Endpunkte."""
+from __future__ import annotations
 
 from collections import defaultdict, deque
 from dataclasses import dataclass

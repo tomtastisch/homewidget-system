@@ -1,8 +1,8 @@
-from __future__ import annotations
 """
 Integrationstest für den /health‑Endpoint. Dieser Test prüft, dass der
 Health‑Check der API den erwarteten OK‑Status zurückgibt.
 """
+from __future__ import annotations
 
 from fastapi.testclient import TestClient
 import pytest

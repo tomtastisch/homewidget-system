@@ -1,8 +1,8 @@
-from __future__ import annotations
 """
 Unit‑Test für die initiale Datenbankerstellung. Hier wird sichergestellt,
 dass alle erwarteten Tabellen durch SQLModel angelegt werden.
 """
+from __future__ import annotations
 
 from sqlalchemy import inspect
 from sqlmodel import SQLModel, create_engine

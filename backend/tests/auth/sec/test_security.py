@@ -1,10 +1,10 @@
-from __future__ import annotations
 """
 Unit‑Test für das Passwort‑Hashing. Hier wird geprüft, dass die
 generierten Hashes nicht mit dem Plaintext übereinstimmen und dass die
 Verifikation für korrekte und falsche Passwörter das erwartete Ergebnis
 liefert.
 """
+from __future__ import annotations
 
 from app.services.security import hash_password, verify_password
 import pytest

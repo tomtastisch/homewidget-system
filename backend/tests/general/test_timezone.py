@@ -1,8 +1,9 @@
-from __future__ import annotations
 """
 Integrationstests für `ensure_utc_aware`, um konsistente UTC-Zeitpunkte sicherzustellen
 und Fehler bei Vergleichen zwischen naiven und timezone-aware Datumswerten zu vermeiden.
 """
+from __future__ import annotations
+
 
 from datetime import UTC, datetime
 

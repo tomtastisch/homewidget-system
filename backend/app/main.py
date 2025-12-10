@@ -1,9 +1,9 @@
-from __future__ import annotations
-
-"""Einstiegspunkt für die FastAPI-Anwendung.
+"""
+Einstiegspunkt für die FastAPI-Anwendung.
 
 Konfiguriert Middleware, Router und Lifecycle-Events für das Backend.
 """
+from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager

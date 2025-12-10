@@ -1,10 +1,10 @@
-from __future__ import annotations
-
-"""Zentrale Logging-Konfiguration für das Backend.
+"""
+Zentrale Logging-Konfiguration für das Backend.
 
 Bietet strukturiertes Logging mit Context-Variablen (request_id, user_id),
 JSON- und Text-Formatierung sowie Log-Rotation.
 """
+from __future__ import annotations
 
 import json
 import logging

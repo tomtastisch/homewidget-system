@@ -1,13 +1,12 @@
-from __future__ import annotations
-
-from tests.conftest import ResponseLike
-
 """
 Integrationstests für die Auth‑Endpunkte. Diese Datei testet vorrangig den
 Refresh‑Token‑Flow sowie den Zugriff auf den geschützten /auth/me‑Endpunkt.
 Registrierungs‑ und Login‑Szenarien befinden sich in den spezifischen
 Testmodulen test_register und test_login.
 """
+from __future__ import annotations
+
+from tests.conftest import ResponseLike
 
 import pytest
 from fastapi.testclient import TestClient

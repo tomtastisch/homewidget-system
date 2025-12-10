@@ -105,11 +105,9 @@ def test_blacklist_entry_lives_at_least_until_token_expiry(
 def test_logout_when_cache_unavailable_fails_open(
     client: TestClient, monkeypatch, register_user, login_user
 ) -> None:
-    """If cache backend is unavailable, logout won't blacklist and token remains usable."""
     register_user("cachefail@example.com", "SecurePassword123!")
     access = login_user("cachefail@example.com", "SecurePassword123!").json()["access_token"]
 
-    import app.services.token_blacklist as tb
     from fastapi_cache import FastAPICache
 
     def _raise():  # type: ignore[no-redef]

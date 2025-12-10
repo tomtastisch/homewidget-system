@@ -1,11 +1,11 @@
-from __future__ import annotations
-
-"""Hilfsfunktionen für Datenbankinitialisierung.
+"""
+Hilfsfunktionen für Datenbankinitialisierung.
 
 Bietet kontrollierten Zugriff auf Schema-Erstellung via SQLModel.metadata.create_all(engine).
 Kann bei App-Start oder in separaten Initialisierungs-Flows verwendet werden und vereinfacht
 Tests durch Übergabe einer benutzerdefinierten Engine.
 """
+from __future__ import annotations
 
 from typing import Optional, Union
 from sqlalchemy.engine import Connection, Engine

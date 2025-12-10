@@ -1,10 +1,10 @@
-from __future__ import annotations
 """
 Integrationstests für die Registrierung: Diese Datei enthält sowohl
 Validierungstests für fehlende/ungültige Felder als auch Happy‑Path‑Tests.
 Die Tests verwenden Hilfsfunktionen aus utils.passwords und utils.emails für
 zufällige und deterministische Testdaten.
 """
+from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Callable
 from typing import Any, TypeAlias

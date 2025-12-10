@@ -1,4 +1,3 @@
-from __future__ import annotations
 """
 Tests zur Erstellung und Verifikation von JWT‑Tokens. Die meisten Tests
 prüfen die Claims und das Ablaufverhalten der Access‑ und Refresh‑Tokens.
@@ -6,6 +5,7 @@ Ein gesonderter Test am Ende verwendet den FastAPI‑TestClient, um das
 Verhalten eines abgelaufenen Access‑Tokens am /auth/me‑Endpunkt zu
 überprüfen.
 """
+from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from freezegun import freeze_time

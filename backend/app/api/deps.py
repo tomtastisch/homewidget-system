@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """FastAPI-Dependency-Funktionen für Authentifizierung und Session-Management."""
+from __future__ import annotations
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -21,7 +20,6 @@ async def get_current_user(
 ) -> User:
     """
     Extrahiert und validiert den aktuellen Benutzer aus dem Access-Token.
-
     Prüft Token-Gültigkeit, Blacklist-Status und Benutzer-Aktivität.
 
     Args:
@@ -46,6 +44,7 @@ async def get_current_user(
     jti = payload.get("jti")
     if not jti:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    
     if await is_access_token_blacklisted(jti):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
@@ -55,6 +54,8 @@ async def get_current_user(
 
     try:
         user_id_var.set(str(user.id))
+
     except ValueError:
         pass
+
     return user

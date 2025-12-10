@@ -1,9 +1,9 @@
-from __future__ import annotations
 """
 Diese Datei prüft, dass der OAuth2‑Password‑Flow funktioniert und falsche
 Eingaben korrekt abgelehnt werden. Die Tests verwenden das FastAPI‑TestClient
 und eine echte Testdatenbank über die Fixtures.
 """
+from __future__ import annotations
 
 from collections.abc import Callable
 import pytest

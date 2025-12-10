@@ -1,5 +1,5 @@
-from __future__ import annotations
 """Utility-Funktionen für Test-E-Mail-Adressen."""
+from __future__ import annotations
 
 from typing import Final
 from faker import Faker

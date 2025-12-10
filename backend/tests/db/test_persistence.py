@@ -1,10 +1,10 @@
-from __future__ import annotations
 """
 Integrationstests für die Datenpersistenz und Zeitzonenbehandlung. Diese
 Tests prüfen die Utility‑Funktion ensure_utc_aware sowie das Verhalten der
 AuthService.rotate_refresh‑Methode bei abgelaufenen Tokens und SQLite‑
 Datumsformaten.
 """
+from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 

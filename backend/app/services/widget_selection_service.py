@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """Service zur Verwaltung von Widget-Auswahl und -Operationen."""
+from __future__ import annotations
 
 from collections.abc import Sequence
 

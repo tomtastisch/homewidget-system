@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """Middleware für Request-/Response-Logging mit Latenz und Korrelations-IDs."""
+from __future__ import annotations
 
 import time
 import uuid

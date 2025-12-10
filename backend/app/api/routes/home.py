@@ -1,6 +1,5 @@
-from __future__ import annotations
-
 """API-Endpunkte für Home-Feed und Widget-Bereitstellung."""
+from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi_cache.decorator import cache

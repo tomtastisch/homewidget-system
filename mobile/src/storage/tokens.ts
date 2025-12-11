@@ -30,7 +30,7 @@ export async function saveRefreshToken(refresh: string): Promise<void> {
  */
 export async function getRefreshToken(): Promise<string | null> {
 	if (Platform.OS === 'web') {
-		return localStorage.getItem(REFRESH_KEY);
+		return Promise.resolve(localStorage.getItem(REFRESH_KEY));
 	} else {
 		return SecureStore.getItemAsync(REFRESH_KEY);
 	}

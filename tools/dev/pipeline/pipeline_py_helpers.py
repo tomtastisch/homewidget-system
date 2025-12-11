@@ -229,7 +229,12 @@ def cmd_run_e2e_contracts() -> int:
     os.environ["E2E_API_BASE_URL"] = f"http://{host}:{port}"
 
     os.environ.setdefault("ENV", "test_e2e")
-    db_url = os.environ.get("E2E_DATABASE_URL") or "sqlite:///./test_e2e.db"
+    # Absoluten Pfad für E2E-Datenbank verwenden, damit Seed-Prozess und uvicorn-Subprocess
+    # (mit unterschiedlichen cwd) dieselbe Datei verwenden.
+    db_url = os.environ.get("E2E_DATABASE_URL")
+    if not db_url:
+        db_path = paths.root / "test_e2e.db"
+        db_url = f"sqlite:///{db_path}"
     os.environ["E2E_DATABASE_URL"] = db_url
     os.environ["DATABASE_URL"] = db_url
     os.environ.setdefault("REQUEST_LOGGING_ENABLED", "0")

@@ -72,9 +72,11 @@ export async function logout(page: Page): Promise<void> {
 	
 	// Fallback: Token-Storage löschen (funktioniert mit plattformabhängiger Storage-Implementierung)
 	await page.evaluate(() => {
-		// Lösche Refresh-Token (verwendet von mobile/src/storage/tokens.ts)
+		// Lösche das aktuelle Refresh-Token (Key: 'hw_refresh_token', verwendet von mobile/src/storage/tokens.ts)
 		localStorage.removeItem('hw_refresh_token');
-		// Für Abwärtskompatibilität auch andere Keys
+		// Entferne zusätzlich veraltete Token-Keys für Abwärtskompatibilität:
+		// - 'access_token': früherer Access-Token-Storage
+		// - 'refreshToken': früherer Refresh-Token-Storage
 		localStorage.removeItem('access_token');
 		localStorage.removeItem('refreshToken');
 	});

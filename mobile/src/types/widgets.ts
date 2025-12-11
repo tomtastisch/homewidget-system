@@ -27,7 +27,7 @@ export function safeParseConfig(config_json: string): AnyWidgetConfig {
 		const parsed = JSON.parse(config_json || '{}');
 		const type = (parsed?.type || 'card') as WidgetType;
 		return {type, ...parsed} as AnyWidgetConfig;
-	} catch (_e) {
+	} catch {
 		return {type: 'card', title: 'Ungültige Konfiguration'};
 	}
 }

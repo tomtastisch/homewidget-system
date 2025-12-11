@@ -8,7 +8,6 @@ describe('widgets parsing helpers', () => {
 	});
 	
 	it('safeParseConfig returns fallback when JSON invalid', () => {
-		// @ts-expect-error intentionally wrong type to simulate broken json
 		const cfg = safeParseConfig('not-a-json');
 		expect(cfg.type).toBe('card');
 		expect(cfg.title).toBe('Ungültige Konfiguration');

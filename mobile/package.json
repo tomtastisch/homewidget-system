@@ -2,6 +2,7 @@
   "name": "homewidget-mobile",
   "version": "0.1.0",
   "private": true,
+    "type": "module",
   "main": "expo-entry.js",
   "scripts": {
     "start": "expo start",
@@ -10,6 +11,9 @@
     "web": "expo start --web",
     "lint": "eslint .",
     "test": "jest",
+      "e2e": "detox test --config ./detox.config.js",
+      "e2e:ios": "detox test -c ios.sim.debug",
+      "e2e:android": "detox test -c android.emu.debug",
     "e2e:build:ios": "detox build -c ios.sim.debug",
     "e2e:test:ios": "detox test -c ios.sim.debug"
   },

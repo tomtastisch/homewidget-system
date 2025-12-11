@@ -1,13 +1,17 @@
+/* eslint-env node */
+
 /**
  * Detox configuration for iOS Simulator using Expo Dev Client
- * Requires: `expo prebuild -p ios` once to generate the ios project.
+ * Specs are colocated in the repository root under tests/e2e/detox
+ * API base URL is configurable via env E2E_API_BASE_URL (default 127.0.0.1:8100)
  */
 /** @type {import('detox').DetoxConfig} */
 module.exports = {
     testRunner: {
         args: {
             $0: 'jest',
-            config: 'e2e/jest.config.js',
+            // Point to shared Detox Jest config under tests/e2e/detox (relative to mobile/)
+            config: '../tests/e2e/detox/jest.config.js',
         },
         jest: {
             setupTimeout: 120000,

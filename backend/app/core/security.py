@@ -17,10 +17,11 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, TYPE_CHECKING
 from uuid import uuid4
 
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlmodel import Session, select
 
 from app.services.token.blacklist import is_access_token_blacklisted
@@ -32,15 +33,19 @@ from .types.token import ACCESS, REFRESH
 if TYPE_CHECKING:  # pragma: no cover
     from ..models.user import User
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+ph = PasswordHasher()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return ph.hash(password)
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
-    return pwd_context.verify(plain_password, password_hash)
+    try:
+        ph.verify(password_hash, plain_password)
+        return True
+    except VerifyMismatchError:
+        return False
 
 
 def create_jwt(

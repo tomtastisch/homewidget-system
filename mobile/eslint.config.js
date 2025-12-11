@@ -1,44 +1,73 @@
-// ESLint flat config for the mobile app (ESLint v9)
-// Uses @eslint/js for core rules and typescript-eslint for TS/TSX support
+import js from '@eslint/js';
+import globals from 'globals';
+import tseslint from 'typescript-eslint';
 
-// CommonJS export for compatibility regardless of package "type"
-const js = require('@eslint/js');
-const tseslint = require('typescript-eslint');
+// ESLint Flat Config for the mobile app
+// - Enables Node globals for config scripts like detox.config.js
+// - Applies recommended rules for JS and TypeScript
+// - Provides Jest globals for tests
+// - Ignores build artifacts and snapshots
 
-module.exports = [
-  // Ignore build artifacts and native folders
+export default [
   {
     ignores: [
-      'node_modules',
-      'dist',
-      'build',
-      '.expo',
-      'android',
-      'ios',
-      // Do not lint config files themselves
-      'eslint.config.js',
-      'babel.config.js',
+        'node_modules/',
+        'dist/',
+        'build/',
+        'ios/',
+        'android/',
+        '**/__snapshots__/**',
     ],
   },
 
-  // Base JS recommendations
+    // Base recommended JS rules
   js.configs.recommended,
 
-  // TypeScript recommendations (non type-checked for speed and simplicity)
+    // TypeScript support and recommended rules
   ...tseslint.configs.recommended,
-
-  // Project-specific tweaks
   {
     files: ['**/*.ts', '**/*.tsx'],
+      languageOptions: {
+          parser: tseslint.parser,
+          parserOptions: {
+              ecmaVersion: 2021,
+              sourceType: 'module',
+          },
+      },
+      plugins: {
+          '@typescript-eslint': tseslint.plugin,
+      },
     rules: {
-      // Allow "any" temporarily in mobile app to keep CI green; tighten later per module as needed
+        // Keep lint pragmatic for RN app; allow `any` for now
       '@typescript-eslint/no-explicit-any': 'off',
-      // Reduce noise from unused vars; allow prefix '_' to intentionally ignore
-      '@typescript-eslint/no-unused-vars': ['warn', {
-        varsIgnorePattern: '^_',
-        argsIgnorePattern: '^_',
-        caughtErrors: 'none',
-      }],
+        // Allow intentionally unused variables if prefixed with underscore
+        '@typescript-eslint/no-unused-vars': [
+            'warn',
+            {argsIgnorePattern: '^_', varsIgnorePattern: '^_'},
+        ],
+    },
+  },
+
+    // Node environment for config files (fixes 'module is not defined')
+    {
+        files: [
+            'detox.config.js',
+            '**/*.config.js',
+            '**/*.config.cjs',
+            'jest.config.js',
+        ],
+        languageOptions: {
+            ecmaVersion: 2021,
+            sourceType: 'script',
+            globals: globals.node,
+        },
+    },
+
+    // Jest test files
+    {
+        files: ['**/__tests__/**/*.{js,jsx,ts,tsx}'],
+        languageOptions: {
+            globals: globals.jest,
     },
   },
 ];

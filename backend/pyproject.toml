@@ -9,7 +9,6 @@ dependencies = [
   "sqlmodel>=0.0.27",
   "uvicorn[standard]>=0.38",
   "argon2-cffi>=23.1",
-  "passlib>=1.7",
   "python-jose[cryptography]>=3.5.0",
   "fastapi-cache2>=0.2",
   "fastapi-limiter>=0.1",
@@ -25,7 +24,6 @@ dev = [
   "ruff>=0.6",
   "mypy>=1.11",
   "types-python-jose",
-  "types-passlib",
     # Tests / Test-Runner
   "pytest>=7.0",
   "pytest-asyncio>=0.23",
@@ -81,9 +79,3 @@ ignore = ["D", "ANN", "B008"]
 # Security-Regeln (Bandit-kompatibel) zusätzlich aktivieren
 extend-select = ["S"]
 
-[tool.pytest.ini_options]
-# Silence a third-party deprecation inside passlib's Argon2 handler that queries
-# argon2-cffi's __version__. This is external noise and not actionable in our code.
-filterwarnings = [
-  "ignore:Accessing argon2.__version__ is deprecated and will be removed in a future release:DeprecationWarning:passlib.handlers.argon2",
-]

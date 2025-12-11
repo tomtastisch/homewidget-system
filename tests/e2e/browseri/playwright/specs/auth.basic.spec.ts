@@ -67,8 +67,8 @@ test('AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
 	await page.getByTestId('login.password').fill('wrongpassword');
 	await page.getByTestId('login.submit').click();
 	
-	// Warte kurz für Server-Response
-	await page.waitForTimeout(2000);
+	// Warte auf Fehlermeldung nach fehlerhaftem Login
+	await page.getByTestId('login.error').waitFor({state: 'visible'});
 	
 	// Verifiziere: Login-Form noch sichtbar (Login fehlgeschlagen)
 	await expect(page.getByTestId('login.email')).toBeVisible();

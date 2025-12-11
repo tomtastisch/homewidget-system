@@ -137,21 +137,7 @@ jobs:
 
             -   name: 🚀 Backend im E2E-Modus starten
                 run: |
-                    bash backend/tools/start_test_backend_e2e.sh &
-                    echo "Warte auf Backend /health..."
-                    BACKEND_READY=0
-                    for i in {1..60}; do
-                      if curl -fsS http://127.0.0.1:8100/health >/dev/null 2>&1; then
-                        echo "Backend ist bereit."
-                        BACKEND_READY=1
-                        break
-                      fi
-                      sleep 1
-                    done
-                    if [ "$BACKEND_READY" -eq 0 ]; then
-                      echo "ERROR: Backend wurde nicht rechtzeitig erreichbar (Timeout nach 60 Sekunden)"
-                      exit 1
-                    fi
+                    bash tools/dev/pipeline/ci_steps.sh e2e_backend_start
 
             -   name: 📱 Node 20 einrichten
                 uses: actions/setup-node@v4
@@ -164,39 +150,21 @@ jobs:
 
             -   name: 📦 Mobile-Dependencies installieren
                 run: |
-                    cd mobile
-                    npm ci
+                    bash tools/dev/pipeline/ci_steps.sh mobile_install_deps
 
             -   name: 🚀 Expo-Web im E2E-Modus starten
                 env:
                     EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8100
                 run: |
-                    cd mobile
-                    npx expo start --web --port 19006 &
-                    echo "Warte auf Expo-Web..."
-                    EXPO_READY=0
-                    for i in {1..60}; do
-                      if curl -fsS http://localhost:19006 >/dev/null 2>&1; then
-                        echo "Expo-Web ist bereit."
-                        EXPO_READY=1
-                        break
-                      fi
-                      sleep 2
-                    done
-                    if [ "$EXPO_READY" -eq 0 ]; then
-                      echo "ERROR: Expo-Web wurde nicht rechtzeitig erreichbar (Timeout nach 120 Sekunden)"
-                      exit 1
-                    fi
+                    bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
+
+            -   name: 🎭 Playwright-Dependencies installieren
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
 
             -   name: 🌐 E2E Browser Tests (Playwright – Minimum)
                 env:
                     PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
                     E2E_API_BASE_URL: http://127.0.0.1:8100
                 run: |
-                    cd tests/e2e/browseri/playwright
-                    npm ci
-                    npx playwright install --with-deps chromium
-                    npx playwright test specs/auth.basic.spec.ts \
-                                         specs/widgets.basic.spec.ts \
-                                         specs/widgets.security.spec.ts \
-                                         specs/infra.health.spec.ts
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimum_tests

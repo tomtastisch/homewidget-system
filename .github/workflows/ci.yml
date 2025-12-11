@@ -112,7 +112,7 @@ jobs:
             # BROWSER E2E (Playwright – Minimum)
             # =============================================================
 
-    e2e-browser-playwright-minimum:
+    e2e-core-minimal:
         runs-on: ubuntu-latest
         needs: [ build-and-check ]
         permissions:

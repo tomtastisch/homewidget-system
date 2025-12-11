@@ -57,8 +57,8 @@ export default defineConfig({
 		env: {
 			// Expo-Web soll die Backend-API-URL kennen
 			EXPO_PUBLIC_API_BASE_URL: apiBaseURL,
-			// Deaktiviere Metro-Watcher im CI-Modus
-			CI: process.env.CI ? 'true' : undefined,
+			// CI-Env explizit setzen (für Metro und andere Tools)
+			...(process.env.CI ? { CI: 'true' } : {}),
 		},
 	},
 });

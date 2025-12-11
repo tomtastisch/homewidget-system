@@ -7,7 +7,7 @@ import {newApiRequestContext} from '../helpers/api';
  * Dieser Test prüft, ob:
  * 1. Das Backend E2E-Modus erreichbar ist
  * 2. Expo-Web startet und die App lädt
- * 3. Der Login-Screen angezeigt wird (für unauthenticated users)
+ * 3. Der Home-Screen im Demo-Modus angezeigt wird (für unauthentifizierte Nutzer)
  */
 
 test.describe('Expo-Web Integration Smoke Tests', () => {
@@ -20,22 +20,25 @@ test.describe('Expo-Web Integration Smoke Tests', () => {
 		expect(data.status).toBe('ok');
 	});
 	
-	test('Expo-Web lädt und zeigt Login-Screen', async ({page}) => {
+	test('Expo-Web lädt und zeigt Home-Screen im Demo-Modus', async ({page}) => {
 		// Navigate to Expo-Web root
 		await page.goto('/');
 		
 		// Wait for the app to load (check for any visible content)
 		await page.waitForLoadState('networkidle');
 		
-		// Check that the login form is visible (for unauthenticated users)
-		const emailInput = page.getByTestId('login.email');
-		await expect(emailInput).toBeVisible({timeout: 15_000});
+		// Wait for React hydration
+		await page.waitForTimeout(3000);
 		
-		// Verify we can interact with the form
-		await emailInput.fill('test@example.com');
-		await expect(emailInput).toHaveValue('test@example.com');
+		// Prüfe, dass Home-Screen im Demo-Modus sichtbar ist
+		// Unauthentifizierte Nutzer sehen den Home-Screen mit Login-Link
+		const loginLink = page.getByTestId('home.loginLink');
+		await expect(loginLink).toBeVisible({timeout: 15_000});
+		
+		// Verify we can interact with the link
+		await expect(loginLink).toBeEnabled();
 		
 		// Take a screenshot for visual verification
-		await page.screenshot({path: 'test-results/expo-web-smoke.png'});
+		await page.screenshot({path: 'test-results/expo-web-smoke-home.png'});
 	});
 });

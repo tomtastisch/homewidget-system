@@ -3,34 +3,49 @@ import {expect, Page} from '@playwright/test';
 /**
  * Auth-Helfer für Playwright E2E-Tests mit Expo-Web-Frontend.
  * 
- * Diese Helfer verwenden die tatsächlichen Routen und testIDs aus der Mobile-App.
+ * Diese Helfer verwenden die tatsächlichen Routen und testIDs aus der Mobile-App
+ * und bilden echte Nutzerflüsse über die UI ab.
  */
 
 const routes = {
-	login: '/', // Expo-Web startet normalerweise auf Home, aber unauthed sollte auf Login redirecten
-	home: '/', // Nach Login: Home-Screen
-	register: '/register', // Falls Register-Screen existiert (noch zu prüfen)
+	home: '/', // Expo-Web startet auf Home-Screen (auch für unauthentifizierte Nutzer im Demo-Modus)
+	// Hinweis: Expo-Web verwendet keine dedizierte '/login' oder '/register' URL-Route.
+	// Navigation erfolgt über React Navigation State, nicht über URL-Pfade.
 };
 
 const testIds = {
+	// Home-Screen (für unauthentifizierte Nutzer)
+	homeLoginLink: 'home.loginLink',
+	// Login-Screen
 	loginEmail: 'login.email',
 	loginPassword: 'login.password',
 	loginSubmit: 'login.submit',
 };
 
 /**
- * Führt einen Login über die Expo-Web-UI durch.
+ * Führt einen vollständigen Login-Flow über die Expo-Web-UI durch.
+ * 
+ * Flow:
+ * 1. Navigate zu Home (zeigt sich für unauthentifizierte Nutzer im Demo-Modus)
+ * 2. Klick auf Login-Link
+ * 3. Login-Formular ausfüllen und absenden
+ * 4. Warten bis Login erfolgreich (Login-Formular verschwindet)
  * 
  * @param page - Playwright Page-Objekt
  * @param email - E-Mail-Adresse
  * @param password - Passwort
  */
 export async function loginAs(page: Page, email: string, password: string): Promise<void> {
-	// Navigate to app root (should redirect to login if not authenticated)
+	// Navigate to app root (Home-Screen, auch für unauthentifizierte Nutzer)
 	await page.goto('/');
 	
-	// Wait for login form to be visible
-	await page.getByTestId(testIds.loginEmail).waitFor({state: 'visible'});
+	// Warte auf Home-Screen und klicke auf Login-Link
+	const loginLink = page.getByTestId(testIds.homeLoginLink);
+	await loginLink.waitFor({state: 'visible', timeout: 15_000});
+	await loginLink.click();
+	
+	// Warte auf Login-Form
+	await page.getByTestId(testIds.loginEmail).waitFor({state: 'visible', timeout: 10_000});
 	
 	// Fill in credentials
 	await page.getByTestId(testIds.loginEmail).fill(email);
@@ -39,56 +54,61 @@ export async function loginAs(page: Page, email: string, password: string): Prom
 	// Submit login
 	await page.getByTestId(testIds.loginSubmit).click();
 	
-	// Wait for navigation to home screen (assuming successful login redirects)
-	// Note: Expo-Web Navigation might not change URL in single-page apps,
-	// so we check for absence of login form instead
+	// Warte auf erfolgreichen Login (Login-Formular verschwindet)
 	await page.getByTestId(testIds.loginEmail).waitFor({state: 'hidden', timeout: 10_000});
 }
 
 /**
- * Führt einen Logout durch und wartet auf Redirect zum Login-Screen.
+ * Führt einen Logout durch die UI (falls Logout-Button vorhanden).
+ * 
+ * Hinweis: Die App hat möglicherweise keinen expliziten Logout-Button in der aktuellen Version.
+ * Als Fallback wird localStorage geleert und die Seite neu geladen.
  * 
  * @param page - Playwright Page-Objekt
  */
 export async function logout(page: Page): Promise<void> {
-	// TODO: Implement logout based on actual UI
-	// For now, clear tokens via storage
+	// Versuche Logout über UI (falls Account-Screen mit Logout-Button existiert)
+	// TODO: Sobald Account-Screen mit Logout-Button existiert, hier implementieren
+	
+	// Fallback: Token-Storage löschen (funktioniert mit plattformabhängiger Storage-Implementierung)
 	await page.evaluate(() => {
-		// React Native Web uses AsyncStorage which is backed by localStorage
-		localStorage.clear();
+		// Lösche Refresh-Token (verwendet von mobile/src/storage/tokens.ts)
+		localStorage.removeItem('hw_refresh_token');
+		// Für Abwärtskompatibilität auch andere Keys
+		localStorage.removeItem('access_token');
+		localStorage.removeItem('refreshToken');
 	});
 	
-	// Reload to trigger auth check
+	// Reload um Auth-State zu triggern
 	await page.reload();
 	
-	// Wait for login form to appear
-	await page.getByTestId(testIds.loginEmail).waitFor({state: 'visible'});
+	// Warte darauf, dass Login-Link wieder sichtbar ist (= unauthentifiziert)
+	await page.getByTestId(testIds.homeLoginLink).waitFor({state: 'visible', timeout: 10_000});
 }
 
 /**
- * Holt das gespeicherte Access-Token aus dem LocalStorage.
+ * Holt das gespeicherte Refresh-Token aus dem LocalStorage.
  * 
  * @param page - Playwright Page-Objekt
- * @returns Access-Token oder null
+ * @returns Refresh-Token oder null
  */
 export async function getStoredToken(page: Page): Promise<string | null> {
 	return page.evaluate(() => {
-		// Check various possible storage keys used by the mobile app
-		return localStorage.getItem('access_token') || 
-		       localStorage.getItem('refreshToken') ||
-		       null;
+		// Prüfe den Key, der von mobile/src/storage/tokens.ts verwendet wird
+		return localStorage.getItem('hw_refresh_token');
 	});
 }
 
 /**
- * Setzt ein Access-Token im LocalStorage (z.B. für Test-Setup).
+ * Setzt ein Refresh-Token im LocalStorage (z.B. für Test-Setup).
  * 
  * @param page - Playwright Page-Objekt
- * @param token - Access-Token
+ * @param token - Refresh-Token
  */
 export async function setStoredToken(page: Page, token: string): Promise<void> {
 	await page.addInitScript((t: string) => {
-		localStorage.setItem('access_token', t);
+		// Verwende denselben Key wie mobile/src/storage/tokens.ts
+		localStorage.setItem('hw_refresh_token', t);
 	}, token);
 }
 

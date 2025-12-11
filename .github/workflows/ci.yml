@@ -139,13 +139,19 @@ jobs:
                 run: |
                     bash backend/tools/start_test_backend_e2e.sh &
                     echo "Warte auf Backend /health..."
+                    BACKEND_READY=0
                     for i in {1..60}; do
-                      if curl -fsS http://127.0.0.1:8100/health >/dev/null; then
+                      if curl -fsS http://127.0.0.1:8100/health >/dev/null 2>&1; then
                         echo "Backend ist bereit."
+                        BACKEND_READY=1
                         break
                       fi
                       sleep 1
                     done
+                    if [ "$BACKEND_READY" -eq 0 ]; then
+                      echo "ERROR: Backend wurde nicht rechtzeitig erreichbar (Timeout nach 60 Sekunden)"
+                      exit 1
+                    fi
 
             -   name: 📱 Node 20 einrichten
                 uses: actions/setup-node@v4
@@ -168,13 +174,19 @@ jobs:
                     cd mobile
                     npx expo start --web --port 19006 &
                     echo "Warte auf Expo-Web..."
+                    EXPO_READY=0
                     for i in {1..60}; do
                       if curl -fsS http://localhost:19006 >/dev/null 2>&1; then
                         echo "Expo-Web ist bereit."
+                        EXPO_READY=1
                         break
                       fi
                       sleep 2
                     done
+                    if [ "$EXPO_READY" -eq 0 ]; then
+                      echo "ERROR: Expo-Web wurde nicht rechtzeitig erreichbar (Timeout nach 120 Sekunden)"
+                      exit 1
+                    fi
 
             -   name: 🌐 E2E Browser Tests (Playwright – Minimum)
                 env:

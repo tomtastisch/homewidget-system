@@ -1,68 +1,117 @@
 import {expect, Page} from '@playwright/test';
 
-// TODO: Align selectors and routes with the real web client once available
+/**
+ * Auth-Helfer für Playwright E2E-Tests mit Expo-Web-Frontend.
+ * 
+ * Diese Helfer verwenden die tatsächlichen Routen und testIDs aus der Mobile-App
+ * und bilden echte Nutzerflüsse über die UI ab.
+ */
+
 const routes = {
-	login: '/login', // TODO adjust if different
-	afterLogin: '/dashboard', // TODO adjust if different
-	logoutButton: '[data-testid="logout-button"]', // TODO: real selector
+	home: '/', // Expo-Web startet auf Home-Screen (auch für unauthentifizierte Nutzer im Demo-Modus)
+	// Hinweis: Expo-Web verwendet keine dedizierte '/login' oder '/register' URL-Route.
+	// Navigation erfolgt über React Navigation State, nicht über URL-Pfade.
 };
 
-const storageKeys = {
-	accessToken: 'access_token', // TODO: confirm key used by web client
-	refreshToken: 'refresh_token', // optional
+const testIds = {
+	// Home-Screen (für unauthentifizierte Nutzer)
+	homeLoginLink: 'home.loginLink',
+	// Login-Screen
+	loginEmail: 'login.email',
+	loginPassword: 'login.password',
+	loginSubmit: 'login.submit',
 };
 
-export async function loginAs(page: Page, email: string, password: string) {
-	await page.goto(routes.login);
-	// Email field
-	const emailByLabel = page.getByLabel('Email');
-	if (await emailByLabel.count()) {
-		await emailByLabel.fill(email);
-	} else {
-		const emailByPh = page.getByPlaceholder('Email');
-		await emailByPh.fill(email);
-	}
-	// Password field
-	const passByLabel = page.getByLabel('Password');
-	if (await passByLabel.count()) {
-		await passByLabel.fill(password);
-	} else {
-		const passByPh = page.getByPlaceholder('Password');
-		await passByPh.fill(password);
-	}
-	await page.getByRole('button', {name: /login|anmelden/i}).click();
-	await page.waitForURL(`**${routes.afterLogin}`);
+/**
+ * Führt einen vollständigen Login-Flow über die Expo-Web-UI durch.
+ * 
+ * Flow:
+ * 1. Navigate zu Home (zeigt sich für unauthentifizierte Nutzer im Demo-Modus)
+ * 2. Klick auf Login-Link
+ * 3. Login-Formular ausfüllen und absenden
+ * 4. Warten bis Login erfolgreich (Login-Formular verschwindet)
+ * 
+ * @param page - Playwright Page-Objekt
+ * @param email - E-Mail-Adresse
+ * @param password - Passwort
+ */
+export async function loginAs(page: Page, email: string, password: string): Promise<void> {
+	// Navigate to app root (Home-Screen, auch für unauthentifizierte Nutzer)
+	await page.goto('/');
+	
+	// Warte auf Home-Screen und klicke auf Login-Link
+	const loginLink = page.getByTestId(testIds.homeLoginLink);
+	await loginLink.waitFor({state: 'visible', timeout: 15_000});
+	await loginLink.click();
+	
+	// Warte auf Login-Form
+	await page.getByTestId(testIds.loginEmail).waitFor({state: 'visible', timeout: 10_000});
+	
+	// Fill in credentials
+	await page.getByTestId(testIds.loginEmail).fill(email);
+	await page.getByTestId(testIds.loginPassword).fill(password);
+	
+	// Submit login
+	await page.getByTestId(testIds.loginSubmit).click();
+	
+	// Warte auf erfolgreichen Login (Login-Formular verschwindet)
+	await page.getByTestId(testIds.loginEmail).waitFor({state: 'hidden', timeout: 10_000});
 }
 
-export async function logout(page: Page) {
-	// Try clicking an explicit logout button first
-	const btn = page.locator(routes.logoutButton);
-	if (await btn.count()) {
-		await btn.click();
-	} else {
-		// Fallback: navigate to a dedicated logout route if exists
-		// TODO: if app supports GET /logout that clears tokens client-side, use it.
-	}
+/**
+ * Führt einen Logout durch die UI (falls Logout-Button vorhanden).
+ * 
+ * Hinweis: Die App hat möglicherweise keinen expliziten Logout-Button in der aktuellen Version.
+ * Als Fallback wird localStorage geleert und die Seite neu geladen.
+ * 
+ * @param page - Playwright Page-Objekt
+ */
+export async function logout(page: Page): Promise<void> {
+	// Versuche Logout über UI (falls Account-Screen mit Logout-Button existiert)
+	// TODO: Sobald Account-Screen mit Logout-Button existiert, hier implementieren
 	
-	// Clear tokens client-side as a safety net
-	await page.evaluate((k: typeof storageKeys) => {
-		localStorage.removeItem(k.accessToken);
-		localStorage.removeItem(k.refreshToken);
-	}, storageKeys);
+	// Fallback: Token-Storage löschen (funktioniert mit plattformabhängiger Storage-Implementierung)
+	await page.evaluate(() => {
+		// Lösche das aktuelle Refresh-Token (Key: 'hw_refresh_token', verwendet von mobile/src/storage/tokens.ts)
+		localStorage.removeItem('hw_refresh_token');
+		// Entferne zusätzlich veraltete Token-Keys für Abwärtskompatibilität:
+		// - 'access_token': früherer Access-Token-Storage
+		// - 'refreshToken': früherer Refresh-Token-Storage
+		localStorage.removeItem('access_token');
+		localStorage.removeItem('refreshToken');
+	});
 	
-	// Expect redirect back to login
-	await expect(page).toHaveURL(new RegExp(`${routes.login.replace('/', '\\/')}`));
+	// Reload um Auth-State zu triggern
+	await page.reload();
+	
+	// Warte darauf, dass Login-Link wieder sichtbar ist (= unauthentifiziert)
+	await page.getByTestId(testIds.homeLoginLink).waitFor({state: 'visible', timeout: 10_000});
 }
 
+/**
+ * Holt das gespeicherte Refresh-Token aus dem LocalStorage.
+ * 
+ * @param page - Playwright Page-Objekt
+ * @returns Refresh-Token oder null
+ */
 export async function getStoredToken(page: Page): Promise<string | null> {
-	return page.evaluate((key: string) => localStorage.getItem(key), storageKeys.accessToken);
+	return page.evaluate(() => {
+		// Prüfe den Key, der von mobile/src/storage/tokens.ts verwendet wird
+		return localStorage.getItem('hw_refresh_token');
+	});
 }
 
-export async function setStoredToken(page: Page, token: string) {
-	await page.addInitScript((arg: string[]) => {
-		const [k, t] = arg as [string, string];
-		localStorage.setItem(k, t);
-	}, [storageKeys.accessToken, token]);
+/**
+ * Setzt ein Refresh-Token im LocalStorage (z.B. für Test-Setup).
+ * 
+ * @param page - Playwright Page-Objekt
+ * @param token - Refresh-Token
+ */
+export async function setStoredToken(page: Page, token: string): Promise<void> {
+	await page.addInitScript((t: string) => {
+		// Verwende denselben Key wie mobile/src/storage/tokens.ts
+		localStorage.setItem('hw_refresh_token', t);
+	}, token);
 }
 
-export const AuthSelectors = {routes, storageKeys} as const;
+export const AuthSelectors = {routes, testIds} as const;

@@ -91,11 +91,11 @@ jobs:
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh mobile_typescript_check
 
-            -   name: 🧪 Mobile Tests (Jest, falls vorhanden)
+            -   name: 🧪 Mobile Tests
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh mobile_jest_tests
 
-            -   name: 📦 Mobile Build (falls vorhanden)
+            -   name: 📦 Mobile Build
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh mobile_build
 

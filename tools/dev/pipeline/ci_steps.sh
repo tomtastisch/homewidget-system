@@ -172,20 +172,23 @@ step_e2e_expo_web_start() {
     
     log_info "Starte Expo-Web im E2E-Modus (Port 19006)..."
     (
-        set -e
-        cd "${MOBILE_DIR}"
-        ensure_npm
+        cd "${MOBILE_DIR}" || exit 1
+        ensure_npm || exit 1
         export EXPO_PUBLIC_API_BASE_URL="${EXPO_PUBLIC_API_BASE_URL:-http://127.0.0.1:8100}"
-        npx expo start --web --port 19006 &
-    )
-    expo_pid=$!
-    # Warten, bis Subshell-Prozess beendet ist (Setup-Fehler abfangen)
-    wait $expo_pid
-    exit_code=$?
-    if [[ $exit_code -ne 0 ]]; then
-        log_error "Expo-Web konnte nicht gestartet werden (Fehler im Setup, Exit-Code $exit_code)."
-        return $exit_code
+        npx expo start --web --port 19006
+    ) &
+    
+    local expo_pid=$!
+    
+    # Kurze Wartezeit für initiale Setup-Fehler
+    sleep 3
+    
+    # Prüfen, ob der Prozess noch läuft
+    if ! kill -0 ${expo_pid} 2>/dev/null; then
+        log_error "Expo-Web-Prozess ist bereits beendet (vermutlich Setup-Fehler)."
+        return 1
     fi
+    
     # Health-Check mit Timeout (mehr Zeit für Expo-Web)
     wait_for_http_health "http://localhost:19006" "Expo-Web" 60 2
 }

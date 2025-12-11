@@ -45,7 +45,7 @@ export async function logout(page: Page) {
 	}
 	
 	// Clear tokens client-side as a safety net
-	await page.evaluate((k) => {
+	await page.evaluate((k: typeof storageKeys) => {
 		localStorage.removeItem(k.accessToken);
 		localStorage.removeItem(k.refreshToken);
 	}, storageKeys);
@@ -55,11 +55,12 @@ export async function logout(page: Page) {
 }
 
 export async function getStoredToken(page: Page): Promise<string | null> {
-	return page.evaluate((key) => localStorage.getItem(key), storageKeys.accessToken);
+	return page.evaluate((key: string) => localStorage.getItem(key), storageKeys.accessToken);
 }
 
 export async function setStoredToken(page: Page, token: string) {
-	await page.addInitScript(([k, t]) => {
+	await page.addInitScript((arg: string[]) => {
+		const [k, t] = arg as [string, string];
 		localStorage.setItem(k, t);
 	}, [storageKeys.accessToken, token]);
 }

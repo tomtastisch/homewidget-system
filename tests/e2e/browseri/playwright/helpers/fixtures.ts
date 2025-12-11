@@ -13,7 +13,7 @@ type Fixtures = {
 };
 
 export const test = base.extend<Fixtures>({
-	authenticatedPage: async ({page}, use) => {
+	authenticatedPage: async ({page}: { page: Page }, use: any) => {
 		const api = await newApiRequestContext();
 		const email = `demo+${Date.now()}@example.com`;
 		const password = 'Demo1234!';
@@ -35,7 +35,7 @@ export const test = base.extend<Fixtures>({
 		};
 		
 		// Inject tokens into localStorage before any script runs
-		await page.addInitScript((pair) => {
+		await page.addInitScript((pair: AuthContext) => {
 			localStorage.setItem('access_token', pair.access_token);
 			localStorage.setItem('refresh_token', pair.refresh_token);
 		}, auth);

@@ -25,8 +25,7 @@ export async function deleteWidgetById(
 ) {
 	const api = 'request' in apiOrPage ? await newApiRequestContext() : (apiOrPage as APIRequestContext);
 	const headers: Record<string, string> = accessToken ? {Authorization: `Bearer ${accessToken}`} : {};
-	const res = await api.delete(`/api/widgets/${widgetId}`, {headers});
-	return res;
+	return api.delete(`/api/widgets/${widgetId}`, {headers});
 }
 
 export async function listWidgets(

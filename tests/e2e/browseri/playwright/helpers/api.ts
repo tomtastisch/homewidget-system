@@ -15,7 +15,7 @@ export async function mockBackendError(
 	statusCode: number,
 	body: any = {detail: 'Simulated error'}
 ) {
-	await page.route(endpointPattern, async (route) => {
+	await page.route(endpointPattern, async (route: any) => {
 		await route.fulfill({status: statusCode, json: body});
 	});
 }

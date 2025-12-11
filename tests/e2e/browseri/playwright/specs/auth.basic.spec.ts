@@ -18,7 +18,7 @@ test('AUTH-01: Login mit gültigen Daten', async () => {
 });
 
 // AUTH-02 – Logout löscht Token, UI zeigt Login-Screen
-test('AUTH-02: Logout löscht Token', async ({page}) => {
+test('AUTH-02: Logout löscht Token', async () => {
 	const api = await newApiRequestContext();
 	const email = `auth02+${Date.now()}@example.com`;
 	const password = 'Secret1234!';

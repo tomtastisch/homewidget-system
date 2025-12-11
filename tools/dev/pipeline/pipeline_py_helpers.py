@@ -239,6 +239,10 @@ def cmd_run_e2e_contracts() -> int:
     if rc_seed != 0:
         return rc_seed
 
+    # Environment-Variablen explizit an uvicorn-Subprocess übergeben,
+    # damit DATABASE_URL und andere E2E-Konfiguration übernommen werden.
+    uvicorn_env = os.environ.copy()
+    
     uvicorn_proc = subprocess.Popen(
         [
             "uvicorn",
@@ -251,6 +255,7 @@ def cmd_run_e2e_contracts() -> int:
             "warning",
         ],
         cwd=str(paths.backend),
+        env=uvicorn_env,
     )
 
     try:

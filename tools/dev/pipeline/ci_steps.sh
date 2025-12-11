@@ -123,15 +123,22 @@ step_e2e_expo_web_start() {
     
     log_info "Starte Expo-Web im E2E-Modus (Port 19006)..."
     (
-        cd "${MOBILE_DIR}" || exit 1
-        ensure_npm || exit 1
+        set -e
+        cd "${MOBILE_DIR}"
+        ensure_npm
         export EXPO_PUBLIC_API_BASE_URL="${EXPO_PUBLIC_API_BASE_URL:-http://127.0.0.1:8100}"
         npx expo start --web --port 19006 &
     )
-    
+    expo_pid=$!
+    # Warten, bis Subshell-Prozess beendet ist (Setup-Fehler abfangen)
+    wait $expo_pid
+    exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        log_error "Expo-Web konnte nicht gestartet werden (Fehler im Setup, Exit-Code $exit_code)."
+        return $exit_code
+    fi
     # Health-Check mit Timeout (mehr Zeit für Expo-Web)
     wait_for_http_health "http://localhost:19006" "Expo-Web" 60 2
-}
 
 ## @brief Playwright-Dependencies installieren.
 step_e2e_playwright_install() {

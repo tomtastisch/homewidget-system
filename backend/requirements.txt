@@ -21,7 +21,7 @@ hypothesis
 
 httpx>=0.28
 respx
-schemathesis
+schemathesis>=4.7.5
 
 ruff
 pip-audit

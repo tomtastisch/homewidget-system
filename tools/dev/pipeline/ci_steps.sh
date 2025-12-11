@@ -139,6 +139,7 @@ step_e2e_expo_web_start() {
     fi
     # Health-Check mit Timeout (mehr Zeit für Expo-Web)
     wait_for_http_health "http://localhost:19006" "Expo-Web" 60 2
+}
 
 ## @brief Playwright-Dependencies installieren.
 step_e2e_playwright_install() {

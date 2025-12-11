@@ -53,9 +53,9 @@ jobs:
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh backend_integration_tests
 
-            -   name: E2E Contract Tests
+            -   name: 🧪 E2E Contract Tests
                 run: |
-                    bash tools/dev/pipeline/ci_steps.sh step_e2e_contract_tests
+                    bash tools/dev/pipeline/ci_steps.sh e2e_contract_tests
 
             # =============================================================
             # MOBILE-UMGEBUNG

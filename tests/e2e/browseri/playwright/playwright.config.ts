@@ -47,13 +47,15 @@ export default defineConfig({
 		command: 'npm run web',
 		url: webBaseURL,
 		cwd: path.resolve(__dirname, '../../../../mobile'),
-		timeout: 120_000, // Expo-Web-Build kann lange dauern beim ersten Start
+		timeout: 180_000, // Expo-Web-Build kann lange dauern beim ersten Start (3 Min)
 		reuseExistingServer: !process.env.CI,
 		stdout: 'pipe',
 		stderr: 'pipe',
 		env: {
 			// Expo-Web soll die Backend-API-URL kennen
 			EXPO_PUBLIC_API_BASE_URL: apiBaseURL,
+			// Deaktiviere Metro-Watcher im CI-Modus
+			CI: process.env.CI ? 'true' : undefined,
 		},
 	},
 });

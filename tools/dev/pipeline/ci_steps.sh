@@ -103,31 +103,64 @@ step_e2e_backend_start() {
         return 1
     fi
     
+    # Statusflag für frühe Fehlererkennung
+    local status_file="/tmp/e2e_backend_status_$$"
+    rm -f "${status_file}"
+    
     log_info "Starte Backend im E2E-Modus (Port 8100)..."
     (
-        cd "${BACKEND_DIR}" || exit 1
-        # Backend-venv aktivieren (erforderlich für Python-Pakete)
-        if [[ -x "${BACKEND_VENV_DIR}/bin/python" ]]; then
-            # shellcheck disable=SC1091
-            source "${BACKEND_VENV_DIR}/bin/activate"
-            export PYTHONPATH="${BACKEND_DIR}:${PYTHONPATH:-}"
-        else
-            log_warn "Backend-venv nicht gefunden unter ${BACKEND_VENV_DIR} – verwende System-Python"
-            # Sicherstellen, dass zumindest PYTHONPATH gesetzt ist
-            export PYTHONPATH="${BACKEND_DIR}:${PYTHONPATH:-}"
+        cd "${BACKEND_DIR}" || { echo "ERROR" > "${status_file}"; exit 1; }
+        
+        # Backend-venv MUSS aktiviert werden (keine System-Python-Fallback)
+        if [[ ! -x "${BACKEND_VENV_DIR}/bin/python" ]]; then
+            log_error "Backend-venv nicht gefunden unter ${BACKEND_VENV_DIR}"
+            log_error "Bitte Backend-Setup ausführen: bash tools/dev/setup_dev_env.sh"
+            echo "ERROR" > "${status_file}"
+            exit 1
         fi
+        
+        # shellcheck disable=SC1091
+        source "${BACKEND_VENV_DIR}/bin/activate"
+        export PYTHONPATH="${BACKEND_DIR}:${PYTHONPATH:-}"
         
         # Prüfen, ob uvicorn verfügbar ist
         if ! command -v uvicorn >/dev/null 2>&1; then
-            log_error "uvicorn nicht gefunden. Bitte Backend-Setup ausführen: tools/dev/setup_dev_env.sh"
+            log_error "uvicorn nicht gefunden in venv. Bitte Backend-Setup ausführen: tools/dev/setup_dev_env.sh"
+            echo "ERROR" > "${status_file}"
             exit 1
         fi
+        
+        # Status: Backend-Start läuft
+        echo "STARTING" > "${status_file}"
         
         bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh"
     ) &
     
+    local backend_pid=$!
+    
+    # Warte kurz auf potentielle Startup-Fehler
+    sleep 2
+    
+    # Prüfe Status-Flag
+    if [[ -f "${status_file}" ]]; then
+        local status
+        status=$(cat "${status_file}")
+        if [[ "${status}" == "ERROR" ]]; then
+            log_error "Backend-Start ist fehlgeschlagen (siehe Fehler oben)"
+            rm -f "${status_file}"
+            return 1
+        fi
+    fi
+    
     # Health-Check mit Timeout
+    local health_result
     wait_for_http_health "http://127.0.0.1:8100/health" "Backend" 60 1
+    health_result=$?
+    
+    # Cleanup
+    rm -f "${status_file}"
+    
+    return ${health_result}
 }
 
 ## @brief Expo-Web im E2E-Modus starten und auf Health-Check warten.

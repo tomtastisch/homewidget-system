@@ -106,7 +106,23 @@ step_e2e_backend_start() {
     log_info "Starte Backend im E2E-Modus (Port 8100)..."
     (
         cd "${BACKEND_DIR}" || exit 1
-        ensure_venv || exit 1
+        # Backend-venv aktivieren (erforderlich für Python-Pakete)
+        if [[ -x "${BACKEND_VENV_DIR}/bin/python" ]]; then
+            # shellcheck disable=SC1091
+            source "${BACKEND_VENV_DIR}/bin/activate"
+            export PYTHONPATH="${BACKEND_DIR}:${PYTHONPATH:-}"
+        else
+            log_warn "Backend-venv nicht gefunden unter ${BACKEND_VENV_DIR} – verwende System-Python"
+            # Sicherstellen, dass zumindest PYTHONPATH gesetzt ist
+            export PYTHONPATH="${BACKEND_DIR}:${PYTHONPATH:-}"
+        fi
+        
+        # Prüfen, ob uvicorn verfügbar ist
+        if ! command -v uvicorn >/dev/null 2>&1; then
+            log_error "uvicorn nicht gefunden. Bitte Backend-Setup ausführen: tools/dev/setup_dev_env.sh"
+            exit 1
+        fi
+        
         bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh"
     ) &
     

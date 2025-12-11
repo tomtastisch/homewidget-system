@@ -199,6 +199,9 @@ backend/.venv/
 # Ensure mobile dependencies are ignored
 mobile/node_modules/
 
+# Expo web build artifacts (generated files)
+mobile/web-build/
+
 # JetBrains/IDEA project files should not be versioned
 .idea/
 

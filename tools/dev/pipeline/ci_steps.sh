@@ -104,7 +104,11 @@ step_e2e_backend_start() {
     fi
     
     log_info "Starte Backend im E2E-Modus (Port 8100)..."
-    bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh" &
+    (
+        cd "${BACKEND_DIR}" || exit 1
+        ensure_venv || exit 1
+        bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh"
+    ) &
     
     # Health-Check mit Timeout
     wait_for_http_health "http://127.0.0.1:8100/health" "Backend" 60 1

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Startet das Expo-Frontend. Stellt sicher, dass Dependencies vorhanden sind.
+# Startet das Expo-Frontend. Nutzt dieselbe Logik wie die CI-Pipeline,
+# um Abhängigkeiten zu installieren (keine Code-Duplizierung).
 
 set -Eeuo pipefail
 
@@ -8,6 +9,7 @@ die() { echo "[mobile][ERROR] $*" >&2; exit 1; }
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../.." &>/dev/null && pwd)"
+CI_STEPS="${PROJECT_ROOT}/tools/dev/pipeline/ci_steps.sh"
 MOBILE_DIR="${PROJECT_ROOT}/mobile"
 
 log "Project root: ${PROJECT_ROOT}"
@@ -17,19 +19,20 @@ if [[ ! -d "${MOBILE_DIR}" ]]; then
   die "Mobile-Verzeichnis ${MOBILE_DIR} existiert nicht."
 fi
 
-if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
-  die "Node/npm nicht im PATH (bist du im Devcontainer?)."
+if [[ ! -x "${CI_STEPS}" ]]; then
+  die "ci_steps.sh nicht gefunden unter ${CI_STEPS}"
 fi
 
-log "Node: $(node -v)"
-log "npm:  $(npm -v)"
+# 1) Dependencies identisch zur Pipeline installieren
+bash "${CI_STEPS}" mobile_install_deps
+
+# 2) Optional: schnelle Checks wie in der Pipeline (entwicklerfreundlich)
+if [[ "${RUN_CHECKS:-1}" == "1" ]]; then
+  bash "${CI_STEPS}" mobile_lint || true
+  bash "${CI_STEPS}" mobile_typescript_check || true
+fi
 
 cd "${MOBILE_DIR}"
-
-if [[ ! -d node_modules ]]; then
-  log "node_modules fehlt → npm install"
-  npm install --no-fund --no-audit
-fi
 
 if ! command -v npx >/dev/null 2>&1; then
   die "npx nicht verfügbar (npm zu alt oder nicht korrekt installiert)."

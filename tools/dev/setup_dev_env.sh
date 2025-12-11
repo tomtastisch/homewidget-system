@@ -101,9 +101,9 @@ setup_mobile() {
 
   log "[Mobile] Projektverzeichnis: ${MOBILE_DIR}"
 
-  # Optional: nvm initialisieren und Node 18 verwenden, wenn verfügbar
-  # Dies stellt sicher, dass lokal wie im Devcontainer Node 18 genutzt wird.
-  local want_node_major="18"
+  # Optional: nvm initialisieren und Node 20.19.4 verwenden, wenn verfügbar
+  # Dies stellt sicher, dass lokal wie im Devcontainer eine RN-kompatible Node-Version genutzt wird.
+  local want_node_version="20.19.4"
   local nvm_inited=0
   if [[ -n "${NVM_DIR:-}" && -s "${NVM_DIR}/nvm.sh" ]]; then
     # shellcheck disable=SC1090
@@ -120,10 +120,10 @@ setup_mobile() {
   fi
 
   if [[ ${nvm_inited} -eq 1 ]]; then
-    log "[Mobile] nvm gefunden – setze Node ${want_node_major}"
-    # Installiere die gewünschte Major-Version, falls nicht vorhanden; nutze sie dann.
-    nvm install ${want_node_major}
-    nvm use ${want_node_major}
+    log "[Mobile] nvm gefunden – setze Node ${want_node_version}"
+    # Installiere die gewünschte Version, falls nicht vorhanden; nutze sie dann.
+    nvm install ${want_node_version}
+    nvm use ${want_node_version}
   else
     log "[Mobile] nvm nicht verfügbar – verwende systemweiten Node."
   fi

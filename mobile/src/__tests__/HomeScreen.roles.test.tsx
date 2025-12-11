@@ -3,9 +3,10 @@ import {cleanup, render, waitFor} from '@testing-library/react-native';
 import HomeScreen from '../screens/HomeScreen';
 
 // Dynamic role mock for AuthContext
-let currentRole: 'common' | 'premium' = 'common';
+// Note: Jest allows referencing variables in mock factories if they start with 'mock'
+let mockCurrentRole: 'common' | 'premium' = 'common';
 jest.mock('../auth/AuthContext', () => ({
-	useAuth: () => ({status: 'authenticated', role: currentRole}),
+	useAuth: () => ({status: 'authenticated', role: mockCurrentRole}),
 }));
 
 // Mock API
@@ -36,7 +37,7 @@ jest.mock('../api/homeApi', () => ({
 
 describe('HomeScreen roles', () => {
 	it('shows COMMON badge when authenticated with role common', async () => {
-		currentRole = 'common';
+		mockCurrentRole = 'common';
 		const {getByText, unmount} = render(
 			<HomeScreen
 				navigation={{navigate: jest.fn()} as any}
@@ -50,7 +51,7 @@ describe('HomeScreen roles', () => {
 	});
 	
 	it('shows PREMIUM badge when authenticated with role premium', async () => {
-		currentRole = 'premium';
+		mockCurrentRole = 'premium';
 		const {getByText, unmount} = render(
 			<HomeScreen
 				navigation={{navigate: jest.fn()} as any}

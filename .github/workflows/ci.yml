@@ -11,16 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # =================================================================
-      # BACKEND CHECKS
-      # =================================================================
-      
-      - name: 🐍 Set up Python 3.13
+      # =============================================================
+      # BACKEND-UMGEBUNG
+      # =============================================================
+
+      - name: 🐍 Python 3.13 einrichten
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -30,123 +30,80 @@ jobs:
             backend/setup.py
             backend/requirements*.txt
 
-      - name: 🔍 Verify Python version
+      - name: 🔍 Python-Umgebung prüfen
         run: |
-          echo "::group::Python Environment Info"
+          echo "::group::Python-Umgebung"
           python3 --version
           pip --version
           echo "::endgroup::"
 
-      - name: 📦 Backend dev env setup (parity with local)
+      - name: 📦 Backend-Setup
         run: |
-          echo "::group::Backend Setup"
-          bash tools/dev/setup_dev_env.sh
-          echo "::endgroup::"
-        env:
-          PYTHON_BIN: python3
+          bash tools/dev/pipeline/ci_steps.sh backend_setup_env
 
-      - name: ✨ Backend quality (ruff + mypy)
+      - name: ✨ Backend-Qualität (Ruff + MyPy)
         run: |
-          echo "::group::Backend Quality Checks"
-          bash tools/dev/quality.sh
-          echo "::endgroup::"
-        shell: bash
+          bash tools/dev/pipeline/ci_steps.sh backend_quality
 
-      - name: 🧪 Backend tests (pytest)
+      - name: 🧪 Backend Unit-Tests
         run: |
-          set -euo pipefail
-          echo "::group::Backend Tests"
-          
-          # Check if tests exist
-          if [ -d "backend/tests" ] || find backend \( -name '*_test.py' -o -name 'test_*.py' \) | grep -q .; then
-            echo "✓ Tests found, running pytest..."
-            
-            # Activate venv and run pytest
-            source backend/.venv/bin/activate
-            
-            if command -v pytest >/dev/null 2>&1; then
-              pytest backend/tests -v --tb=short || {
-                echo "::error::Backend tests failed"
-                exit 1
-              }
-            else
-              echo "::error::pytest not found in venv"
-              exit 1
-            fi
-          else
-            echo "ℹ️  No tests found – skipping test step"
-          fi
-          
-          echo "::endgroup::"
+          bash tools/dev/pipeline/ci_steps.sh backend_unit_tests
 
-      # =================================================================
-      # MOBILE CHECKS
-      # =================================================================
-      
-      - name: 📱 Set up Node 18
+      - name: 🧪 Backend Integrationstests
+        run: |
+          bash tools/dev/pipeline/ci_steps.sh backend_integration_tests
+
+      - name: 🧪 E2E-Contracttests
+        run: |
+          bash tools/dev/pipeline/ci_steps.sh step_e2e_contract_tests
+
+      # =============================================================
+      # MOBILE-UMGEBUNG
+      # =============================================================
+
+      - name: 📱 Node 20 einrichten
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20.19.4'
           cache: 'npm'
           cache-dependency-path: 'mobile/package-lock.json'
 
-      - name: 🔍 Verify Node version
+      - name: 🔍 Node-Umgebung prüfen
         run: |
-          echo "::group::Node Environment Info"
+          echo "::group::Node-Umgebung"
           node --version
           npm --version
           echo "::endgroup::"
 
-      - name: 📦 Mobile install dependencies
-        working-directory: mobile
+      - name: 📦 Mobile-Abhängigkeiten
         run: |
-          echo "::group::Mobile Dependencies"
-          npm ci --no-fund --no-audit || {
-            echo "::error::Failed to install mobile dependencies"
-            exit 1
-          }
-          echo "::endgroup::"
+          bash tools/dev/pipeline/ci_steps.sh mobile_install_deps
 
-      - name: ✨ Mobile lint
-        working-directory: mobile
+      - name: 🚑 Expo-Konfiguration (expo-doctor)
         run: |
-          echo "::group::Mobile Linting"
-          npm run lint || {
-            echo "::error::Mobile linting failed"
-            exit 1
-          }
-          echo "::endgroup::"
+          bash tools/dev/pipeline/ci_steps.sh mobile_expo_doctor
 
-      - name: 🔍 Mobile typecheck
-        working-directory: mobile
+      - name: ✨ Mobile Linting
         run: |
-          echo "::group::Mobile TypeScript Check"
-          npx tsc --noEmit || {
-            echo "::error::Mobile type checking failed"
-            exit 1
-          }
-          echo "::endgroup::"
+          bash tools/dev/pipeline/ci_steps.sh mobile_lint
 
-      - name: 📦 Mobile build check (if script exists)
-        working-directory: mobile
+      - name: 🔍 Mobile TypeScript-Check
         run: |
-          echo "::group::Mobile Build Check"
-          if jq -e '.scripts.build' package.json > /dev/null 2>&1; then
-            echo "✓ Build script found, running build..."
-            npm run build || {
-              echo "::error::Mobile build failed"
-              exit 1
-            }
-          else
-            echo "ℹ️  No build script defined – skipping build step"
-          fi
-          echo "::endgroup::"
-      
-      # =================================================================
-      # SUMMARY
-      # =================================================================
-      
-      - name: ✅ CI Pipeline Complete
+          bash tools/dev/pipeline/ci_steps.sh mobile_typescript_check
+
+      - name: 🧪 Mobile Tests (Jest, falls vorhanden)
+        run: |
+          bash tools/dev/pipeline/ci_steps.sh mobile_jest_tests
+
+      - name: 📦 Mobile Build (falls vorhanden)
+        run: |
+          bash tools/dev/pipeline/ci_steps.sh mobile_build
+
+      # =============================================================
+      # ABSCHLUSS
+      # =============================================================
+
+      - name: ✅ CI-Pipeline abgeschlossen
         if: success()
         run: |
-          echo "::notice::All CI checks passed successfully! 🎉"
+          echo "::notice::Alle CI-Prüfungen wurden erfolgreich abgeschlossen."

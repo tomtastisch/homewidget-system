@@ -48,7 +48,7 @@ Die CI-Pipeline besteht aus zwei Hauptbereichen mit klarer Trennung:
 
 ```
 ┌─────────────────────────────────────────┐
-│  📱 Node 18 Setup                        │
+│  📱 Node 20.19.4 Setup                   │
 │  - Setup-Node Action mit npm-Cache      │
 └─────────────────────────────────────────┘
                   ↓
@@ -81,8 +81,9 @@ Die CI-Pipeline besteht aus zwei Hauptbereichen mit klarer Trennung:
 - Python 3.13 oder höher
 - pip und venv
 
-**Mobile:**
-- Node.js 18.x
+-**Mobile:**
+
+- Node.js 20.19.4 oder höher
 - npm
 
 ### Setup und Quality Checks lokal ausführen

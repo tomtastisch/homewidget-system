@@ -9,6 +9,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+      "build": "npx expo export --platform web --output-dir web-build",
     "lint": "eslint .",
     "test": "jest",
       "e2e": "detox test --config ./detox.config.js",
@@ -36,8 +37,7 @@
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@eslint/js": "^9.39.1",
-    "@testing-library/jest-native": "^5.4.3",
-    "@testing-library/react-native": "~13.3.3",
+      "@testing-library/react-native": "^12.6.0",
     "@types/jest": "29.5.14",
     "@types/node": "^25.0.0",
     "@types/react": "~19.1.10",
@@ -55,7 +55,7 @@
   "jest": {
     "preset": "jest-expo",
     "setupFilesAfterEnv": [
-      "@testing-library/jest-native/extend-expect"
+        "@testing-library/react-native/extend-expect"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|expo(nent)?|@expo(nent)?|@expo-google-fonts|react-native-svg|react-native-vector-icons|react-clone-referenced-element|@testing-library))"
@@ -63,5 +63,8 @@
   },
   "detox": {
     "testRunner": "jest"
+  },
+    "engines": {
+        "node": ">=20.19.4"
   }
 }

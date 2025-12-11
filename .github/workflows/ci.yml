@@ -1,109 +1,109 @@
 name: CI
 
 on:
-  push:
-    branches: ["main", "master"]
-  pull_request:
-    branches: ["**"]
+    push:
+        branches: [ "main", "master" ]
+    pull_request:
+        branches: [ "**" ]
 
 jobs:
-  build-and-check:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    build-and-check:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
 
-      # =============================================================
-      # BACKEND-UMGEBUNG
-      # =============================================================
+            # =============================================================
+            # BACKEND-UMGEBUNG
+            # =============================================================
 
-      - name: 🐍 Python 3.13 einrichten
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-          cache: 'pip'
-          cache-dependency-path: |
-            backend/pyproject.toml
-            backend/setup.py
-            backend/requirements*.txt
+            -   name: 🐍 Python 3.13 einrichten
+                uses: actions/setup-python@v5
+                with:
+                    python-version: '3.13'
+                    cache: 'pip'
+                    cache-dependency-path: |
+                        backend/pyproject.toml
+                        backend/setup.py
+                        backend/requirements*.txt
 
-      - name: 🔍 Python-Umgebung prüfen
-        run: |
-          echo "::group::Python-Umgebung"
-          python3 --version
-          pip --version
-          echo "::endgroup::"
+            -   name: 🔍 Python-Umgebung prüfen
+                run: |
+                    echo "::group::Python-Umgebung"
+                    python3 --version
+                    pip --version
+                    echo "::endgroup::"
 
-      - name: 📦 Backend-Setup
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh backend_setup_env
+            -   name: 📦 Backend-Setup
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh backend_setup_env
 
-      - name: ✨ Backend-Qualität (Ruff + MyPy)
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh backend_quality
+            -   name: ✨ Backend-Qualität (Ruff + MyPy)
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh backend_quality
 
-      - name: 🧪 Backend Unit-Tests
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh backend_unit_tests
+            -   name: 🧪 Backend Unit-Tests
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh backend_unit_tests
 
-      - name: 🧪 Backend Integrationstests
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh backend_integration_tests
+            -   name: 🧪 Backend Integrationstests
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh backend_integration_tests
 
-      - name: 🧪 E2E-Contracttests
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh step_e2e_contract_tests
+            -   name: E2E Contract Tests
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh step_e2e_contract_tests
 
-      # =============================================================
-      # MOBILE-UMGEBUNG
-      # =============================================================
+            # =============================================================
+            # MOBILE-UMGEBUNG
+            # =============================================================
 
-      - name: 📱 Node 20 einrichten
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.19.4'
-          cache: 'npm'
-          cache-dependency-path: 'mobile/package-lock.json'
+            -   name: 📱 Node 20 einrichten
+                uses: actions/setup-node@v4
+                with:
+                    node-version: '20.19.4'
+                    cache: 'npm'
+                    cache-dependency-path: 'mobile/package-lock.json'
 
-      - name: 🔍 Node-Umgebung prüfen
-        run: |
-          echo "::group::Node-Umgebung"
-          node --version
-          npm --version
-          echo "::endgroup::"
+            -   name: 🔍 Node-Umgebung prüfen
+                run: |
+                    echo "::group::Node-Umgebung"
+                    node --version
+                    npm --version
+                    echo "::endgroup::"
 
-      - name: 📦 Mobile-Abhängigkeiten
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh mobile_install_deps
+            -   name: 📦 Mobile-Abhängigkeiten
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_install_deps
 
-      - name: 🚑 Expo-Konfiguration (expo-doctor)
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh mobile_expo_doctor
+            -   name: 🚑 Expo-Konfiguration (expo-doctor)
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_expo_doctor
 
-      - name: ✨ Mobile Linting
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh mobile_lint
+            -   name: ✨ Mobile Linting
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_lint
 
-      - name: 🔍 Mobile TypeScript-Check
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh mobile_typescript_check
+            -   name: 🔍 Mobile TypeScript-Check
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_typescript_check
 
-      - name: 🧪 Mobile Tests (Jest, falls vorhanden)
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh mobile_jest_tests
+            -   name: 🧪 Mobile Tests (Jest, falls vorhanden)
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_jest_tests
 
-      - name: 📦 Mobile Build (falls vorhanden)
-        run: |
-          bash tools/dev/pipeline/ci_steps.sh mobile_build
+            -   name: 📦 Mobile Build (falls vorhanden)
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_build
 
-      # =============================================================
-      # ABSCHLUSS
-      # =============================================================
+            # =============================================================
+            # ABSCHLUSS
+            # =============================================================
 
-      - name: ✅ CI-Pipeline abgeschlossen
-        if: success()
-        run: |
-          echo "::notice::Alle CI-Prüfungen wurden erfolgreich abgeschlossen."
+            -   name: ✅ CI-Pipeline abgeschlossen
+                if: success()
+                run: |
+                    echo "::notice::Alle CI-Prüfungen wurden erfolgreich abgeschlossen."

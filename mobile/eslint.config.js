@@ -14,6 +14,7 @@ export default [
         'node_modules/',
         'dist/',
         'build/',
+        'web-build/',
         'ios/',
         'android/',
         '**/__snapshots__/**',

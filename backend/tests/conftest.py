@@ -79,6 +79,8 @@ def engine() -> Generator[Engine, None, None]:
         SQLModel.metadata.create_all(test_engine)
         yield test_engine
     finally:
+        # Verbindungen explizit schließen, um ResourceWarnings zu vermeiden
+        test_engine.dispose()
         Path(db_path).unlink(missing_ok=True)
 
 
@@ -106,6 +108,9 @@ def client(engine: Engine) -> Generator[TestClient, None, None]:
 
     with TestClient(app, raise_server_exceptions=True) as c:
         yield c
+
+    # Dependency-Overrides aufräumen nach Test
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture()

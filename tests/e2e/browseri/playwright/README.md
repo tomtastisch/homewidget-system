@@ -31,8 +31,7 @@ Voraussetzungen
 - Backend im E2E-Modus gestartet (Port 8100):
   backend/tools/start_test_backend_e2e.sh &
 - Env:
-    - E2E_API_BASE_URL=http://127.0.0.1:8100 (Default, kann entfallen)
-    - PLAYWRIGHT_BASE_URL / WEB_BASE_URL: Basis-URL für eine Web-UI (falls vorhanden). Aktuell Platzhalter.
+    - E2E_API_BASE_URL=http://127.0.0.1:8100 (Standard-Wert, kann für abweichende Backend-URLs gesetzt werden)
 
 Installieren & Ausführen (lokal)
 
@@ -50,9 +49,19 @@ Installieren & Ausführen (lokal)
 
 Hinweise
 
-- Solange keine vollwertige Web-UI existiert, interagieren die Tests für Minimum-Pfade teils direkt per
-  APIRequestContext
-  mit dem Backend (Login/CRUD) und verifizieren Verhalten serverseitig. UI-spezifische Selektoren sind als TODOs
+- **WICHTIG**: Diese Tests laufen derzeit **NICHT gegen eine Web-UI**, sondern direkt gegen das Backend-API.
+- Die Tests nutzen primär `APIRequestContext` für API-Aufrufe (Login, CRUD, etc.).
+- Einige Tests verwenden `page.evaluate()` für minimale Browser-Interaktionen (z.B. Fetch-Calls mit Mocking).
+- **Kein Web-Frontend erforderlich**: Die baseURL zeigt auf das Backend (http://127.0.0.1:8100).
+- UI-spezifische Helper (auth.ts, security.ts) sind für **zukünftige** Web-Frontend-Tests vorbereitet und mit TODOs
   markiert.
-- Keine Verwendung von waitForTimeout – nur Playwright-übliche Waits/Assertions.
-- Konfiguration: siehe playwright.config.ts (baseURL via Env, chromium-Projekt, Platzhalter webServer kommentiert).
+- Konfiguration: siehe playwright.config.ts (baseURL=E2E_API_BASE_URL, kein webServer-Block).
+
+Zukünftige Web-Frontend-Integration
+
+Wenn ein dediziertes Web-Frontend existiert:
+
+1. playwright.config.ts: webServer-Block aktivieren und auf Web-Client zeigen
+2. baseURL auf Web-Client-URL ändern (z.B. http://localhost:3000)
+3. Tests erweitern um echte UI-Interaktionen (Selektoren, Navigation, etc.)
+4. Helper aus auth.ts und security.ts nutzen für Login-Forms, XSS-Tests, etc.

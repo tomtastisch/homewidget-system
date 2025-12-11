@@ -1,7 +1,16 @@
 import {defineConfig, devices} from '@playwright/test';
 
-// Base URL resolution: PLAYWRIGHT_BASE_URL > WEB_BASE_URL > default
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || process.env.WEB_BASE_URL || 'http://localhost:3000';
+/**
+ * Playwright Configuration for Browser E2E Tests (Ticket 13 - Minimum)
+ *
+ * WICHTIG: Diese Tests laufen direkt gegen das Backend-API unter http://127.0.0.1:8100
+ * Es gibt aktuell KEIN dediziertes Web-Frontend. Die Tests nutzen primär das request-Objekt
+ * für API-Aufrufe oder page.evaluate() für minimale Browser-Interaktionen.
+ *
+ * Base URL: E2E_API_BASE_URL (Backend-API, nicht Web-Client)
+ * Standard: http://127.0.0.1:8100
+ */
+const baseURL = process.env.E2E_API_BASE_URL || 'http://127.0.0.1:8100';
 
 export default defineConfig({
 	testDir: './specs',
@@ -24,11 +33,16 @@ export default defineConfig({
 			use: {...devices['Desktop Chrome']},
 		},
 	],
-	// If a separate web client must be started, configure here. Currently left as placeholder.
-	// webServer: {
-	//   command: process.env.WEB_START_CMD || 'npm run dev', // TODO: adjust when a real web client exists
-	//   url: baseURL,
-	//   reuseExistingServer: !process.env.CI,
-	//   timeout: 120_000,
-	// },
+	
+	/**
+	 * KEIN webServer-Block:
+	 * Das Backend wird separat über backend/tools/start_test_backend_e2e.sh im CI gestartet.
+	 * Es gibt keinen separaten Web-Client, der hier gestartet werden müsste.
+	 *
+	 * Für zukünftige Web-Frontend-Integration (TODO):
+	 * - Wenn ein dediziertes Web-Frontend existiert, kann hier ein webServer-Block
+	 *   hinzugefügt werden, der z.B. 'npm run dev' im Frontend-Verzeichnis startet.
+	 * - Die baseURL würde dann auf den Web-Client zeigen (z.B. http://localhost:3000)
+	 * - API-Calls würden über den Web-Client-Proxy oder direkt erfolgen
+	 */
 });

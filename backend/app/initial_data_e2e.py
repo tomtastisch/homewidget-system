@@ -9,7 +9,7 @@ from __future__ import annotations
 from sqlmodel import Session, select
 
 from .core.database import engine, init_db
-from .core.security import hash_password
+from .core.security import hash_password, verify_password
 from .models.user import User, UserRole
 from .models.widget import Widget
 
@@ -18,8 +18,19 @@ def ensure_user(session: Session, email: str, password: str, role: UserRole) -> 
     user = session.exec(select(User).where(User.email == email)).first()
     if user:
         # Rolle ggf. korrigieren (idempotent aktualisieren)
+        updated = False
         if user.role != role:
             user.role = role
+            updated = True
+
+        # E2E-Spezifik: Passwort deterministisch setzen, damit veraltete
+        # Datenbanken aus dem Repo (test_e2e.db) nicht zu 401 führen.
+        # => bewahrt Idempotenz.
+        if not verify_password(password, user.password_hash):
+            user.password_hash = hash_password(password)
+            updated = True
+
+        if updated:
             session.add(user)
             session.commit()
             session.refresh(user)
@@ -36,6 +47,7 @@ def ensure_role_widget(session: Session, user: User, name: str) -> None:
     existing = session.exec(select(Widget).where(Widget.owner_id == user.id, Widget.name == name)).first()
     if existing:
         return
+
     w = Widget(
         name=name,
         title=f"{name.title()} Widget",

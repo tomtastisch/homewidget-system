@@ -156,7 +156,6 @@ jobs:
 
             -   name: 🌐 E2E Browser Tests (Playwright – Minimum)
                 env:
-                    PLAYWRIGHT_BASE_URL: http://localhost:3000 # Platzhalter, falls später ein Web-Client existiert
                     E2E_API_BASE_URL: http://127.0.0.1:8100
                 run: |
                     cd tests/e2e/browseri/playwright

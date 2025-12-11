@@ -28,7 +28,6 @@ test.describe('Expo-Web Integration Smoke Tests', () => {
 		await page.waitForLoadState('networkidle');
 		
 		// Wait for React hydration
-		await page.waitForTimeout(3000);
 		
 		// Prüfe, dass Home-Screen im Demo-Modus sichtbar ist
 		// Unauthentifizierte Nutzer sehen den Home-Screen mit Login-Link

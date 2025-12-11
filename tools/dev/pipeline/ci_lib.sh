@@ -198,3 +198,36 @@ pmcd_run() {
 
     python -m "${PMCD_MODULE}" "${subcommand}" "$@"
 }
+
+# -----------------------------------------------------------------------------
+# Health-Check-Funktionen für E2E-Setup
+# -----------------------------------------------------------------------------
+
+## @brief Wartet darauf, dass eine HTTP-URL erreichbar wird (Health-Check mit Timeout).
+## @param $1 URL (z.B. http://127.0.0.1:8100/health)
+## @param $2 Beschreibung für Logging (z.B. "Backend")
+## @param $3 Max. Anzahl Versuche (Standard: 60)
+## @param $4 Wartezeit zwischen Versuchen in Sekunden (Standard: 1)
+## @return 0 bei Erfolg, 1 bei Timeout
+wait_for_http_health() {
+    local url="$1"
+    local service_name="$2"
+    local max_attempts="${3:-60}"
+    local sleep_time="${4:-1}"
+    
+    log_info "Warte auf ${service_name} unter ${url}..."
+    
+    local attempt=1
+    while [[ ${attempt} -le ${max_attempts} ]]; do
+        if curl -fsS "${url}" >/dev/null 2>&1; then
+            log_info "${service_name} ist bereit (nach ${attempt} Versuchen)."
+            return 0
+        fi
+        sleep "${sleep_time}"
+        ((attempt++))
+    done
+    
+    local total_time=$((max_attempts * sleep_time))
+    log_error "${service_name} wurde nicht rechtzeitig erreichbar (Timeout nach ${total_time} Sekunden)"
+    return 1
+}

@@ -93,6 +93,94 @@ step_e2e_contract_tests() {
 }
 
 # -----------------------------------------------------------------------------
+# E2E-Browser-Tests (Playwright)
+# -----------------------------------------------------------------------------
+
+## @brief Backend im E2E-Modus starten und auf Health-Check warten.
+step_e2e_backend_start() {
+    if [[ ! -d "${BACKEND_DIR}" ]]; then
+        log_error "Backend-Verzeichnis fehlt – Backend-Start nicht möglich."
+        return 1
+    fi
+    
+    log_info "Starte Backend im E2E-Modus (Port 8100)..."
+    (
+        cd "${BACKEND_DIR}" || exit 1
+        ensure_venv || exit 1
+        bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh"
+    ) &
+    
+    # Health-Check mit Timeout
+    wait_for_http_health "http://127.0.0.1:8100/health" "Backend" 60 1
+}
+
+## @brief Expo-Web im E2E-Modus starten und auf Health-Check warten.
+step_e2e_expo_web_start() {
+    if [[ ! -d "${MOBILE_DIR}" ]]; then
+        log_error "Mobile-Verzeichnis fehlt – Expo-Web-Start nicht möglich."
+        return 1
+    fi
+    
+    log_info "Starte Expo-Web im E2E-Modus (Port 19006)..."
+    (
+        set -e
+        cd "${MOBILE_DIR}"
+        ensure_npm
+        export EXPO_PUBLIC_API_BASE_URL="${EXPO_PUBLIC_API_BASE_URL:-http://127.0.0.1:8100}"
+        npx expo start --web --port 19006 &
+    )
+    expo_pid=$!
+    # Warten, bis Subshell-Prozess beendet ist (Setup-Fehler abfangen)
+    wait $expo_pid
+    exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        log_error "Expo-Web konnte nicht gestartet werden (Fehler im Setup, Exit-Code $exit_code)."
+        return $exit_code
+    fi
+    # Health-Check mit Timeout (mehr Zeit für Expo-Web)
+    wait_for_http_health "http://localhost:19006" "Expo-Web" 60 2
+}
+
+## @brief Playwright-Dependencies installieren.
+step_e2e_playwright_install() {
+    local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
+    if [[ ! -d "${playwright_dir}" ]]; then
+        log_warn "Playwright-Verzeichnis fehlt – Installation wird übersprungen."
+        return 0
+    fi
+    
+    log_info "Installiere Playwright-Dependencies..."
+    (
+        cd "${playwright_dir}" || exit 1
+        ensure_npm || exit 1
+        npm ci --no-fund --no-audit
+        npx playwright install --with-deps chromium
+    )
+}
+
+## @brief Playwright Minimum-Tests ausführen.
+step_e2e_playwright_minimum_tests() {
+    local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
+    if [[ ! -d "${playwright_dir}" ]]; then
+        log_error "Playwright-Verzeichnis fehlt – Tests können nicht ausgeführt werden."
+        return 1
+    fi
+    
+    log_info "Führe Playwright Minimum-Tests aus..."
+    (
+        cd "${playwright_dir}" || exit 1
+        ensure_npm || exit 1
+        export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
+        export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+        npx playwright test \
+            specs/auth.basic.spec.ts \
+            specs/widgets.basic.spec.ts \
+            specs/widgets.security.spec.ts \
+            specs/infra.health.spec.ts
+    )
+}
+
+# -----------------------------------------------------------------------------
 # Mobile-Schritte
 # -----------------------------------------------------------------------------
 
@@ -208,6 +296,11 @@ Verfügbare Kommandos:
   backend_integration_tests       Backend Integrationstests
   e2e_contract_tests              Backend E2E-Contracttests (tests/e2e -m contract)
 
+  e2e_backend_start               Backend im E2E-Modus starten (Port 8100)
+  e2e_expo_web_start              Expo-Web im E2E-Modus starten (Port 19006)
+  e2e_playwright_install          Playwright-Dependencies installieren
+  e2e_playwright_minimum_tests    Playwright Minimum-Tests ausführen
+
   mobile_install_deps             Mobile-Abhängigkeiten installieren (npm ci)
   mobile_expo_doctor              Expo-Konfiguration prüfen (expo-doctor)
   mobile_lint                     Mobile Linting
@@ -244,6 +337,18 @@ main() {
             ;;
         e2e_contract_tests)
             step_e2e_contract_tests
+            ;;
+        e2e_backend_start)
+            step_e2e_backend_start
+            ;;
+        e2e_expo_web_start)
+            step_e2e_expo_web_start
+            ;;
+        e2e_playwright_install)
+            step_e2e_playwright_install
+            ;;
+        e2e_playwright_minimum_tests)
+            step_e2e_playwright_minimum_tests
             ;;
         mobile_install_deps)
             step_mobile_install_deps

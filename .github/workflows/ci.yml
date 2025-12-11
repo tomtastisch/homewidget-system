@@ -137,31 +137,34 @@ jobs:
 
             -   name: 🚀 Backend im E2E-Modus starten
                 run: |
-                    bash backend/tools/start_test_backend_e2e.sh &
-                    echo "Warte auf Backend /health..."
-                    for i in {1..60}; do
-                      if curl -fsS http://127.0.0.1:8100/health >/dev/null; then
-                        echo "Backend ist bereit."
-                        break
-                      fi
-                      sleep 1
-                    done
+                    bash tools/dev/pipeline/ci_steps.sh e2e_backend_start
 
             -   name: 📱 Node 20 einrichten
                 uses: actions/setup-node@v4
                 with:
                     node-version: '20.19.4'
                     cache: 'npm'
-                    cache-dependency-path: 'tests/e2e/browseri/playwright/package-lock.json'
+                    cache-dependency-path: |
+                        mobile/package-lock.json
+                        tests/e2e/browseri/playwright/package-lock.json
+
+            -   name: 📦 Mobile-Dependencies installieren
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_install_deps
+
+            -   name: 🚀 Expo-Web im E2E-Modus starten
+                env:
+                    EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8100
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
+
+            -   name: 🎭 Playwright-Dependencies installieren
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
 
             -   name: 🌐 E2E Browser Tests (Playwright – Minimum)
                 env:
+                    PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
                     E2E_API_BASE_URL: http://127.0.0.1:8100
                 run: |
-                    cd tests/e2e/browseri/playwright
-                    npm install
-                    npx playwright install --with-deps chromium
-                    npx playwright test specs/auth.basic.spec.ts \
-                                         specs/widgets.basic.spec.ts \
-                                         specs/widgets.security.spec.ts \
-                                         specs/infra.health.spec.ts
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimum_tests

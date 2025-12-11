@@ -38,7 +38,10 @@ export default defineConfig({
 	],
 	
 	/**
-	 * Expo-Web-Frontend automatisch starten (lokal und im CI).
+	 * Expo-Web-Frontend automatisch starten (lokal).
+	 * 
+	 * Im CI wird Expo-Web manuell im Workflow gestartet, daher wird dort
+	 * der bereits laufende Server wiederverwendet (reuseExistingServer: true).
 	 * 
 	 * Das Backend wird separat über backend/tools/start_test_backend_e2e.sh gestartet,
 	 * entweder manuell (lokal) oder im CI-Job vor den Playwright-Tests.
@@ -48,7 +51,7 @@ export default defineConfig({
 		url: webBaseURL,
 		cwd: path.resolve(__dirname, '../../../../mobile'),
 		timeout: 180_000, // Expo-Web-Build kann lange dauern beim ersten Start (3 Min)
-		reuseExistingServer: !process.env.CI,
+		reuseExistingServer: !!process.env.CI, // Im CI wird Expo-Web bereits manuell gestartet
 		stdout: 'pipe',
 		stderr: 'pipe',
 		env: {

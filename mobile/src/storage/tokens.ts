@@ -18,6 +18,7 @@ const REFRESH_KEY = 'hw_refresh_token';
 export async function saveRefreshToken(refresh: string): Promise<void> {
 	if (Platform.OS === 'web') {
 		localStorage.setItem(REFRESH_KEY, refresh);
+		return Promise.resolve();
 	} else {
 		await SecureStore.setItemAsync(REFRESH_KEY, refresh);
 	}

@@ -36,8 +36,6 @@ test.describe('@minimum Widget Basic', () => {
 	});
 
 	test('@minimum WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Widget-Details nicht in Feed-UI sichtbar. Entfernen sobald Widget-Namen-Anzeige implementiert ist.');
-		
 	const api = await newApiRequestContext();
 	const email = `w2+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
@@ -52,8 +50,9 @@ test.describe('@minimum Widget Basic', () => {
 	// Login über UI und prüfe Feed
 	await loginAs(page, email, password);
 	
-		// TODO: Sobald Widget-Details in UI sichtbar sind, hier auf Widget-Name im Feed prüfen
-		// Aktuell nur visuell über Screenshot verifizierbar
+		// UI-Validierung: Widget-Namen wird im Feed angezeigt (testID: feed.widget.name)
+		await expect(page.getByText(name)).toBeVisible();
+		
 		await page.screenshot({path: 'test-results/widget-02-created.png'});
 	});
 

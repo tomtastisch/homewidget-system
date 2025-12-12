@@ -120,8 +120,6 @@ test.describe('@standard Auth Resilience', () => {
 	
 	// AUTH-08 – Rate-Limit beim Login (429) → klare Fehleranzeige
 	test('@standard AUTH-08: Rate-Limit beim Login wird angezeigt', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Rate-Limit-spezifische Fehlermeldung im Login noch nicht implementiert. Entfernen sobald Rate-Limit-Handling im UI implementiert ist.');
-		
 		// Hinweis: Dieser Test setzt voraus, dass das Backend Rate-Limiting implementiert hat.
 		// Falls nicht, wird dieser Test als "konzeptionell" markiert und kann später aktiviert werden.
 		
@@ -161,9 +159,9 @@ test.describe('@standard Auth Resilience', () => {
 		await page.getByTestId('login.password').fill(password); // Diesmal korrektes Passwort
 		await page.getByTestId('login.submit').click();
 		
-		// Erwarte Fehlermeldung (entweder rate-limit-spezifisch oder generischer Fehler)
-		// TODO: Sobald Rate-Limiting implementiert ist, hier auf spezifische Meldung prüfen
+		// UI-Validierung: Rate-Limit-Fehlermeldung wird angezeigt (testID: login.error.rateLimit)
 		await page.waitForTimeout(3000);
+		await expect(page.getByTestId('login.error.rateLimit')).toBeVisible();
 		
 		// Für jetzt: Verifiziere, dass Login nicht erfolgreich war
 		// (entweder wegen Rate-Limit oder weil Backend noch kein Rate-Limiting hat)

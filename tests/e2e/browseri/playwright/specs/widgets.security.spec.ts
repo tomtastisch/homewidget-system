@@ -29,9 +29,15 @@ test('WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
 	// Verifiziere Login erfolgreich
 	await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 	
-	// Versuche Widget von A zu löschen (über API, da UI keine Lösch-Funktion hat)
-	const loginB = await (await api.post('/api/auth/login', {form: {username: emailB, password: pwd}})).json();
-	const del = await deleteWidgetById(api, w.id, loginB.access_token);
+	// Extrahiere Access-Token nach UI-Login aus localStorage
+	const accessTokenB = await page.evaluate(() => {
+	    // Annahme: Das Access-Token wird nach Login unter 'access_token' in localStorage gespeichert
+	    return window.localStorage.getItem('access_token');
+	});
+	if (!accessTokenB) {
+	    throw new Error('Kein Access-Token nach UI-Login gefunden. Prüfe Storage-Key und Login-Flow.');
+	}
+	const del = await deleteWidgetById(api, w.id, accessTokenB);
 	expect(del.status()).toBe(404);
 	
 	// Screenshot

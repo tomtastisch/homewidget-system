@@ -133,7 +133,6 @@ class AuthService:
         """
         token_digest = compute_refresh_token_digest(token)
         lock_manager = get_refresh_lock_manager()
-        
         # Lock für diesen spezifischen Token-Digest erwerben
         # Dies verhindert parallele Refresh-Operationen für denselben Token
         with lock_manager.acquire(token_digest):

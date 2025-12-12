@@ -3,15 +3,15 @@ import {loginAs, logout} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
- * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web (Minimum-Ebene)
+ * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web (Minimal-Ebene)
  * 
  * Diese Tests verwenden die echte UI und bilden Nutzerflüsse ab.
- * Tag: @minimum
+ * Tag: @minimal
  */
 
-test.describe('@minimum Auth Basic', () => {
+test.describe('@minimal Auth Basic', () => {
 	// AUTH-01 – Login mit gültigen Daten (Happy Path) über UI
-	test('@minimum AUTH-01: Login mit gültigen Daten über UI', async ({page}) => {
+	test('@minimal AUTH-01: Login mit gültigen Daten über UI', async ({page}) => {
 	// Erstelle Testbenutzer über API (Setup)
 	const api = await newApiRequestContext();
 	const email = `auth01+${Date.now()}@example.com`;
@@ -30,7 +30,7 @@ test.describe('@minimum Auth Basic', () => {
 	});
 
 	// AUTH-02 – Logout über UI
-	test('@minimum AUTH-02: Logout über UI', async ({page}) => {
+	test('@minimal AUTH-02: Logout über UI', async ({page}) => {
 	// Setup: Testbenutzer erstellen und einloggen
 	const api = await newApiRequestContext();
 	const email = `auth02+${Date.now()}@example.com`;
@@ -54,7 +54,7 @@ test.describe('@minimum Auth Basic', () => {
 	});
 
 	// AUTH-03 – Login mit falschen Credentials zeigt Fehlermeldung
-	test('@minimum AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
+	test('@minimal AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
 		// Note: login.error testId exists and shows, but actual error text content is not yet assertable
 		// This test currently only verifies that error display appears, not its content
 		

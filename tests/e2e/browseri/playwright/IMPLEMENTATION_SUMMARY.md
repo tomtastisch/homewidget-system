@@ -28,10 +28,11 @@
 - `browser.spec.ts` - Browser-UX und Session-Persistence (8 Tests)
 
 **Existierende Specs aktualisiert**:
-- `auth.basic.spec.ts` - @minimum Tags hinzugefügt
-- `widgets.basic.spec.ts` - @minimum Tags hinzugefügt
-- `widgets.security.spec.ts` - @minimum Tags hinzugefügt
-- `infra.health.spec.ts` - @minimum Tags hinzugefügt
+
+- `auth.basic.spec.ts` - @minimal Tags hinzugefügt
+- `widgets.basic.spec.ts` - @minimal Tags hinzugefügt
+- `widgets.security.spec.ts` - @minimal Tags hinzugefügt
+- `infra.health.spec.ts` - @minimal Tags hinzugefügt
 
 **Helper erweitert**:
 - `auth.ts`: 
@@ -42,25 +43,28 @@
 #### 2. Tagging-Strategie implementiert
 
 **Test-Ebenen**:
-- `@minimum` (10 Tests) - Kritische Basis-Szenarien
+
+- `@minimal` (10 Tests) - Kritische Basis-Szenarien
 - `@standard` (26 Tests) - Minimum + erweiterte Fehlerbehandlung
 - `@advanced` (60 Tests) - Alle Tests inkl. Edge-Cases
 
 **Playwright-Konfiguration**:
 
-- 3 Projekte definiert: `minimum`, `standard`, `advanced`
+- 3 Projekte definiert: `minimal`, `standard`, `advanced`
 - Grep-basierte Filterung nach Tags
 - Dedizierte npm-Scripts für jede Ebene
 
 #### 3. CI-Integration
 
 **ci_steps.sh erweitert**:
-- `step_e2e_playwright_minimum_tests()` - Nur @minimum
+
+- `step_e2e_playwright_minimal_tests()` - Nur @minimal
 - `step_e2e_playwright_standard_tests()` - @minimum + @standard
 - `step_e2e_playwright_all_tests()` - Alle Tests
 
 **GitHub Workflows**:
-- `ci.yml` - Standard-CI läuft @minimum (schnell, bei jedem Push)
+
+- `ci.yml` - Standard-CI läuft @minimal (schnell, bei jedem Push)
 - `e2e-extended.yml` - Nightly/manuell für Standard/Advanced
   - Zeitgesteuert: täglich 2 Uhr UTC (Standard-Tests)
   - Manuell: mit Auswahl zwischen standard/advanced
@@ -107,7 +111,7 @@ npm install
 npx playwright install --with-deps chromium
 
 # Tests ausführen
-npm run test:minimum      # Schnellster Durchlauf (10 Tests)
+npm run test:minimal      # Schnellster Durchlauf (10 Tests)
 npm run test:standard     # Empfohlen für Dev (26 Tests)
 npm run test:all          # Vollständige Coverage (60 Tests)
 npm run test:headed       # Mit sichtbarem Browser
@@ -117,7 +121,7 @@ npm run test:headed       # Mit sichtbarem Browser
 
 ```bash
 # Via ci_steps.sh
-bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimum_tests
+bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimal_tests
 bash tools/dev/pipeline/ci_steps.sh e2e_playwright_standard_tests
 bash tools/dev/pipeline/ci_steps.sh e2e_playwright_all_tests
 
@@ -127,7 +131,7 @@ tools/dev/pipeline/run_steps.sh tests
 
 #### GitHub Actions
 
-- **Standard-CI** (ci.yml): Automatisch @minimum bei jedem Push
+- **Standard-CI** (ci.yml): Automatisch @minimal bei jedem Push
 - **Extended-CI** (e2e-extended.yml): 
   - Täglich: @standard Tests
   - Manuell: Wählbar zwischen standard/advanced

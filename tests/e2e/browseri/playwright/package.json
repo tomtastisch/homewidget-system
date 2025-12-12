@@ -2,11 +2,11 @@
     "name": "homewidget-e2e-playwright",
     "version": "0.1.0",
     "private": true,
-    "description": "Browser E2E (minimum, standard, advanced) for homewidget-system using Playwright",
+    "description": "Browser E2E (minimal, standard, advanced) for homewidget-system using Playwright",
     "license": "MIT",
     "scripts": {
         "test": "playwright test --project=standard",
-        "test:minimum": "playwright test --project=minimum",
+        "test:minimal": "playwright test --project=minimal",
         "test:standard": "playwright test --project=standard",
         "test:advanced": "playwright test --project=advanced",
         "test:all": "playwright test --project=advanced",

@@ -136,7 +136,7 @@ step_e2e_backend_start() {
         bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh"
     ) &
     
-    local backend_pid=$!
+    local backend_pid=$! # Hintergrundprozess-ID
     
     # Warte kurz auf potentielle Startup-Fehler
     sleep 2
@@ -210,7 +210,7 @@ step_e2e_playwright_install() {
     )
 }
 
-## @brief Playwright Minimum-Tests ausführen.
+## @brief Playwright Minimal-Tests ausführen.
 step_e2e_playwright_minimal_tests() {
     local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
     if [[ ! -d "${playwright_dir}" ]]; then
@@ -228,7 +228,7 @@ step_e2e_playwright_minimal_tests() {
     )
 }
 
-## @brief Playwright Standard-Tests ausführen (Minimum + Standard).
+## @brief Playwright Standard-Tests ausführen (Minimal + Standard).
 step_e2e_playwright_standard_tests() {
     local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
     if [[ ! -d "${playwright_dir}" ]]; then
@@ -236,7 +236,7 @@ step_e2e_playwright_standard_tests() {
         return 1
     fi
     
-    log_info "Führe Playwright Standard-Tests aus (Minimum + Standard)..."
+    log_info "Führe Playwright Standard-Tests aus (Minimal + Standard)..."
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
@@ -246,7 +246,7 @@ step_e2e_playwright_standard_tests() {
     )
 }
 
-## @brief Playwright alle Tests ausführen (Minimum + Standard + Advanced).
+## @brief Playwright alle Tests ausführen (Minimal + Standard + Advanced).
 step_e2e_playwright_all_tests() {
     local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
     if [[ ! -d "${playwright_dir}" ]]; then
@@ -254,7 +254,7 @@ step_e2e_playwright_all_tests() {
         return 1
     fi
     
-    log_info "Führe alle Playwright-Tests aus (Minimum + Standard + Advanced)..."
+    log_info "Führe alle Playwright-Tests aus (Minimal + Standard + Advanced)..."
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1

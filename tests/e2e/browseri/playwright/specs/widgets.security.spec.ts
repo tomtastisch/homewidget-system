@@ -4,14 +4,14 @@ import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
 /**
- * Widget-Security-Tests: Hybrid-Ansatz (Minimum-Ebene)
+ * Widget-Security-Tests: Hybrid-Ansatz (Minimal-Ebene)
  * 
  * Login über UI, Security-Checks über API
- * Tag: @minimum
+ * Tag: @minimal
  */
 
-test.describe('@minimum Widget Security', () => {
-	test('@minimum WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
+test.describe('@minimal Widget Security', () => {
+	test('@minimal WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
 	const api = await newApiRequestContext();
 	
 	// User A erstellt Widget
@@ -40,8 +40,8 @@ test.describe('@minimum Widget Security', () => {
 		// Screenshot
 		await page.screenshot({path: 'test-results/widget-04-security.png'});
 	});
-
-	test('@minimum WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
+	
+	test('@minimal WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `xss+${Date.now()}@example.com`;
 	const pwd = 'Secret1234!';

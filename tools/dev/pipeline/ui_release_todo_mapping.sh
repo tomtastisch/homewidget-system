@@ -78,9 +78,7 @@ while IFS= read -r skip_line; do
     start_line=$((line > 10 ? line - 10 : 1))
     end_line=$((line + 40))
     
-    # Extrahiere Testfunktion (um relevante TODOs zu finden)
-    test_function=$(sed -n "${line}p" "${file}" | grep -oP "test\(['\"]@\w+ [^'\"]+['\"]" || echo "")
-    
+
     # Finde TODOs in diesem Testblock
     todos=$(sed -n "${start_line},${end_line}p" "${file}" | grep -n "// TODO" || true)
     
@@ -155,9 +153,9 @@ echo ""
 echo "2. Core-Advanced (Prio 2): ${advanced_count} Tests"
 echo "   - ROLE-*, INFRA-06/07/08, BROWSER-*"
 echo ""
-echo "3. Minimum (bereits grün): ${minimum_count} Skips (sollten 0 sein)"
-if [[ ${minimum_count} -gt 0 ]]; then
-    echo -e "   ${YELLOW}⚠ WARNUNG: Minimum-Tests sollten nicht geskippt sein!${NC}"
+echo "3. Minimal (bereits grün): ${minimal_count} Skips (sollten 0 sein)"
+if [[ ${minimal_count} -gt 0 ]]; then
+    echo -e "   ${YELLOW}⚠ WARNUNG: Minimal-Tests sollten nicht geskippt sein!${NC}"
 fi
 echo ""
 
@@ -203,7 +201,7 @@ if [[ "${1:-}" == "--json" ]]; then
     
     echo "{" > "${json_output}"
     echo "  \"skip_count\": ${skip_count}," >> "${json_output}"
-    echo "  \"minimum_skips\": ${minimum_count}," >> "${json_output}"
+    echo "  \"minimal_skips\": ${minimal_count}," >> "${json_output}"
     echo "  \"standard_skips\": ${standard_count}," >> "${json_output}"
     echo "  \"advanced_skips\": ${advanced_count}," >> "${json_output}"
     echo "  \"skips\": [" >> "${json_output}"

@@ -1,4 +1,4 @@
-# Playwright – Browser-E2E (Minimum, Standard, Advanced)
+# Playwright – Browser-E2E (Minimal, Standard, Advanced)
 
 > **📚 ZENTRALE DOKUMENTATION:** Alle E2E-Dokumentation wurde nach `docs/e2e/` verschoben.
 > 
@@ -8,7 +8,7 @@
 
 Dieses Verzeichnis enthält die Browser-E2E-Infrastruktur auf Basis von Playwright mit drei Testebenen:
 
-- **Minimum**: Kritische Infra-/Security-Pfade (Login/Logout, Widgets CRUD, Health)
+- **Minimal**: Kritische Infra-/Security-Pfade (Login/Logout, Widgets CRUD, Health)
 - **Standard**: Erweiterte Resilience, Fehlerbehandlung, Feed-Tests, CORS
 - **Advanced**: Edge-Cases, komplexe Szenarien, Security-Advanced, Performance
 
@@ -20,7 +20,7 @@ Die Tests laufen gegen das **Expo-Web-Frontend** (React Native Web) und das **Ba
 
 Alle Tests sind mit Tags versehen, die eine selektive Ausführung ermöglichen:
 
-- `@minimum`: Kritische Basistests (müssen immer grün sein)
+- `@minimal`: Kritische Basistests (müssen immer grün sein)
 - `@standard`: Erweiterte Tests für robuste Fehlerbehandlung
 - `@advanced`: Edge-Cases und fortgeschrittene Szenarien
 
@@ -28,7 +28,7 @@ Alle Tests sind mit Tags versehen, die eine selektive Ausführung ermöglichen:
 
 ```
 tests/e2e/browseri/playwright/
-├── playwright.config.ts     # Konfiguration mit Test-Projekten (minimum/standard/advanced)
+├── playwright.config.ts     # Konfiguration mit Test-Projekten (minimal/standard/advanced)
 ├── package.json             # Dependencies und Test-Scripts
 ├── helpers/                 # Wiederverwendbare Test-Helfer
 │   ├── auth.ts             # Login, Logout, Rollen-Handling
@@ -37,15 +37,15 @@ tests/e2e/browseri/playwright/
 │   ├── api.ts              # API-Context, Mocking, Error-Simulation
 │   └── fixtures.ts         # Custom Fixtures (authenticated page, etc.)
 ├── specs/                   # Test-Spezifikationen (nach Kategorie)
-│   ├── auth.basic.spec.ts           # @minimum: Login, Logout (AUTH-01 bis AUTH-03)
+│   ├── auth.basic.spec.ts           # @minimal: Login, Logout (AUTH-01 bis AUTH-03)
 │   ├── auth.resilience.spec.ts      # @standard: Fehlerbehandlung (AUTH-04 bis AUTH-08)
 │   ├── auth.edge-cases.spec.ts      # @advanced: Token-Refresh, Race-Conditions (AUTH-09+)
-│   ├── widgets.basic.spec.ts        # @minimum: CRUD (WIDGET-01 bis WIDGET-03)
-│   ├── widgets.security.spec.ts     # @minimum: Owner-Check, XSS (WIDGET-04, WIDGET-06)
+│   ├── widgets.basic.spec.ts        # @minimal: CRUD (WIDGET-01 bis WIDGET-03)
+│   ├── widgets.security.spec.ts     # @minimal: Owner-Check, XSS (WIDGET-04, WIDGET-06)
 │   ├── widgets.resilience.spec.ts   # @standard/@advanced: Backend-Fehler, Edge-Cases
 │   ├── feed.spec.ts                 # @standard: Feed-Laden, Caching, XSS (FEED-01 bis FEED-05)
 │   ├── roles.spec.ts                # @standard/@advanced: Rollenbasierte Features
-│   ├── infra.health.spec.ts         # @minimum: Health-Checks (INFRA-01, INFRA-02)
+│   ├── infra.health.spec.ts         # @minimal: Health-Checks (INFRA-01, INFRA-02)
 │   ├── infra.resilience.spec.ts     # @standard/@advanced: CORS, Network, Offline
 │   ├── security.advanced.spec.ts    # @advanced: CSP, Payload-Validierung (SEC-01, SEC-02)
 │   └── browser.spec.ts              # @advanced: Session-Persistence, Responsive, UX
@@ -90,14 +90,14 @@ tests/e2e/browseri/playwright/
 
 4. **Tests ausführen**:
 
-   **Minimum-Tests** (schnellster Durchlauf, nur kritische Tests):
+   **Minimal-Tests** (schnellster Durchlauf, nur kritische Tests):
    ```bash
-   npm run test:minimum
+   npm run test:minimal
    # oder
-   npx playwright test --project=minimum
+   npx playwright test --project=minimal
    ```
 
-   **Standard-Tests** (Minimum + Standard, empfohlen für lokale Entwicklung):
+   **Standard-Tests** (Minimal + Standard, empfohlen für lokale Entwicklung):
    ```bash
    npm run test:standard
    # oder

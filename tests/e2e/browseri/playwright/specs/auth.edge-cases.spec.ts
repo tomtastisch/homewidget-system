@@ -140,10 +140,11 @@ test.describe('@advanced Auth Edge Cases', () => {
 		await page.screenshot({path: 'test-results/auth-11-invalid-token.png'});
 	});
 	
-	// AUTH-12 – Session-Hijacking-Schutz
-	test('@advanced AUTH-12: Token aus anderem Browser funktioniert nicht', async ({page, context}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Token-Binding (Device-ID, IP-Check) nicht im Backend implementiert. Entfernen sobald Token-Binding-Feature implementiert ist.');
-		
+	// AUTH-12 – Session-Hijacking-Schutz (aktueller Stand: Refresh-Token ist nicht gebunden)
+	test('@advanced AUTH-12: Refresh-Token kann in anderem Browser wiederverwendet werden (Risk documented)', async ({
+		                                                                                                                 page,
+		                                                                                                                 context
+	                                                                                                                 }) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'auth12');
 		
@@ -151,35 +152,39 @@ test.describe('@advanced Auth Edge Cases', () => {
 		await loginAs(page, user.email, user.password);
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
-		// Hole Token
+		// Hole Token (simuliert Token-Diebstahl)
 		const stolenToken = await page.evaluate(() => localStorage.getItem('hw_refresh_token'));
 		expect(stolenToken).not.toBeNull();
 		
+		// Verifiziere serverseitig: Refresh mit diesem Token ist aktuell möglich (kein Token-Binding)
+		const refreshRes = await api.post('/api/auth/refresh', {
+			data: {refresh_token: stolenToken!},
+		});
+		expect(refreshRes.ok()).toBeTruthy();
+		
 		// Öffne neuen Browser-Context (simuliert anderen Browser)
-		const newContext = await context.browser()?.newContext();
-		if (!newContext) {
-			throw new Error('Could not create new context');
+		const browser = context.browser();
+		if (!browser) throw new Error('Could not access browser');
+		
+		const newContext = await browser.newContext();
+		try {
+			const newPage = await newContext.newPage();
+			
+			// Setze gestohlenen Token in neuem Browser
+			await newPage.addInitScript((token: string) => {
+				localStorage.setItem('hw_refresh_token', token);
+			}, stolenToken!);
+			
+			await newPage.goto('/');
+			
+			// Verifiziere UI-seitig: Session wird im neuen Context akzeptiert (Account-Button sichtbar)
+			await expect(newPage.getByText('Home-Feed')).toBeVisible({timeout: 15_000});
+			await expect(newPage.getByRole('button', {name: 'Account'})).toBeVisible({timeout: 15_000});
+			
+			await newPage.screenshot({path: 'test-results/auth-12-token-sharing.png'});
+		} finally {
+			await newContext.close();
 		}
-		const newPage = await newContext.newPage();
-		
-		// Setze gestohlenen Token in neuem Browser
-		await newPage.addInitScript((token: string) => {
-			localStorage.setItem('hw_refresh_token', token);
-		}, stolenToken!);
-		
-		await newPage.goto(page.url());
-		
-		// TODO: Sobald Token-Binding implementiert ist (z.B. via Device-ID, IP-Check):
-		// - Erwarte, dass Token im neuen Context nicht funktioniert
-		// - await expect(newPage.getByTestId('home.loginLink')).toBeVisible();
-		
-		// Für jetzt: Dokumentiere, dass Token-Sharing derzeit funktioniert
-		// (aber in Produktion mit zusätzlichen Sicherheitsmaßnahmen verhindert werden sollte)
-		
-		await newPage.screenshot({path: 'test-results/auth-12-token-sharing.png'});
-		
-		await newPage.close();
-		await newContext.close();
 	});
 	
 	// AUTH-13 – Gleichzeitige Login-Versuche desselben Users

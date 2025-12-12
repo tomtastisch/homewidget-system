@@ -27,9 +27,6 @@ const refreshStorage: RefreshStorage = Platform.OS === 'web'
 		},
 		clear: async () => {
 			localStorage.removeItem(REFRESH_KEY);
-			// Für Abwärtskompatibilität auch andere mögliche Keys löschen
-			localStorage.removeItem('access_token');
-			localStorage.removeItem('refreshToken');
 		},
 	}
 	: {

@@ -1,6 +1,7 @@
 import React from 'react';
 import {render, waitFor} from '@testing-library/react-native';
 import HomeScreen from '../screens/HomeScreen';
+import {ToastProvider} from '../ui/ToastContext';
 
 // Mock API
 jest.mock('../api/homeApi', () => ({
@@ -38,11 +39,12 @@ jest.mock('../auth/AuthContext', () => ({
 describe('HomeScreen', () => {
 	it('renders widgets by type and shows demo banner when unauthenticated', async () => {
 		const {getByText, queryByText} = render(
-			// Pass minimal navigation and route mocks to satisfy NativeStackScreenProps
-			<HomeScreen
-				navigation={{navigate: jest.fn()} as any}
-				route={{key: 'Home', name: 'Home', params: undefined} as any}
-			/>
+			<ToastProvider>
+				<HomeScreen
+					navigation={{navigate: jest.fn()} as any}
+					route={{key: 'Home', name: 'Home', params: undefined} as any}
+				/>
+			</ToastProvider>
 		);
 		
 		// Demo indicators

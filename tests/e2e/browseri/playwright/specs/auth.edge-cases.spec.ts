@@ -53,7 +53,17 @@ test.describe('@advanced Auth Edge Cases', () => {
 	
 	// AUTH-10 – mehrfacher Logout
 	test('@advanced AUTH-10: Mehrfacher Logout verursacht keine Fehler', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Console-Error-Tracking nicht als testbare UI-Feature verfügbar. Entfernen sobald Error-Monitoring-UI implementiert ist.');
+		const consoleErrors: string[] = [];
+		const pageErrors: string[] = [];
+		
+		page.on('console', (msg) => {
+			if (msg.type() !== 'error') return;
+			consoleErrors.push(msg.text());
+		});
+		
+		page.on('pageerror', (err) => {
+			pageErrors.push(err.message);
+		});
 		
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'auth10');
@@ -78,10 +88,11 @@ test.describe('@advanced Auth Edge Cases', () => {
 		await logout(page);
 		await expect(page.getByTestId('home.loginLink')).toBeVisible();
 		
-		// Verifiziere, dass keine Fehler in Console aufgetreten sind
-		// TODO: Track console errors und verifiziere
-		
 		await page.screenshot({path: 'test-results/auth-10-multiple-logout.png'});
+		
+		// Verifiziere, dass keine Console- oder Page-Errors aufgetreten sind
+		expect(pageErrors, `Page errors during test:\n${pageErrors.join('\n')}`).toHaveLength(0);
+		expect(consoleErrors, `Console errors during test:\n${consoleErrors.join('\n')}`).toHaveLength(0);
 	});
 	
 	// AUTH-11 – leere/getrimmte Tokens im Refresh-Request

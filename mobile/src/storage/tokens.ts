@@ -10,18 +10,41 @@ import {Platform} from 'react-native';
 
 const REFRESH_KEY = 'hw_refresh_token';
 
+// Kleine Abstraktionsschicht für plattformspezifischen Storage
+type RefreshStorage = {
+	set: (value: string) => Promise<void>;
+	get: () => Promise<string | null>;
+	clear: () => Promise<void>;
+};
+
+const refreshStorage: RefreshStorage = Platform.OS === 'web'
+	? {
+		set: async (value: string) => {
+			localStorage.setItem(REFRESH_KEY, value);
+		},
+		get: async () => {
+			return localStorage.getItem(REFRESH_KEY);
+		},
+		clear: async () => {
+			localStorage.removeItem(REFRESH_KEY);
+			// Für Abwärtskompatibilität auch andere mögliche Keys löschen
+			localStorage.removeItem('access_token');
+			localStorage.removeItem('refreshToken');
+		},
+	}
+	: {
+		set: (value: string) => SecureStore.setItemAsync(REFRESH_KEY, value),
+		get: () => SecureStore.getItemAsync(REFRESH_KEY),
+		clear: () => SecureStore.deleteItemAsync(REFRESH_KEY),
+	};
+
 /**
  * Speichert das Refresh-Token plattformabhängig.
  * - Native: SecureStore (verschlüsselt)
  * - Web: localStorage (unverschlüsselt, da SecureStore auf Web nicht verfügbar)
  */
 export async function saveRefreshToken(refresh: string): Promise<void> {
-	if (Platform.OS === 'web') {
-		localStorage.setItem(REFRESH_KEY, refresh);
-		return Promise.resolve();
-	} else {
-		await SecureStore.setItemAsync(REFRESH_KEY, refresh);
-	}
+	await refreshStorage.set(refresh);
 }
 
 /**
@@ -30,11 +53,7 @@ export async function saveRefreshToken(refresh: string): Promise<void> {
  * - Web: localStorage
  */
 export async function getRefreshToken(): Promise<string | null> {
-	if (Platform.OS === 'web') {
-		return Promise.resolve(localStorage.getItem(REFRESH_KEY));
-	} else {
-		return SecureStore.getItemAsync(REFRESH_KEY);
-	}
+	return refreshStorage.get();
 }
 
 /**
@@ -43,13 +62,5 @@ export async function getRefreshToken(): Promise<string | null> {
  * - Web: localStorage
  */
 export async function clearTokens(): Promise<void> {
-	if (Platform.OS === 'web') {
-		localStorage.removeItem(REFRESH_KEY);
-		// Für Abwärtskompatibilität auch andere mögliche Keys löschen
-		localStorage.removeItem('access_token');
-		localStorage.removeItem('refreshToken');
-	} else {
-		// Für Abwärtskompatibilität: löscht alle auth‑bezogenen Einträge.
-		await SecureStore.deleteItemAsync(REFRESH_KEY);
-	}
+	await refreshStorage.clear();
 }

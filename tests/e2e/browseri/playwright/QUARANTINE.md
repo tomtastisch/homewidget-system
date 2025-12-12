@@ -1,5 +1,9 @@
 # Playwright Test Quarantine (UI-Blocked Tests)
 
+> **⚠️ HINWEIS:** Diese Dokumentation wurde nach `docs/e2e/ci-quarantine-management.md` verschoben.
+> 
+> **Für vollständige Dokumentation siehe:** [docs/e2e/ci-quarantine-management.md](../../../../docs/e2e/ci-quarantine-management.md)
+
 ## Übersicht
 
 Dieses Dokument beschreibt den Mechanismus zur temporären Quarantäne von Playwright-E2E-Tests, die aufgrund fehlender UI-Features blockiert sind.

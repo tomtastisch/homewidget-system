@@ -1,6 +1,17 @@
 # Ticket 15 – Browser-E2E mit Playwright: Standard- & Advanced-Abdeckung
 
+> **📚 AKTUELLE DOKUMENTATION:** Siehe [docs/e2e/README.md](../../../../docs/e2e/README.md)
+
 ## Implementierungs-Zusammenfassung
+
+### ⚠️ Wichtige Ergänzung: Ticket 15-2-A (TODO-Abbau nach UI-Freigabe)
+
+**Nach Merge von Ticket C (UI-Signale):**
+- Alle 25 BLOCKED-UI Skips müssen entfernt werden
+- Alle TODO-markierten Assertions müssen implementiert werden
+- **Ziel:** 0 TODOs in Core-Standard; Core-Advanced nur für zusätzliche Coverage
+
+**Details:** Siehe [docs/e2e/ui-release-guide.md](../../../../docs/e2e/ui-release-guide.md) für vollständigen Ablaufplan.
 
 ### Umgesetzte Arbeiten
 

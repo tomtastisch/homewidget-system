@@ -1,5 +1,9 @@
 # Playwright – Browser-E2E (Minimum, Standard, Advanced)
 
+> **📚 ZENTRALE DOKUMENTATION:** Alle E2E-Dokumentation wurde nach `docs/e2e/` verschoben.
+> 
+> **Siehe:** [docs/e2e/README.md](../../../../docs/e2e/README.md)
+
 ## Überblick
 
 Dieses Verzeichnis enthält die Browser-E2E-Infrastruktur auf Basis von Playwright mit drei Testebenen:

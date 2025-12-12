@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test';
 import {newApiRequestContext} from '../helpers/api';
-import {loginAs, createUserWithRole} from '../helpers/auth';
+import {loginAs, loginAsRole, createUserWithRole} from '../helpers/auth';
 
 /**
  * Infrastruktur-Resilience-Tests: Standard- und Bestenfalls-Ebene

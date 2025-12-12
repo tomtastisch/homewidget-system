@@ -117,7 +117,8 @@ test.describe('@standard Feed', () => {
 		
 		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
 		await expect(page.getByTestId('error.toast')).toBeVisible({timeout: 10_000});
-		await expect(page.getByText(/Rate limit|zu viele|too many/i)).toBeVisible({timeout: 5_000});
+		// Text-Check auf Toast-Element beschränken, um strict mode violation zu vermeiden
+		await expect(page.getByTestId('error.toast').getByText(/Rate limit|zu viele|too many/i)).toBeVisible({timeout: 5_000});
 		
 		await page.screenshot({path: 'test-results/feed-03-rate-limit.png'});
 	});

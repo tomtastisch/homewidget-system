@@ -17,13 +17,11 @@ test.describe('@standard Roles', () => {
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
 		// UI-Validierung: Rolle wird im Account-Screen angezeigt (testID: account.role)
-		// Navigiere zum Account-Screen (falls verfügbar)
-		// Hinweis: Wenn noch keine Navigation zu /account existiert, muss dies überprüft werden
-		// await page.goto('/account');
-		// await expect(page.getByTestId('account.role')).toBeVisible();
-		// await expect(page.getByText('demo')).toBeVisible();
+		// Navigiere zum Account-Screen über UI-Button
+		await page.getByRole('button', {name: 'Account'}).click();
+		await expect(page.getByTestId('account.role')).toBeVisible();
+		await expect(page.getByTestId('account.role')).toHaveText('demo');
 		
-		// Für jetzt: Screenshot als visuelle Verifikation
 		await page.screenshot({path: 'test-results/role-01-demo.png'});
 	});
 	
@@ -33,9 +31,9 @@ test.describe('@standard Roles', () => {
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
 		// UI-Validierung: Rolle wird im Account-Screen angezeigt (testID: account.role)
-		// await page.goto('/account');
-		// await expect(page.getByTestId('account.role')).toBeVisible();
-		// await expect(page.getByText('common')).toBeVisible();
+		await page.getByRole('button', {name: 'Account'}).click();
+		await expect(page.getByTestId('account.role')).toBeVisible();
+		await expect(page.getByTestId('account.role')).toHaveText('common');
 		
 		await page.screenshot({path: 'test-results/role-01-common.png'});
 	});
@@ -46,9 +44,9 @@ test.describe('@standard Roles', () => {
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
 		// UI-Validierung: Rolle wird im Account-Screen angezeigt (testID: account.role)
-		// await page.goto('/account');
-		// await expect(page.getByTestId('account.role')).toBeVisible();
-		// await expect(page.getByText('premium')).toBeVisible();
+		await page.getByRole('button', {name: 'Account'}).click();
+		await expect(page.getByTestId('account.role')).toBeVisible();
+		await expect(page.getByTestId('account.role')).toHaveText('premium');
 		
 		await page.screenshot({path: 'test-results/role-01-premium.png'});
 	});

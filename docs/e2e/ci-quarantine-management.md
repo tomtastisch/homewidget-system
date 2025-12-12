@@ -10,7 +10,7 @@
 **Problem:** UI-Features fehlen noch, Tests können UI nicht validieren.  
 **Lösung:** Temporäre Quarantäne in CI, Tests laufen lokal weiter.
 
-**Status:** 3 Tests quarantänisiert (Stand: 2025-12-12 - nach Ticket D)  
+**Status:** 3 Tests quarantänisiert (Stand: 2025-12-12 - nach Ticket D finalisiert)  
 **Vorher:** 25 Tests (vor Ticket C)  
 **Ziel:** 0 Tests (sobald alle UI-Features implementiert sind)
 
@@ -75,6 +75,7 @@ test('@standard FEED-01: Home-Feed zeigt eigene Widgets', async ({page}) => {
 - **ROLE-01 (3x):** Rollen-Anzeige im UI (Demo/Common/Premium) (`testId: 'account.role'`)
 
 **Status:** ✅ Alle aktiviert in Ticket D (Account-Screen mit Rollen-Anzeige implementiert)
+**Details:** Tests navigieren zum Account-Screen über UI-Button und validieren Rollenwerte direkt
 
 ### ⚠️ Noch blockiert (3 Tests)
 
@@ -306,11 +307,12 @@ fi
 - Rollen-Anzeige im Account-Screen (`testId: 'account.role'`)
 - Offline-Indikator (`testId: 'status.offline'`)
 
-**Ticket D (aktuell) bewirkte:**
+**Ticket D (finalisiert) bewirkte:**
 1. ✅ 15 Skips entfernt (core-standard komplett + 6 core-advanced)
-2. ✅ Alle TODO-Assertions in entblockten Tests aktiviert
+2. ✅ Alle TODO-Assertions in entblockten Tests aktiviert (inkl. ROLE-01 Navigationen)
 3. ⚠️ 3 Skips bleiben (ROLE-02 - Feature-Visibility UI fehlt noch)
 4. 📝 Quality Gate: 0 Skips in core-standard, 3 Skips in core-advanced
+5. ✅ ROLE-01 Tests vollständig aktiviert mit Account-Screen Navigation
 
 **Nächste Schritte:**
 1. Validation: Tests lokal + CI ausführen
@@ -350,11 +352,11 @@ test-results/<test-name>/video.webm
 
 ## Zusammenfassung
 
-**Status quo (2025-12-12 - nach Ticket D):**
+**Status quo (2025-12-12 - nach Ticket D finalisiert):**
 - 3 Tests in CI-Quarantäne (ROLE-02 Varianten)
-- 15 Tests erfolgreich entquarantänisiert
+- 15 Tests erfolgreich entquarantänisiert (inkl. vollständiger ROLE-01 Aktivierung)
 - Alle entblockten Tests nutzen testIDs aus Ticket C
-- core-standard: 100% entblockt (0 Skips)
+- core-standard: 100% entblockt (0 Skips, 0 TODOs)
 - core-advanced: 66% entblockt (3 von 9 Skips verbleiben)
 
 **Erfolge:**
@@ -374,5 +376,5 @@ test-results/<test-name>/video.webm
 
 ---
 
-**Letzte Aktualisierung:** 2025-12-12 (nach Ticket D)  
+**Letzte Aktualisierung:** 2025-12-12 (nach Ticket D finalisiert)  
 **Nächstes Review:** Nach Implementierung von Feature-Visibility UI

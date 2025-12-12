@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {loginAs} from '../helpers/auth';
+import {loginAs, loginViaApi} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
@@ -29,14 +29,9 @@ test('WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
 	// Verifiziere Login erfolgreich
 	await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 	
-	// Extrahiere Access-Token nach UI-Login aus localStorage
-	const accessTokenB = await page.evaluate(() => {
-	    // Annahme: Das Access-Token wird nach Login unter 'access_token' in localStorage gespeichert
-	    return window.localStorage.getItem('access_token');
-	});
-	if (!accessTokenB) {
-	    throw new Error('Kein Access-Token nach UI-Login gefunden. Prüfe Storage-Key und Login-Flow.');
-	}
+	// Hole Access-Token via API-Login (Access-Token wird nicht in localStorage gespeichert,
+	// sondern nur in-memory im React State gehalten)
+	const accessTokenB = await loginViaApi(api, emailB, pwd);
 	const del = await deleteWidgetById(api, w.id, accessTokenB);
 	expect(del.status()).toBe(404);
 	

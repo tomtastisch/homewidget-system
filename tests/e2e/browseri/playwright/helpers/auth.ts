@@ -1,4 +1,5 @@
-import {expect, Page} from '@playwright/test';
+import {expect, Page, APIRequestContext} from '@playwright/test';
+import {getApiBaseUrl} from './api';
 
 /**
  * Auth-Helfer für Playwright E2E-Tests mit Expo-Web-Frontend.
@@ -118,6 +119,34 @@ export async function setStoredToken(page: Page, token: string): Promise<void> {
 		// Verwende denselben Key wie mobile/src/storage/tokens.ts
 		localStorage.setItem('hw_refresh_token', t);
 	}, token);
+}
+
+/**
+ * Führt einen Login direkt über die Backend-API durch und gibt das Access-Token zurück.
+ * 
+ * Dies ist nützlich für Tests, die ein Access-Token benötigen, ohne die UI durchlaufen zu müssen.
+ * 
+ * @param api - Playwright APIRequestContext
+ * @param email - E-Mail-Adresse
+ * @param password - Passwort
+ * @returns Access-Token
+ */
+export async function loginViaApi(
+	api: APIRequestContext,
+	email: string,
+	password: string
+): Promise<string> {
+	const baseUrl = getApiBaseUrl();
+	const res = await api.post(`${baseUrl}/api/auth/login`, {
+		data: {email, password},
+	});
+	
+	if (!res.ok()) {
+		throw new Error(`API Login fehlgeschlagen: ${res.status()} ${await res.text()}`);
+	}
+	
+	const json = await res.json();
+	return json.access_token;
 }
 
 export const AuthSelectors = {routes, testIds} as const;

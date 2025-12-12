@@ -1,7 +1,7 @@
 import {expect, test} from '@playwright/test';
 import {loginAsRole, createUserWithRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
-import {createWidget, deleteWidgetById} from '../helpers/widgets';
+import {deleteWidgetById} from '../helpers/widgets';
 
 /**
  * Security-Advanced-Tests: Bestenfalls-Ebene
@@ -121,14 +121,13 @@ test.describe('@bestenfalls Security Advanced', () => {
 	});
 	
 	test('@bestenfalls SEC-02: Externe Scripts werden durch CSP kontrolliert', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'sec02-external');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'sec02-external');
 		
 		// Login
 		await loginAsRole(page, 'demo', 'sec02-external-ui');
 		
 		// Versuche, externes Script dynamisch zu laden
-		const scriptLoaded = await page.evaluate(() => {
+		await page.evaluate(() => {
 			return new Promise<boolean>((resolve) => {
 				const script = document.createElement('script');
 				script.src = 'https://evil.example.com/malicious.js';
@@ -159,8 +158,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 	
 	// SEC-04 – Sensitive Daten werden nicht im LocalStorage gespeichert
 	test('@bestenfalls SEC-04: Keine sensiblen Daten im LocalStorage', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'sec04');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'sec04');
 		
 		// Login
 		await loginAsRole(page, 'demo', 'sec04-ui');

@@ -19,8 +19,8 @@ test.describe('@standard Feed', () => {
 		const widget1 = await createWidget(api, 'Feed Test Widget 1', '{}', user.access_token);
 		const widget2 = await createWidget(api, 'Feed Test Widget 2', '{}', user.access_token);
 		
-		// Login über UI
-		await loginAsRole(page, 'demo', 'feed01-ui');
+		// Login über UI (verwendet denselben User)
+		await loginAsRole(page, 'demo', 'feed01');
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
 		// Verifiziere, dass Feed geladen wurde (über API)
@@ -48,26 +48,29 @@ test.describe('@standard Feed', () => {
 		// Erstelle Widget
 		const widget = await createWidget(api, 'Cache Test Widget', '{}', user.access_token);
 		
+		// Tracke API-Calls zu /api/widgets/ (Tracking erst nach Login aktiv)
+		const apiCalls: string[] = [];
+		let trackApiCalls = false;
+		await page.route('**/api/widgets/**', async (route) => {
+			if (trackApiCalls) {
+				apiCalls.push(route.request().url());
+			}
+			await route.continue();
+		});
+		
 		// Login über UI
 		await loginAsRole(page, 'demo', 'feed02-ui');
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
-		
-		// Tracke API-Calls zu /api/widgets/
-		const apiCalls: string[] = [];
-		await page.route('**/api/widgets/**', async (route) => {
-			apiCalls.push(route.request().url());
-			await route.continue();
-		});
+		// Tracking ab jetzt aktivieren
+		trackApiCalls = true;
 		
 		// Initial load (sollte API-Call triggern)
 		await page.reload();
 		await page.waitForTimeout(2000);
-		const initialCalls = apiCalls.length;
 		
 		// Reload innerhalb Cache-Zeitfenster (sollte Cache nutzen, kein neuer API-Call)
 		await page.reload();
 		await page.waitForTimeout(2000);
-		const cachedCalls = apiCalls.length;
 		
 		// TODO: Sobald Caching implementiert ist, verifiziere:
 		// expect(cachedCalls).toBe(initialCalls); // Kein neuer Call wegen Cache
@@ -83,8 +86,7 @@ test.describe('@standard Feed', () => {
 	
 	// FEED-03 – Rate-Limit (429) → UI-Fehlermeldung
 	test('@standard FEED-03: Feed Rate-Limit zeigt Fehlermeldung', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'feed03');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'feed03');
 		
 		// Login über UI
 		await loginAsRole(page, 'demo', 'feed03-ui');

@@ -32,31 +32,31 @@ export default defineConfig({
 	},
 	
 	/**
-	 * Test-Projekte für verschiedene Testebenen (Minimum/Standard/Advanced)
+	 * Test-Projekte für verschiedene Testebenen (Minimal/Standard/Advanced)
 	 *
 	 * Verwendung:
-	 * - npx playwright test --project=minimum      # Nur Minimum-Tests
-	 * - npx playwright test --project=standard     # Minimum + Standard
+	 * - npx playwright test --project=minimal      # Nur Minimal-Tests
+	 * - npx playwright test --project=standard     # Minimal + Standard
 	 * - npx playwright test --project=advanced     # Alle Tests inkl. Advanced
-	 * - npx playwright test                        # Standard (Minimum + Standard)
+	 * - npx playwright test                        # Standard (Minimal + Standard)
 	 */
 	projects: [
 		{
-			name: 'minimum',
+			name: 'minimal',
 			testMatch: /.*\.spec\.ts$/,
-			grep: /@minimum/,
+			grep: /@minimal/,
 			use: {...devices['Desktop Chrome']},
 		},
 		{
 			name: 'standard',
 			testMatch: /.*\.spec\.ts$/,
-			grep: /@minimum|@standard/,
+			grep: /@minimal|@standard/,
 			use: {...devices['Desktop Chrome']},
 		},
 		{
 			name: 'advanced',
 			testMatch: /.*\.spec\.ts$/,
-			// Kein grep-Filter: alle Tests (minimum + standard + advanced)
+			// Kein grep-Filter: alle Tests (minimal + standard + advanced)
 			use: {...devices['Desktop Chrome']},
 		},
 	],

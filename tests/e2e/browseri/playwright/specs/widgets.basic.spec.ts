@@ -8,11 +8,11 @@ import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
  * 
  * Login/Navigation über UI, Widget-CRUD über API
  * (da die App aktuell keine UI für Widget-Erstellung/Löschung hat)
- * Tag: @minimum
+ * Tag: @minimal
  */
 
-test.describe('@minimum Widget Basic', () => {
-	test('@minimum WIDGET-01: Eigene Widgets anzeigen nach Login', async ({page}) => {
+test.describe('@minimal Widget Basic', () => {
+	test('@minimal WIDGET-01: Eigene Widgets anzeigen nach Login', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w1+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
@@ -35,7 +35,7 @@ test.describe('@minimum Widget Basic', () => {
 		await page.screenshot({path: 'test-results/widget-01-home-feed.png'});
 	});
 
-	test('@minimum WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
+	test('@minimal WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w2+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
@@ -56,7 +56,7 @@ test.describe('@minimum Widget Basic', () => {
 		await page.screenshot({path: 'test-results/widget-02-created.png'});
 	});
 
-	test('@minimum WIDGET-03: Eigenes Widget löschen', async ({page}) => {
+	test('@minimal WIDGET-03: Eigenes Widget löschen', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w3+${Date.now()}@example.com`;
 	const password = 'Secret1234!';

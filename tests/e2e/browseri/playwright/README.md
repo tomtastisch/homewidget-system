@@ -1,4 +1,4 @@
-# Playwright – Browser-E2E (Minimum, Standard, Advanced)
+# Playwright – Browser-E2E (Minimal, Standard, Advanced)
 
 > **📚 ZENTRALE DOKUMENTATION:** Alle E2E-Dokumentation wurde nach `docs/e2e/` verschoben.
 > 
@@ -8,7 +8,7 @@
 
 Dieses Verzeichnis enthält die Browser-E2E-Infrastruktur auf Basis von Playwright mit drei Testebenen:
 
-- **Minimum**: Kritische Infra-/Security-Pfade (Login/Logout, Widgets CRUD, Health)
+- **Minimal**: Kritische Infra-/Security-Pfade (Login/Logout, Widgets CRUD, Health)
 - **Standard**: Erweiterte Resilience, Fehlerbehandlung, Feed-Tests, CORS
 - **Advanced**: Edge-Cases, komplexe Szenarien, Security-Advanced, Performance
 
@@ -20,7 +20,7 @@ Die Tests laufen gegen das **Expo-Web-Frontend** (React Native Web) und das **Ba
 
 Alle Tests sind mit Tags versehen, die eine selektive Ausführung ermöglichen:
 
-- `@minimum`: Kritische Basistests (müssen immer grün sein)
+- `@minimal`: Kritische Basistests (müssen immer grün sein)
 - `@standard`: Erweiterte Tests für robuste Fehlerbehandlung
 - `@advanced`: Edge-Cases und fortgeschrittene Szenarien
 

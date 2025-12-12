@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {loginAs, loginViaApi, createUserWithRole} from '../helpers/auth';
+import {loginAs, createUserWithRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**

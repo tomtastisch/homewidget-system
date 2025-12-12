@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {loginAsRole, loginViaApi, createUserWithRole} from '../helpers/auth';
+import {loginAsRole, createUserWithRole} from '../helpers/auth';
 import {newApiRequestContext, mockBackendError} from '../helpers/api';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
@@ -12,8 +12,7 @@ import {createWidget, deleteWidgetById} from '../helpers/widgets';
 test.describe('@standard Widget Resilience', () => {
 	// WIDGET-05 – Backend-Fehler bei Creation (500) → UI-Error-Toast
 	test('@standard WIDGET-05: Backend-Fehler bei Widget-Erstellung zeigt Fehler', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'widget05');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'widget05');
 		
 		// Login über UI
 		await loginAsRole(page, 'demo', 'widget05-ui');

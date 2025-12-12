@@ -1,5 +1,5 @@
-import {expect, test, Page} from '@playwright/test';
-import {getApiBaseUrl, mockBackendError, newApiRequestContext} from '../helpers/api';
+import {expect, test} from '@playwright/test';
+import {newApiRequestContext} from '../helpers/api';
 import {loginAsRole, createUserWithRole} from '../helpers/auth';
 
 /**
@@ -32,8 +32,7 @@ test.describe('@standard Infrastructure Resilience', () => {
 	
 	// INFRA-04 – CORS-Header korrekt (kein CORS-Error im Browser)
 	test('@standard INFRA-04: CORS-Header sind korrekt gesetzt', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'infra04');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra04');
 		
 		// Console-Errors tracken
 		const consoleErrors: string[] = [];
@@ -71,8 +70,7 @@ test.describe('@standard Infrastructure Resilience', () => {
 test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 	// INFRA-05 – langsame Netzwerke simulieren, Loading-States
 	test('@bestenfalls INFRA-05: Langsames Netzwerk zeigt Loading-States', async ({page, context}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'infra05');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra05');
 		
 		// Simuliere langsames Netzwerk durch Verzögerung aller API-Calls
 		await page.route('**/api/**', async (route) => {
@@ -98,8 +96,7 @@ test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 	
 	// INFRA-06 – Offline-Modus und Reconnect
 	test('@bestenfalls INFRA-06: Offline-Modus wird erkannt', async ({page, context}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'infra06');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra06');
 		
 		// Login zunächst mit funktionierendem Netzwerk
 		await loginAsRole(page, 'demo', 'infra06-ui');
@@ -134,12 +131,11 @@ test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 	
 	// INFRA-07 – Timeout-Handling bei langsamen Responses
 	test('@bestenfalls INFRA-07: Request-Timeouts werden korrekt behandelt', async ({page}) => {
-		// Mock sehr langsamen Backend-Response (länger als typischer Timeout)
+		// Mock sehr langsamen Backend-Response (Timeout simulieren durch abort)
 		await page.route('**/api/widgets/**', async (route) => {
 			if (route.request().method() === 'GET') {
-				// Verzögere extrem lang (simuliert Timeout)
-				await new Promise(resolve => setTimeout(resolve, 60_000));
-				await route.continue();
+				// Breche Request gezielt mit Timeout-Fehler ab (simuliert Timeout)
+				await route.abort('timedout');
 			} else {
 				await route.continue();
 			}
@@ -151,8 +147,8 @@ test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 		// Versuche Feed zu laden (sollte nach Timeout abbrechen)
 		await page.reload();
 		
-		// Warte auf Timeout-Fehler (kürzer als 60s Mock-Delay)
-		await page.waitForTimeout(15_000);
+		// Warte kurz auf Fehlerbehandlung
+		await page.waitForTimeout(3000);
 		
 		// TODO: Sobald Timeout-Error-Handling implementiert:
 		// await expect(page.getByText(/Zeitüberschreitung/i)).toBeVisible();
@@ -166,8 +162,7 @@ test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 test.describe('@bestenfalls Infrastructure - Error Recovery', () => {
 	// INFRA-08 – Backend-Recovery nach temporärem Ausfall
 	test('@bestenfalls INFRA-08: App erholt sich nach Backend-Wiederherstellung', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'infra08');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra08');
 		
 		let failureMode = true;
 		

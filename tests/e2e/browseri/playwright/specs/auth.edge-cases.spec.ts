@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {loginAs, loginViaApi, createUserWithRole, logout} from '../helpers/auth';
+import {loginAs, createUserWithRole, logout} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
@@ -84,12 +84,16 @@ test.describe('@bestenfalls Auth Edge Cases', () => {
 	
 	// AUTH-11 – leere/getrimmte Tokens im Refresh-Request
 	test('@bestenfalls AUTH-11: Leere oder getrimmte Tokens werden korrekt abgelehnt', async ({page}) => {
-		// Test mit leerem Token
+		// Test mit leerem Token - erst navigieren, dann Token setzen
+		await page.goto('/');
+		await page.waitForLoadState('domcontentloaded');
+		
 		await page.evaluate(() => {
 			localStorage.setItem('hw_refresh_token', '');
 		});
 		
-		await page.goto('/');
+		// Reload um Token-Check zu triggern
+		await page.reload();
 		
 		// Erwarte, dass App als unauthentifiziert behandelt wird
 		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
@@ -97,6 +101,9 @@ test.describe('@bestenfalls Auth Edge Cases', () => {
 		await page.screenshot({path: 'test-results/auth-11-empty-token.png'});
 		
 		// Test mit nur Whitespace
+		await page.goto('/');
+		await page.waitForLoadState('domcontentloaded');
+		
 		await page.evaluate(() => {
 			localStorage.setItem('hw_refresh_token', '   ');
 		});
@@ -107,6 +114,9 @@ test.describe('@bestenfalls Auth Edge Cases', () => {
 		await page.screenshot({path: 'test-results/auth-11-whitespace-token.png'});
 		
 		// Test mit ungültigen Zeichen
+		await page.goto('/');
+		await page.waitForLoadState('domcontentloaded');
+		
 		await page.evaluate(() => {
 			localStorage.setItem('hw_refresh_token', 'invalid-token-###');
 		});

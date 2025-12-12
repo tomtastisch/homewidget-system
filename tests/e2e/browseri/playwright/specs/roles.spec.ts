@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {loginAsRole, createUserWithRole, type UserRole} from '../helpers/auth';
+import {loginAsRole, createUserWithRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
@@ -21,12 +21,7 @@ test.describe('@standard Roles', () => {
 		// Beispiel: await expect(page.getByText('Demo')).toBeVisible();
 		
 		// Verifiziere über API, dass User die richtige Rolle hat
-		const api = await newApiRequestContext();
-		const users = await api.get('/api/users/me', {
-			headers: {
-				Authorization: `Bearer ${await page.evaluate(() => localStorage.getItem('hw_refresh_token'))}`,
-			},
-		});
+		// (API-Call würde /api/users/me benötigen, falls implementiert)
 		
 		// Für jetzt: Screenshot als visuelle Verifikation
 		await page.screenshot({path: 'test-results/role-01-demo.png'});
@@ -87,10 +82,9 @@ test.describe('@bestenfalls Roles - Feature Visibility', () => {
 	
 	test('@bestenfalls ROLE-02: Rolle beeinflusst verfügbare Widget-Typen', async ({page}) => {
 		// Test für rollenbasierte Widget-Beschränkungen
-		const api = await newApiRequestContext();
 		
 		// Demo-User: möglicherweise limitierte Widget-Anzahl oder -Typen
-		const demoUser = await createUserWithRole(api, 'demo', 'role02-widget-demo');
+		await createUserWithRole(await newApiRequestContext(), 'demo', 'role02-widget-demo');
 		await loginAsRole(page, 'demo', 'role02-widget-demo-ui');
 		
 		// TODO: Sobald Widget-Erstellung in UI verfügbar:
@@ -100,7 +94,7 @@ test.describe('@bestenfalls Roles - Feature Visibility', () => {
 		await page.screenshot({path: 'test-results/role-02-demo-widgets.png'});
 		
 		// Premium-User: voller Zugriff
-		const premiumUser = await createUserWithRole(api, 'premium', 'role02-widget-premium');
+		await createUserWithRole(await newApiRequestContext(), 'premium', 'role02-widget-premium');
 		await loginAsRole(page, 'premium', 'role02-widget-premium-ui');
 		
 		// TODO: Prüfe erweiterte Widget-Optionen für Premium

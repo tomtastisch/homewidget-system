@@ -35,6 +35,7 @@ exports[`WidgetBanner renders title, description and CTA 1`] = `
             "fontWeight": "700",
           }
         }
+        testID="feed.widget.name"
       >
         Big Promo
       </Text>

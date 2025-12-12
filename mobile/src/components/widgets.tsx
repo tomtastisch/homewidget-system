@@ -13,7 +13,7 @@ export function WidgetCard({title, description, imageUrl, ctaLabel, onPress}: Co
 	return (
 		<View style={styles.card}>
 			{!!imageUrl && <Image source={{uri: imageUrl}} style={styles.cardImage} resizeMode="cover"/>}
-			{!!title && <Text style={styles.cardTitle}>{title}</Text>}
+			{!!title && <Text style={styles.cardTitle} testID="feed.widget.name">{title}</Text>}
 			{!!description && <Text style={styles.cardText}>{description}</Text>}
 			{!!ctaLabel && <View style={{marginTop: 8}}><Button title={ctaLabel} onPress={onPress}/></View>}
 		</View>
@@ -26,7 +26,7 @@ export function WidgetBanner({title, description, imageUrl, ctaLabel, onPress}: 
 			<View style={{flexDirection: 'row', alignItems: 'center'}}>
 				{!!imageUrl && <Image source={{uri: imageUrl}} style={styles.bannerImage} resizeMode="cover"/>}
 				<View style={{flex: 1}}>
-					{!!title && <Text style={styles.bannerTitle}>{title}</Text>}
+					{!!title && <Text style={styles.bannerTitle} testID="feed.widget.name">{title}</Text>}
 					{!!description && <Text style={styles.bannerText}>{description}</Text>}
 				</View>
 			</View>

@@ -1,6 +1,7 @@
 import React from 'react';
 import {cleanup, render, waitFor} from '@testing-library/react-native';
 import HomeScreen from '../screens/HomeScreen';
+import {ToastProvider} from '../ui/ToastContext';
 
 // Dynamic role mock for AuthContext
 // Note: Jest allows referencing variables in mock factories if they start with 'mock'
@@ -39,10 +40,12 @@ describe('HomeScreen roles', () => {
 	it('shows COMMON badge when authenticated with role common', async () => {
 		mockCurrentRole = 'common';
 		const {getByText, unmount} = render(
-			<HomeScreen
-				navigation={{navigate: jest.fn()} as any}
-				route={{key: 'Home', name: 'Home', params: undefined} as any}
-			/>
+			<ToastProvider>
+				<HomeScreen
+					navigation={{navigate: jest.fn()} as any}
+					route={{key: 'Home', name: 'Home', params: undefined} as any}
+				/>
+			</ToastProvider>
 		);
 		await waitFor(() => expect(getByText('COMMON')).toBeTruthy());
 		await waitFor(() => expect(getByText('Willkommen')).toBeTruthy());
@@ -53,10 +56,12 @@ describe('HomeScreen roles', () => {
 	it('shows PREMIUM badge when authenticated with role premium', async () => {
 		mockCurrentRole = 'premium';
 		const {getByText, unmount} = render(
-			<HomeScreen
-				navigation={{navigate: jest.fn()} as any}
-				route={{key: 'Home', name: 'Home', params: undefined} as any}
-			/>
+			<ToastProvider>
+				<HomeScreen
+					navigation={{navigate: jest.fn()} as any}
+					route={{key: 'Home', name: 'Home', params: undefined} as any}
+				/>
+			</ToastProvider>
 		);
 		await waitFor(() => expect(getByText('PREMIUM')).toBeTruthy());
 		await waitFor(() => expect(getByText('Exklusiv')).toBeTruthy());

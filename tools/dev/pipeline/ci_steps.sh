@@ -211,20 +211,20 @@ step_e2e_playwright_install() {
 }
 
 ## @brief Playwright Minimum-Tests ausführen.
-step_e2e_playwright_minimum_tests() {
+step_e2e_playwright_minimal_tests() {
     local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
     if [[ ! -d "${playwright_dir}" ]]; then
         log_error "Playwright-Verzeichnis fehlt – Tests können nicht ausgeführt werden."
         return 1
     fi
     
-    log_info "Führe Playwright Minimum-Tests aus..."
+    log_info "Führe Playwright Minimal-Tests aus..."
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
-        npx playwright test --project=minimum
+        npx playwright test --project=minimal
     )
 }
 
@@ -383,8 +383,8 @@ Verfügbare Kommandos:
   e2e_backend_start               Backend im E2E-Modus starten (Port 8100)
   e2e_expo_web_start              Expo-Web im E2E-Modus starten (Port 19006)
   e2e_playwright_install          Playwright-Dependencies installieren
-  e2e_playwright_minimum_tests    Playwright Minimum-Tests ausführen
-  e2e_playwright_standard_tests   Playwright Standard-Tests ausführen (Minimum + Standard)
+  e2e_playwright_minimal_tests    Playwright Minimal-Tests ausführen
+  e2e_playwright_standard_tests   Playwright Standard-Tests ausführen (Minimal + Standard)
   e2e_playwright_all_tests        Playwright alle Tests ausführen (inkl. Advanced)
 
   mobile_install_deps             Mobile-Abhängigkeiten installieren (npm ci)
@@ -433,8 +433,8 @@ main() {
         e2e_playwright_install)
             step_e2e_playwright_install
             ;;
-        e2e_playwright_minimum_tests)
-            step_e2e_playwright_minimum_tests
+        e2e_playwright_minimal_tests)
+            step_e2e_playwright_minimal_tests
             ;;
         e2e_playwright_standard_tests)
             step_e2e_playwright_standard_tests

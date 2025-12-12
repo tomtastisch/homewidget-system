@@ -135,11 +135,11 @@ echo "=========================================="
 echo ""
 
 # Zähle nach Test-Level
-minimum_count=$(grep -r "test.skip.*BLOCKED-UI" "${SPECS_DIR}" --include="*.spec.ts" -B2 | grep -c "@minimum" || true)
+minimal_count=$(grep -r "test.skip.*BLOCKED-UI" "${SPECS_DIR}" --include="*.spec.ts" -B2 | grep -c "@minimal" || true)
 standard_count=$(grep -r "test.skip.*BLOCKED-UI" "${SPECS_DIR}" --include="*.spec.ts" -B2 | grep -c "@standard" || true)
 advanced_count=$(grep -r "test.skip.*BLOCKED-UI" "${SPECS_DIR}" --include="*.spec.ts" -B2 | grep -c "@advanced" || true)
 
-echo "Minimum-Tests:  ${minimum_count} Skips"
+echo "Minimal-Tests:  ${minimal_count} Skips"
 echo "Standard-Tests: ${standard_count} Skips"
 echo "Advanced-Tests: ${advanced_count} Skips"
 echo ""

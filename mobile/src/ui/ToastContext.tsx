@@ -16,6 +16,10 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined);
  * ToastProvider verwaltet globale Toast-Benachrichtigungen.
  * 
  * Ermöglicht das Anzeigen von Feedback-Meldungen aus beliebigen Komponenten.
+ * 
+ * HINWEIS: Aktuell wird nur ein Toast gleichzeitig angezeigt. Neue Toasts
+ * überschreiben vorherige. Für eine Queue-basierte Implementierung mit
+ * mehreren Toasts müsste die State-Struktur erweitert werden.
  */
 export function ToastProvider({children}: {children: React.ReactNode}) {
 	const [toast, setToast] = useState<{message: string; type: ToastType; duration: number} | null>(null);

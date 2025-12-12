@@ -12,9 +12,11 @@ export default function LoginScreen({ navigation }: Props) {
 	const [password, setPassword] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
+	const [isRateLimited, setIsRateLimited] = useState(false);
 	
 	const onLogin = async () => {
 		setLocalError(null);
+		setIsRateLimited(false);
 		if (!email || !password) {
 			setLocalError('Bitte E‑Mail und Passwort ausfüllen.');
 			return;
@@ -26,6 +28,7 @@ export default function LoginScreen({ navigation }: Props) {
 		} catch (e: any) {
 			if (e?.status === 429) {
 				setLocalError('Zu viele Anmeldeversuche. Bitte versuche es später erneut.');
+				setIsRateLimited(true);
 			} else if (e?.message) {
 				setLocalError(e.message);
 			}
@@ -41,7 +44,7 @@ export default function LoginScreen({ navigation }: Props) {
 				<View>
 					<Text 
 						style={styles.error} 
-						testID={localError?.includes('Zu viele Anmeldeversuche') || error?.includes('Zu viele') ? 'login.error.rateLimit' : 'login.error'}
+						testID={isRateLimited ? 'login.error.rateLimit' : 'login.error'}
 					>
 						{localError || error}
 					</Text>

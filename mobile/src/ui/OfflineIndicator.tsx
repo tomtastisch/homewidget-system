@@ -5,6 +5,10 @@ import {StyleSheet, Text, View} from 'react-native';
  * OfflineIndicator zeigt eine Warnung an, wenn keine Netzwerkverbindung besteht.
  * 
  * Nutzt die native Browser-API für Netzwerk-Status-Erkennung (navigator.onLine).
+ * 
+ * HINWEIS: Für native React Native Apps (iOS/Android) sollte stattdessen
+ * @react-native-community/netinfo verwendet werden. Diese Implementierung
+ * funktioniert nur für Web (Expo Web).
  */
 export function OfflineIndicator() {
 	const [isOffline, setIsOffline] = useState(false);

@@ -168,3 +168,11 @@ jobs:
                     E2E_API_BASE_URL: http://127.0.0.1:8100
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimum_tests
+            
+            # Optionale erweiterte Tests (Standard: Minimum + Standard, aktivierbar für Feature-Branches)
+            # Für aktivierung: GitHub Workflow manuell mit Input-Parameter erweitern
+            # oder in Feature-Branch-Workflow separate Job definieren mit:
+            #     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_standard_tests
+            
+            # Vollständige Test-Suite (inkl. Bestenfalls) für manuelle/Release-Runs:
+            #     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_all_tests

@@ -214,6 +214,3 @@ export async function loginAsRole(
 }
 
 export const AuthSelectors = {routes, testIds} as const;
-
-// Export type für externe Verwendung
-export type {UserRole};

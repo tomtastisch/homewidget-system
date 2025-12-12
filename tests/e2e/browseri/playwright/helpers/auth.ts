@@ -56,6 +56,17 @@ export async function loginAs(page: Page, email: string, password: string): Prom
 	
 	// Warte auf erfolgreichen Login (Login-Formular verschwindet)
 	await page.getByTestId(testIds.loginEmail).waitFor({state: 'hidden', timeout: 10_000});
+	
+	// Zusätzliche Verifikation: Nutzer ist wirklich eingeloggt
+	// 1) Der Login-Link auf dem Homescreen sollte nicht mehr sichtbar sein
+	await expect(page.getByTestId(testIds.homeLoginLink)).toBeHidden({timeout: 10_000});
+	// 2) Ein Refresh-Token sollte im Storage vorhanden sein (Web: localStorage)
+	await expect
+		.poll(
+			async () => page.evaluate(() => Boolean(localStorage.getItem('hw_refresh_token'))),
+			{timeout: 10_000},
+		)
+		.toBe(true);
 }
 
 /**
@@ -74,11 +85,6 @@ export async function logout(page: Page): Promise<void> {
 	await page.evaluate(() => {
 		// Lösche das aktuelle Refresh-Token (Key: 'hw_refresh_token', verwendet von mobile/src/storage/tokens.ts)
 		localStorage.removeItem('hw_refresh_token');
-		// Entferne zusätzlich veraltete Token-Keys für Abwärtskompatibilität:
-		// - 'access_token': früherer Access-Token-Storage
-		// - 'refreshToken': früherer Refresh-Token-Storage
-		localStorage.removeItem('access_token');
-		localStorage.removeItem('refreshToken');
 	});
 	
 	// Reload um Auth-State zu triggern

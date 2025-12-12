@@ -183,9 +183,16 @@ def cmd_seed_e2e() -> int:
     """
     _ensure_backend_on_path()
     from app.config.test_e2e import apply_env
+
+    # WICHTIG: ENV zuerst anwenden, erst danach Module importieren,
+    # die das DB-Engine-Singleton initialisieren (z. B. app.core.database).
+    # So ist sichergestellt, dass sowohl Seed als auch Uvicorn dieselbe
+    # E2E-Datenbank verwenden.
+    apply_env()
+
+    # Import nach apply_env, damit Settings/DATABASE_URL korrekt gesetzt sind
     from app.initial_data_e2e import run as seed
 
-    apply_env()
     seed()
     print("e2e_seed_complete")
     return 0

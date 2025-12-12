@@ -72,8 +72,12 @@ class RefreshTokenLockManager:
             # Hinweis: Es besteht eine theoretische Race-Condition zwischen locked() und del,
             # aber das ist akzeptabel - im schlimmsten Fall bleibt ein Lock länger im Dict.
             with self._manager_lock:
-                # Double-check: Nur löschen wenn niemand darauf wartet
-                if token_digest in self._locks and not self._locks[token_digest].locked():
+                # Double-check: Nur löschen wenn niemand darauf wartet und der Lock noch derselbe ist
+                if (
+                    token_digest in self._locks
+                    and self._locks[token_digest] is token_lock
+                    and not self._locks[token_digest].locked()
+                ):
                     del self._locks[token_digest]
                     LOG.debug("refresh_lock_cleaned_up", extra={"token_digest_hash": hash(token_digest) % 100000})
 

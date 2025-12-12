@@ -1,4 +1,5 @@
-"""Full-Stack-Light Contract Tests (pytest + httpx)
+"""
+Full-Stack-Light Contract Tests (pytest + httpx)
 
 Flow: Login -> Home-Feed -> Logout
 

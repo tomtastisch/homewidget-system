@@ -133,7 +133,7 @@ jest-expo → jest → jest-cli → @jest/core → jest-runner → jest-haste-ma
 | Package | Aktuelle Version | Status |
 |---------|------------------|---------|
 | expo | ~54.0.27 | ✅ Neueste Stable |
-| jest-expo | ~54.0.14 | ✅ Kompatibel mit Expo 54 |
+| jest-expo | ~54.0.15 | ✅ Kompatibel mit Expo 54 |
 | react-native | 0.81.5 | ✅ Korrekt für Expo 54 |
 | react | 19.1.0 | ✅ Neueste Stable |
 
@@ -149,16 +149,8 @@ jest-expo → jest → jest-cli → @jest/core → jest-runner → jest-haste-ma
 
 **Dokumentierte Ausnahme:**
 
-```json
-// mobile/package.json
-"overrides": {
-  "@xmldom/xmldom": "^0.8.10"  // Sicherheitsfix (bekannte CVE)
-}
-```
-
 Weitere Overrides werden **nicht** hinzugefügt, um Tooling-Stabilität zu wahren.
 
----
 
 ## Pipeline-Status (Stand: 2025-12-11)
 

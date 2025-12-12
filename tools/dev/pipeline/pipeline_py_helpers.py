@@ -183,9 +183,16 @@ def cmd_seed_e2e() -> int:
     """
     _ensure_backend_on_path()
     from app.config.test_e2e import apply_env
+
+    # WICHTIG: ENV zuerst anwenden, erst danach Module importieren,
+    # die das DB-Engine-Singleton initialisieren (z. B. app.core.database).
+    # So ist sichergestellt, dass sowohl Seed als auch Uvicorn dieselbe
+    # E2E-Datenbank verwenden.
+    apply_env()
+
+    # Import nach apply_env, damit Settings/DATABASE_URL korrekt gesetzt sind
     from app.initial_data_e2e import run as seed
 
-    apply_env()
     seed()
     print("e2e_seed_complete")
     return 0
@@ -229,7 +236,12 @@ def cmd_run_e2e_contracts() -> int:
     os.environ["E2E_API_BASE_URL"] = f"http://{host}:{port}"
 
     os.environ.setdefault("ENV", "test_e2e")
-    db_url = os.environ.get("E2E_DATABASE_URL") or "sqlite:///./test_e2e.db"
+    # Absoluten Pfad für E2E-Datenbank verwenden, damit Seed-Prozess und uvicorn-Subprocess
+    # (mit unterschiedlichen cwd) dieselbe Datei verwenden.
+    db_url = os.environ.get("E2E_DATABASE_URL")
+    if not db_url:
+        db_path = paths.root / "test_e2e.db"
+        db_url = f"sqlite:///{db_path}"
     os.environ["E2E_DATABASE_URL"] = db_url
     os.environ["DATABASE_URL"] = db_url
     os.environ.setdefault("REQUEST_LOGGING_ENABLED", "0")
@@ -239,6 +251,10 @@ def cmd_run_e2e_contracts() -> int:
     if rc_seed != 0:
         return rc_seed
 
+    # Environment-Variablen explizit an uvicorn-Subprocess übergeben,
+    # damit DATABASE_URL und andere E2E-Konfiguration übernommen werden.
+    uvicorn_env = os.environ.copy()
+    
     uvicorn_proc = subprocess.Popen(
         [
             "uvicorn",
@@ -251,6 +267,7 @@ def cmd_run_e2e_contracts() -> int:
             "warning",
         ],
         cwd=str(paths.backend),
+        env=uvicorn_env,
     )
 
     try:

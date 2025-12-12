@@ -33,7 +33,11 @@ export default function LoginScreen({ navigation }: Props) {
 	return (
 		<View style={styles.container}>
 			<Text style={styles.title}>HomeWidget Login</Text>
-			{!!(localError || error) && <Text style={styles.error}>{localError || error}</Text>}
+			{!!(localError || error) && (
+				<Text style={styles.error} testID="login.error">
+					{localError || error}
+				</Text>
+			)}
 			<TextInput
 				style={styles.input}
 				placeholder="E‑Mail"

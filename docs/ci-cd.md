@@ -116,7 +116,7 @@ Führt aus:
 
 #### Backend Tests
 ```bash
-# Tests ausführen (falls vorhanden)
+# Tests ausführen
 source backend/.venv/bin/activate
 pytest backend/tests -v
 ```

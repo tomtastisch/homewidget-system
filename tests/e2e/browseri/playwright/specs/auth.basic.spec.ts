@@ -1,64 +1,81 @@
 import {expect, test} from '@playwright/test';
+import {loginAs, logout} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
-// AUTH-01 – Login mit gültigen Daten (Happy Path)
-test('AUTH-01: Login mit gültigen Daten', async () => {
+/**
+ * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web
+ * 
+ * Diese Tests verwenden die echte UI und bilden Nutzerflüsse ab.
+ */
+
+// AUTH-01 – Login mit gültigen Daten (Happy Path) über UI
+test('AUTH-01: Login mit gültigen Daten über UI', async ({page}) => {
+	// Erstelle Testbenutzer über API (Setup)
 	const api = await newApiRequestContext();
 	const email = `auth01+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
-	
-	// Register user
 	await api.post('/api/auth/register', {data: {email, password}});
-	// Login via OAuth2 form
-	const res = await api.post('/api/auth/login', {form: {username: email, password}});
-	expect(res.ok()).toBeTruthy();
-	const json = await res.json();
-	expect(json.access_token).toBeTruthy();
-	expect(json.refresh_token).toBeTruthy();
+	
+	// Login über UI
+	await loginAs(page, email, password);
+	
+	// Verifiziere erfolgreichen Login: Home-Screen ohne Login-Link
+	const loginLink = page.getByTestId('home.loginLink');
+	await expect(loginLink).not.toBeVisible();
+	
+	// Screenshot für visuelle Verifikation
+	await page.screenshot({path: 'test-results/auth-01-logged-in.png'});
 });
 
-// AUTH-02 – Logout löscht Token, UI zeigt Login-Screen
-test('AUTH-02: Logout löscht Token', async () => {
+// AUTH-02 – Logout über UI
+test('AUTH-02: Logout über UI', async ({page}) => {
+	// Setup: Testbenutzer erstellen und einloggen
 	const api = await newApiRequestContext();
 	const email = `auth02+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
 	await api.post('/api/auth/register', {data: {email, password}});
-	const login = await (await api.post('/api/auth/login', {form: {username: email, password}})).json();
 	
-	// Call protected endpoint succeeds
-	const meOk = await api.get('/api/auth/me', {headers: {Authorization: `Bearer ${login.access_token}`}});
-	expect(meOk.ok()).toBeTruthy();
+	// Login über UI
+	await loginAs(page, email, password);
 	
-	// Logout (blacklists current access token)
-	const loggedOut = await api.post('/api/auth/logout', {headers: {Authorization: `Bearer ${login.access_token}`}});
-	expect(loggedOut.status()).toBe(204);
+	// Verifiziere Login erfolgreich
+	await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 	
-	// Token should no longer work
-	const meFail = await api.get('/api/auth/me', {headers: {Authorization: `Bearer ${login.access_token}`}});
-	expect(meFail.status()).toBe(401);
+	// Logout über UI-Helper (löscht localStorage und reload)
+	await logout(page);
 	
-	// UI note: Real app should redirect to /login after client logout.
-	// TODO: When UI exists, perform logout via UI and verify redirect.
+	// Verifiziere Logout: Login-Link wieder sichtbar (unauthentifiziert)
+	await expect(page.getByTestId('home.loginLink')).toBeVisible();
+	
+	// Screenshot
+	await page.screenshot({path: 'test-results/auth-02-logged-out.png'});
 });
 
-// AUTH-03 – Abgelaufener Access-Token → Refresh oder Re-Login (verifizierbares Verhalten)
-test('AUTH-03: Abgelaufener Access-Token → Refresh', async () => {
-	const api = await newApiRequestContext();
-	const email = `auth03+${Date.now()}@example.com`;
-	const password = 'Secret1234!';
-	await api.post('/api/auth/register', {data: {email, password}});
-	const loginResp = await api.post('/api/auth/login', {form: {username: email, password}});
-	const login = await loginResp.json();
+// AUTH-03 – Login mit falschen Credentials zeigt Fehlermeldung
+test('AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
+	// Navigiere zu Home und öffne Login
+	await page.goto('/');
+	const loginLink = page.getByTestId('home.loginLink');
+	await loginLink.waitFor({state: 'visible'});
+	await loginLink.click();
 	
-	// Simulate expired/invalid access by mangling token
-	const badAccess = login.access_token + 'x';
-	const me401 = await api.get('/api/auth/me', {headers: {Authorization: `Bearer ${badAccess}`}});
-	expect(me401.status()).toBe(401);
+	// Warte auf Login-Form
+	await page.getByTestId('login.email').waitFor({state: 'visible'});
 	
-	// Refresh should provide a new access token
-	const refresh = await api.post('/api/auth/refresh', {data: {refresh_token: login.refresh_token}});
-	expect(refresh.ok()).toBeTruthy();
-	const rotated = await refresh.json();
-	const meOk = await api.get('/api/auth/me', {headers: {Authorization: `Bearer ${rotated.access_token}`}});
-	expect(meOk.ok()).toBeTruthy();
+	// Falsche Credentials eingeben
+	await page.getByTestId('login.email').fill('nonexistent@example.com');
+	await page.getByTestId('login.password').fill('wrongpassword');
+	await page.getByTestId('login.submit').click();
+	
+	// Warte auf Fehlermeldung nach fehlerhaftem Login
+	await page.getByTestId('login.error').waitFor({state: 'visible'});
+	
+	// Verifiziere: Login-Form noch sichtbar (Login fehlgeschlagen)
+	await expect(page.getByTestId('login.email')).toBeVisible();
+	
+	// TODO: Prüfe auf Fehlermeldung in UI (sobald Error-State-Handling implementiert)
+	// Erwarte einen Text wie "Invalid credentials" oder ähnlich
+	
+	// Screenshot
+	await page.screenshot({path: 'test-results/auth-03-login-error.png'});
 });

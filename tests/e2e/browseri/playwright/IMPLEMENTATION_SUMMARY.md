@@ -2,6 +2,15 @@
 
 ## Implementierungs-Zusammenfassung
 
+### ⚠️ Wichtige Ergänzung: Ticket 15-2-A (TODO-Abbau nach UI-Freigabe)
+
+**Nach Merge von Ticket C (UI-Signale):**
+- Alle 25 BLOCKED-UI Skips müssen entfernt werden
+- Alle TODO-markierten Assertions müssen implementiert werden
+- **Ziel:** 0 TODOs in Core-Standard; Core-Advanced nur für zusätzliche Coverage
+
+**Details:** Siehe `UI_RELEASE_CHECKLIST.md` für vollständigen Ablaufplan.
+
 ### Umgesetzte Arbeiten
 
 #### 1. Test-Infrastruktur erweitert

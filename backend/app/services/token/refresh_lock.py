@@ -56,16 +56,16 @@ class RefreshTokenLockManager:
                 self._locks[token_digest] = threading.Lock()
             token_lock = self._locks[token_digest]
 
-        LOG.debug("acquiring_refresh_lock", extra={"token_digest_hash": hash(token_digest) % 100000})
+        LOG.debug("acquiring_refresh_lock", extra={"token_digest_prefix": token_digest[:10]})
 
         # Token-spezifischen Lock erwerben
         token_lock.acquire()
         try:
-            LOG.debug("refresh_lock_acquired", extra={"token_digest_hash": hash(token_digest) % 100000})
+            LOG.debug("refresh_lock_acquired", extra={"token_digest_prefix": token_digest[:10]})
             yield
         finally:
             token_lock.release()
-            LOG.debug("refresh_lock_released", extra={"token_digest_hash": hash(token_digest) % 100000})
+            LOG.debug("refresh_lock_released", extra={"token_digest_prefix": token_digest[:10]})
 
             # Cleanup: Lock entfernen wenn er nicht mehr verwendet wird
             # Dies verhindert unbegrenztes Wachstum des Lock-Dictionaries
@@ -79,7 +79,7 @@ class RefreshTokenLockManager:
                     and not self._locks[token_digest].locked()
                 ):
                     del self._locks[token_digest]
-                    LOG.debug("refresh_lock_cleaned_up", extra={"token_digest_hash": hash(token_digest) % 100000})
+                    LOG.debug("refresh_lock_cleaned_up", extra={"token_digest_prefix": token_digest[:10]})
 
 
 # Globale Singleton-Instanz für die gesamte Anwendung

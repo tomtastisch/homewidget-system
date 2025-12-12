@@ -55,6 +55,9 @@ test.describe('@minimum Auth Basic', () => {
 
 	// AUTH-03 – Login mit falschen Credentials zeigt Fehlermeldung
 	test('@minimum AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
+		// Note: login.error testId exists and shows, but actual error text content is not yet assertable
+		// This test currently only verifies that error display appears, not its content
+		
 	// Navigiere zu Home und öffne Login
 	await page.goto('/');
 	const loginLink = page.getByTestId('home.loginLink');

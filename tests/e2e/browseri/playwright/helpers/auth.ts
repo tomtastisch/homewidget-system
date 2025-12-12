@@ -1,5 +1,5 @@
 import {expect, Page, APIRequestContext} from '@playwright/test';
-import {getApiBaseUrl} from './api';
+import {getApiBaseUrl, newApiRequestContext} from './api';
 
 /**
  * Auth-Helfer für Playwright E2E-Tests mit Expo-Web-Frontend.
@@ -152,4 +152,68 @@ export async function loginViaApi(
 	return json.access_token;
 }
 
+/**
+ * Typen für User-Rollen (synchron mit backend/app/models/user.py UserRole)
+ */
+export type UserRole = 'demo' | 'common' | 'premium';
+
+/**
+ * Erstellt einen Testbenutzer mit spezifischer Rolle über die Backend-API.
+ * 
+ * @param api - Playwright APIRequestContext
+ * @param role - Gewünschte Rolle (demo, common, premium)
+ * @param emailPrefix - Optionaler E-Mail-Präfix (default: role)
+ * @returns Object mit email, password und access_token
+ */
+export async function createUserWithRole(
+	api: APIRequestContext,
+	role: UserRole = 'demo',
+	emailPrefix?: string
+): Promise<{email: string; password: string; access_token: string}> {
+	const baseUrl = getApiBaseUrl();
+	const email = `${emailPrefix || role}+${Date.now()}@example.com`;
+	const password = 'Secret1234!';
+	
+	// Register user
+	const registerRes = await api.post(`${baseUrl}/api/auth/register`, {
+		data: {email, password, role},
+	});
+	
+	if (!registerRes.ok()) {
+		throw new Error(`API Registration fehlgeschlagen: ${registerRes.status()} ${await registerRes.text()}`);
+	}
+	
+	// Login to get access token
+	const access_token = await loginViaApi(api, email, password);
+	
+	return {email, password, access_token};
+}
+
+/**
+ * Führt einen vollständigen Login-Flow über die Expo-Web-UI für einen Benutzer mit spezifischer Rolle durch.
+ * 
+ * Erstellt automatisch einen Testbenutzer mit der angegebenen Rolle und führt den Login aus.
+ * 
+ * @param page - Playwright Page-Objekt
+ * @param role - Gewünschte Rolle (demo, common, premium)
+ * @param emailPrefix - Optionaler E-Mail-Präfix
+ * @returns Benutzer-Credentials und Access-Token
+ */
+export async function loginAsRole(
+	page: Page,
+	role: UserRole = 'demo',
+	emailPrefix?: string
+): Promise<{email: string; password: string; access_token: string}> {
+	const api = await newApiRequestContext();
+	const user = await createUserWithRole(api, role, emailPrefix);
+	
+	// Login über UI
+	await loginAs(page, user.email, user.password);
+	
+	return user;
+}
+
 export const AuthSelectors = {routes, testIds} as const;
+
+// Export type für externe Verwendung
+export type {UserRole};

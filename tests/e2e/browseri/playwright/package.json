@@ -2,11 +2,15 @@
     "name": "homewidget-e2e-playwright",
     "version": "0.1.0",
     "private": true,
-    "description": "Browser E2E (minimum) for homewidget-system using Playwright",
+    "description": "Browser E2E (minimum, standard, bestenfalls) for homewidget-system using Playwright",
     "license": "MIT",
     "scripts": {
-        "test": "playwright test",
-        "test:headed": "playwright test --headed",
+        "test": "playwright test --project=standard",
+        "test:minimum": "playwright test --project=minimum",
+        "test:standard": "playwright test --project=standard",
+        "test:bestenfalls": "playwright test --project=bestenfalls",
+        "test:all": "playwright test --project=bestenfalls",
+        "test:headed": "playwright test --headed --project=standard",
         "codegen": "playwright codegen ${PLAYWRIGHT_BASE_URL:-http://localhost:3000}",
         "install:browsers": "playwright install --with-deps chromium"
     },

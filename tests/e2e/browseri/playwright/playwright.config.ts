@@ -30,9 +30,33 @@ export default defineConfig({
 		screenshot: 'only-on-failure',
 		video: 'retain-on-failure',
 	},
+	
+	/**
+	 * Test-Projekte für verschiedene Testebenen (Minimum/Standard/Bestenfalls)
+	 * 
+	 * Verwendung:
+	 * - npx playwright test --project=minimum      # Nur Minimum-Tests
+	 * - npx playwright test --project=standard     # Minimum + Standard
+	 * - npx playwright test --project=bestenfalls  # Alle Tests inkl. Bestenfalls
+	 * - npx playwright test                        # Standard (Minimum + Standard)
+	 */
 	projects: [
 		{
-			name: 'chromium',
+			name: 'minimum',
+			testMatch: /.*\.spec\.ts$/,
+			grep: /@minimum/,
+			use: {...devices['Desktop Chrome']},
+		},
+		{
+			name: 'standard',
+			testMatch: /.*\.spec\.ts$/,
+			grep: /@minimum|@standard/,
+			use: {...devices['Desktop Chrome']},
+		},
+		{
+			name: 'bestenfalls',
+			testMatch: /.*\.spec\.ts$/,
+			// Kein grep-Filter: alle Tests (minimum + standard + bestenfalls)
 			use: {...devices['Desktop Chrome']},
 		},
 	],

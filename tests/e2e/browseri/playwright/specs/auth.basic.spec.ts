@@ -3,13 +3,15 @@ import {loginAs, logout} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
- * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web
+ * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web (Minimum-Ebene)
  * 
  * Diese Tests verwenden die echte UI und bilden Nutzerflüsse ab.
+ * Tag: @minimum
  */
 
-// AUTH-01 – Login mit gültigen Daten (Happy Path) über UI
-test('AUTH-01: Login mit gültigen Daten über UI', async ({page}) => {
+test.describe('@minimum Auth Basic', () => {
+	// AUTH-01 – Login mit gültigen Daten (Happy Path) über UI
+	test('@minimum AUTH-01: Login mit gültigen Daten über UI', async ({page}) => {
 	// Erstelle Testbenutzer über API (Setup)
 	const api = await newApiRequestContext();
 	const email = `auth01+${Date.now()}@example.com`;
@@ -23,12 +25,12 @@ test('AUTH-01: Login mit gültigen Daten über UI', async ({page}) => {
 	const loginLink = page.getByTestId('home.loginLink');
 	await expect(loginLink).not.toBeVisible();
 	
-	// Screenshot für visuelle Verifikation
-	await page.screenshot({path: 'test-results/auth-01-logged-in.png'});
-});
+		// Screenshot für visuelle Verifikation
+		await page.screenshot({path: 'test-results/auth-01-logged-in.png'});
+	});
 
-// AUTH-02 – Logout über UI
-test('AUTH-02: Logout über UI', async ({page}) => {
+	// AUTH-02 – Logout über UI
+	test('@minimum AUTH-02: Logout über UI', async ({page}) => {
 	// Setup: Testbenutzer erstellen und einloggen
 	const api = await newApiRequestContext();
 	const email = `auth02+${Date.now()}@example.com`;
@@ -47,12 +49,12 @@ test('AUTH-02: Logout über UI', async ({page}) => {
 	// Verifiziere Logout: Login-Link wieder sichtbar (unauthentifiziert)
 	await expect(page.getByTestId('home.loginLink')).toBeVisible();
 	
-	// Screenshot
-	await page.screenshot({path: 'test-results/auth-02-logged-out.png'});
-});
+		// Screenshot
+		await page.screenshot({path: 'test-results/auth-02-logged-out.png'});
+	});
 
-// AUTH-03 – Login mit falschen Credentials zeigt Fehlermeldung
-test('AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
+	// AUTH-03 – Login mit falschen Credentials zeigt Fehlermeldung
+	test('@minimum AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
 	// Navigiere zu Home und öffne Login
 	await page.goto('/');
 	const loginLink = page.getByTestId('home.loginLink');
@@ -73,9 +75,10 @@ test('AUTH-03: Login mit falschen Credentials zeigt Fehler', async ({page}) => {
 	// Verifiziere: Login-Form noch sichtbar (Login fehlgeschlagen)
 	await expect(page.getByTestId('login.email')).toBeVisible();
 	
-	// TODO: Prüfe auf Fehlermeldung in UI (sobald Error-State-Handling implementiert)
-	// Erwarte einen Text wie "Invalid credentials" oder ähnlich
-	
-	// Screenshot
-	await page.screenshot({path: 'test-results/auth-03-login-error.png'});
+		// TODO: Prüfe auf Fehlermeldung in UI (sobald Error-State-Handling implementiert)
+		// Erwarte einen Text wie "Invalid credentials" oder ähnlich
+		
+		// Screenshot
+		await page.screenshot({path: 'test-results/auth-03-login-error.png'});
+	});
 });

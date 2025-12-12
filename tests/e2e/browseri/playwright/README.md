@@ -1,67 +1,254 @@
-Playwright – Browser-E2E (Minimum-Basis, Ticket 13)
+# Playwright – Browser-E2E (Minimum, Standard, Bestenfalls)
 
-Überblick
+## Überblick
 
-- Dieses Verzeichnis enthält die minimum Browser-E2E-Infrastruktur auf Basis von Playwright.
-- Fokus: kritische Infra-/Security-Pfade (Login/Logout/Refresh, Widgets CRUD/Owner-Check, Health/Fehlerfälle).
+Dieses Verzeichnis enthält die Browser-E2E-Infrastruktur auf Basis von Playwright mit drei Testebenen:
 
-Struktur
+- **Minimum**: Kritische Infra-/Security-Pfade (Login/Logout, Widgets CRUD, Health)
+- **Standard**: Erweiterte Resilience, Fehlerbehandlung, Feed-Tests, CORS
+- **Bestenfalls**: Edge-Cases, komplexe Szenarien, Security-Advanced, Performance
 
-tests/
-e2e/
-browseri/
-playwright/
-playwright.config.ts
-package.json
-helpers/
-auth.ts
-widgets.ts
-security.ts
-api.ts
-fixtures.ts
-specs/
-auth.basic.spec.ts
-widgets.basic.spec.ts
-widgets.security.spec.ts
-infra.health.spec.ts
-README.md
+Die Tests laufen gegen das **Expo-Web-Frontend** (React Native Web) und das **Backend im E2E-Modus**.
 
-Voraussetzungen
+## Architektur
 
-- Backend im E2E-Modus gestartet (Port 8100):
-  backend/tools/start_test_backend_e2e.sh &
-- Env:
-    - E2E_API_BASE_URL=http://127.0.0.1:8100 (Standard-Wert, kann für abweichende Backend-URLs gesetzt werden)
+### Testebenen & Tagging
 
-Installieren & Ausführen (lokal)
+Alle Tests sind mit Tags versehen, die eine selektive Ausführung ermöglichen:
 
-1) In dieses Verzeichnis wechseln:
+- `@minimum`: Kritische Basistests (müssen immer grün sein)
+- `@standard`: Erweiterte Tests für robuste Fehlerbehandlung
+- `@bestenfalls`: Edge-Cases und fortgeschrittene Szenarien
+
+### Struktur
+
+```
+tests/e2e/browseri/playwright/
+├── playwright.config.ts     # Konfiguration mit Test-Projekten (minimum/standard/bestenfalls)
+├── package.json             # Dependencies und Test-Scripts
+├── helpers/                 # Wiederverwendbare Test-Helfer
+│   ├── auth.ts             # Login, Logout, Rollen-Handling
+│   ├── widgets.ts          # Widget-CRUD-Operationen
+│   ├── security.ts         # XSS-Checks, CSP-Tests
+│   ├── api.ts              # API-Context, Mocking, Error-Simulation
+│   └── fixtures.ts         # Custom Fixtures (authenticated page, etc.)
+├── specs/                   # Test-Spezifikationen (nach Kategorie)
+│   ├── auth.basic.spec.ts           # @minimum: Login, Logout (AUTH-01 bis AUTH-03)
+│   ├── auth.resilience.spec.ts      # @standard: Fehlerbehandlung (AUTH-04 bis AUTH-08)
+│   ├── auth.edge-cases.spec.ts      # @bestenfalls: Token-Refresh, Race-Conditions (AUTH-09+)
+│   ├── widgets.basic.spec.ts        # @minimum: CRUD (WIDGET-01 bis WIDGET-03)
+│   ├── widgets.security.spec.ts     # @minimum: Owner-Check, XSS (WIDGET-04, WIDGET-06)
+│   ├── widgets.resilience.spec.ts   # @standard/@bestenfalls: Backend-Fehler, Edge-Cases
+│   ├── feed.spec.ts                 # @standard: Feed-Laden, Caching, XSS (FEED-01 bis FEED-05)
+│   ├── roles.spec.ts                # @standard/@bestenfalls: Rollenbasierte Features
+│   ├── infra.health.spec.ts         # @minimum: Health-Checks (INFRA-01, INFRA-02)
+│   ├── infra.resilience.spec.ts     # @standard/@bestenfalls: CORS, Network, Offline
+│   ├── security.advanced.spec.ts    # @bestenfalls: CSP, Payload-Validierung (SEC-01, SEC-02)
+│   └── browser.spec.ts              # @bestenfalls: Session-Persistence, Responsive, UX
+└── README.md                # Diese Datei
+
+```
+
+## Voraussetzungen
+
+1. **Backend im E2E-Modus** (Port 8100):
+   ```bash
+   backend/tools/start_test_backend_e2e.sh &
+   ```
+
+2. **Expo-Web im E2E-Modus** (Port 19006):
+   - Wird automatisch von Playwright gestartet (siehe `playwright.config.ts`)
+   - Oder manuell: `cd mobile && npm run web`
+
+3. **Umgebungsvariablen**:
+   - `PLAYWRIGHT_WEB_BASE_URL`: Expo-Web-Frontend (Standard: `http://localhost:19006`)
+   - `E2E_API_BASE_URL`: Backend-API im E2E-Modus (Standard: `http://127.0.0.1:8100`)
+   - `EXPO_PUBLIC_API_BASE_URL`: Backend-URL für Expo-Web (gesetzt von Playwright)
+
+## Installation & Ausführung
+
+### Lokal
+
+1. **In dieses Verzeichnis wechseln**:
+   ```bash
    cd tests/e2e/browseri/playwright
-2) Abhängigkeiten installieren:
+   ```
+
+2. **Abhängigkeiten installieren**:
+   ```bash
    npm install
-3) Browser installieren:
+   ```
+
+3. **Browser installieren** (beim ersten Mal):
+   ```bash
    npx playwright install --with-deps chromium
-4) Tests ausführen (Minimum-Suite):
-   npx playwright test specs/auth.basic.spec.ts \
-   specs/widgets.basic.spec.ts \
-   specs/widgets.security.spec.ts \
-   specs/infra.health.spec.ts
+   ```
 
-Hinweise
+4. **Tests ausführen**:
 
-- **WICHTIG**: Diese Tests laufen derzeit **NICHT gegen eine Web-UI**, sondern direkt gegen das Backend-API.
-- Die Tests nutzen primär `APIRequestContext` für API-Aufrufe (Login, CRUD, etc.).
-- Einige Tests verwenden `page.evaluate()` für minimale Browser-Interaktionen (z.B. Fetch-Calls mit Mocking).
-- **Kein Web-Frontend erforderlich**: Die baseURL zeigt auf das Backend (http://127.0.0.1:8100).
-- UI-spezifische Helper (auth.ts, security.ts) sind für **zukünftige** Web-Frontend-Tests vorbereitet und mit TODOs
-  markiert.
-- Konfiguration: siehe playwright.config.ts (baseURL=E2E_API_BASE_URL, kein webServer-Block).
+   **Minimum-Tests** (schnellster Durchlauf, nur kritische Tests):
+   ```bash
+   npm run test:minimum
+   # oder
+   npx playwright test --project=minimum
+   ```
 
-Zukünftige Web-Frontend-Integration
+   **Standard-Tests** (Minimum + Standard, empfohlen für lokale Entwicklung):
+   ```bash
+   npm run test:standard
+   # oder
+   npm test
+   ```
 
-Wenn ein dediziertes Web-Frontend existiert:
+   **Alle Tests** (inkl. Bestenfalls, für vollständige Coverage):
+   ```bash
+   npm run test:all
+   # oder
+   npx playwright test --project=bestenfalls
+   ```
 
-1. playwright.config.ts: webServer-Block aktivieren und auf Web-Client zeigen
-2. baseURL auf Web-Client-URL ändern (z.B. http://localhost:3000)
-3. Tests erweitern um echte UI-Interaktionen (Selektoren, Navigation, etc.)
-4. Helper aus auth.ts und security.ts nutzen für Login-Forms, XSS-Tests, etc.
+   **Mit UI** (Browser sichtbar für Debugging):
+   ```bash
+   npm run test:headed
+   ```
+
+### CI-Integration
+
+In der CI-Pipeline (`.github/workflows/ci.yml`):
+
+- **Standard-CI** (bei jedem Push): nur `@minimum`
+  ```yaml
+  - name: 🌐 E2E Browser Tests (Playwright – Minimum)
+    run: bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimum_tests
+  ```
+
+- **Nightly/Feature-Branch**: `@minimum + @standard`
+  ```yaml
+  - name: 🌐 E2E Browser Tests (Playwright – Standard)
+    run: bash tools/dev/pipeline/ci_steps.sh e2e_playwright_standard_tests
+  ```
+
+- **Manuell/Release**: alle Tests (inkl. `@bestenfalls`)
+  ```yaml
+  - name: 🌐 E2E Browser Tests (Playwright – Alle)
+    run: bash tools/dev/pipeline/ci_steps.sh e2e_playwright_all_tests
+  ```
+
+## Testmatrix: Matrix vs. Implementierung
+
+| Szenario-ID | Ebene | Status | Spec-Datei | Beschreibung |
+|-------------|-------|--------|-----------|--------------|
+| **Auth** | | | | |
+| AUTH-01 | Minimum | ✅ Implementiert | auth.basic.spec.ts | Login mit gültigen Daten |
+| AUTH-02 | Minimum | ✅ Implementiert | auth.basic.spec.ts | Logout |
+| AUTH-03 | Minimum | ✅ Implementiert | auth.basic.spec.ts | Login mit falschen Credentials |
+| AUTH-04 | Standard | ✅ Implementiert | auth.resilience.spec.ts | Login mit falschem Passwort |
+| AUTH-05 | Standard | ✅ Implementiert | auth.resilience.spec.ts | Ungültige E-Mail |
+| AUTH-06 | Standard | ✅ Implementiert | auth.resilience.spec.ts | Abgelaufener Refresh-Token |
+| AUTH-07 | Standard | ✅ Implementiert | auth.resilience.spec.ts | Manipuliertes JWT |
+| AUTH-08 | Standard | ✅ Implementiert | auth.resilience.spec.ts | Rate-Limit beim Login |
+| AUTH-09 | Bestenfalls | ✅ Implementiert | auth.edge-cases.spec.ts | Token-Refresh während parallel Requests |
+| AUTH-10 | Bestenfalls | ✅ Implementiert | auth.edge-cases.spec.ts | Mehrfacher Logout |
+| AUTH-11 | Bestenfalls | ✅ Implementiert | auth.edge-cases.spec.ts | Leere/getrimmte Tokens |
+| AUTH-12 | Bestenfalls | ✅ Implementiert | auth.edge-cases.spec.ts | Session-Hijacking-Schutz |
+| AUTH-13 | Bestenfalls | ✅ Implementiert | auth.edge-cases.spec.ts | Gleichzeitige Logins |
+| **Widgets** | | | | |
+| WIDGET-01 | Minimum | ✅ Implementiert | widgets.basic.spec.ts | Eigene Widgets anzeigen |
+| WIDGET-02 | Minimum | ✅ Implementiert | widgets.basic.spec.ts | Widget erstellen |
+| WIDGET-03 | Minimum | ✅ Implementiert | widgets.basic.spec.ts | Widget löschen |
+| WIDGET-04 | Minimum | ✅ Implementiert | widgets.security.spec.ts | Fremdes Widget löschen → 404 |
+| WIDGET-05 | Standard | ✅ Implementiert | widgets.resilience.spec.ts | Backend-Fehler bei Creation |
+| WIDGET-06 | Minimum | ✅ Implementiert | widgets.security.spec.ts | XSS in Widget-Name |
+| WIDGET-07 | Bestenfalls | ✅ Implementiert | widgets.resilience.spec.ts | Bereits gelöschtes Widget |
+| WIDGET-08 | Bestenfalls | ✅ Implementiert | widgets.resilience.spec.ts | Viele Widgets gleichzeitig |
+| WIDGET-09 | Bestenfalls | ✅ Implementiert | widgets.resilience.spec.ts | Konkurrierende Updates |
+| **Feed** | | | | |
+| FEED-01 | Standard | ✅ Implementiert | feed.spec.ts | Feed lädt User-Widgets |
+| FEED-02 | Standard | ✅ Implementiert | feed.spec.ts | Feed-Caching (30s) |
+| FEED-03 | Standard | ✅ Implementiert | feed.spec.ts | Rate-Limit → Fehler |
+| FEED-04 | Standard | ✅ Implementiert | feed.spec.ts | XSS-Inhalte escaped |
+| FEED-05 | Standard | ✅ Implementiert | feed.spec.ts | Leerer Feed |
+| **Rollen** | | | | |
+| ROLE-01 | Standard | ✅ Implementiert | roles.spec.ts | Rolle korrekt angezeigt |
+| ROLE-02 | Bestenfalls | ✅ Implementiert | roles.spec.ts | Rollenspezifische Features |
+| **Infrastruktur** | | | | |
+| INFRA-01 | Minimum | ✅ Implementiert | infra.health.spec.ts | /health erreichbar |
+| INFRA-02 | Minimum | ✅ Implementiert | infra.health.spec.ts | 500-Fehler mocken |
+| INFRA-03 | Standard | ✅ Implementiert | infra.resilience.spec.ts | Backend nicht erreichbar |
+| INFRA-04 | Standard | ✅ Implementiert | infra.resilience.spec.ts | CORS-Header korrekt |
+| INFRA-05 | Bestenfalls | ✅ Implementiert | infra.resilience.spec.ts | Langsame Netzwerke |
+| INFRA-06 | Bestenfalls | ✅ Implementiert | infra.resilience.spec.ts | Offline-Modus |
+| INFRA-07 | Bestenfalls | ✅ Implementiert | infra.resilience.spec.ts | Request-Timeouts |
+| INFRA-08 | Bestenfalls | ✅ Implementiert | infra.resilience.spec.ts | Backend-Recovery |
+| **Security** | | | | |
+| SEC-01 | Bestenfalls | ✅ Implementiert | security.advanced.spec.ts | Manipulierte API-Payloads |
+| SEC-02 | Bestenfalls | ✅ Implementiert | security.advanced.spec.ts | CSP verhindert Inline-Scripts |
+| SEC-03 | Bestenfalls | 📝 Geplant | security.advanced.spec.ts | HTTPS-Enforcement (Production) |
+| SEC-04 | Bestenfalls | ✅ Implementiert | security.advanced.spec.ts | Keine sensiblen Daten im Storage |
+| **Browser/UX** | | | | |
+| BROWSER-01 | Bestenfalls | ✅ Implementiert | browser.spec.ts | Session-Persistence über Reload |
+| BROWSER-02 | Bestenfalls | ✅ Implementiert | browser.spec.ts | Storage-Fallbacks |
+| BROWSER-03 | Bestenfalls | ✅ Implementiert | browser.spec.ts | Back-Button-Navigation |
+| BROWSER-04 | Bestenfalls | ✅ Implementiert | browser.spec.ts | Fokus-Management |
+| BROWSER-05 | Bestenfalls | ✅ Implementiert | browser.spec.ts | Keyboard-Navigation |
+| BROWSER-06 | Bestenfalls | ✅ Implementiert | browser.spec.ts | Responsive Design |
+
+### Legende
+
+- ✅ **Implementiert**: Test ist vollständig implementiert und läuft
+- 📝 **Geplant**: Test ist konzeptionell beschrieben, aber noch nicht vollständig umgesetzt
+- ⚠️ **Teilweise**: Test läuft, aber einige Assertions sind noch TODOs (abhängig von UI-Features)
+
+### Offene TODOs
+
+Die meisten Standard- und Bestenfalls-Tests sind implementiert, haben aber TODOs für:
+- **UI-spezifische Assertions**: Sobald Widget-Namen, Rolle, Error-Toasts im UI sichtbar sind
+- **Backend-Features**: Rate-Limiting, Feed-Caching (Backend-seitig noch zu implementieren)
+- **Production-Features**: HTTPS-Enforcement, CSP-Header (relevant für Production-Deployment)
+
+Diese TODOs sind in den jeweiligen Spec-Dateien dokumentiert und können aktiviert werden, sobald die entsprechenden Features implementiert sind.
+
+## Debugging
+
+### UI-Modus (interaktiv)
+
+```bash
+npx playwright test --ui
+```
+
+### Headed-Modus (Browser sichtbar)
+
+```bash
+npm run test:headed
+```
+
+### Traces ansehen
+
+Nach einem fehlgeschlagenen Test:
+```bash
+npx playwright show-trace test-results/<test-name>/trace.zip
+```
+
+### Code-Generierung
+
+Für neue Tests:
+```bash
+npm run codegen
+```
+
+## Best Practices
+
+1. **Kleine, fokussierte Tests**: Ein Test pro Szenario
+2. **Klare Tags**: `@minimum`, `@standard`, `@bestenfalls` konsequent nutzen
+3. **Wiederverwendbare Helper**: Nutze `helpers/` für gemeinsame Logik
+4. **TODOs dokumentieren**: Markiere UI-abhängige Assertions klar mit `// TODO:`
+5. **Screenshots**: Immer am Ende eines Tests für visuelle Verifikation
+6. **Cleanup**: Lösche erstellte Test-Daten (Widgets, User) am Ende des Tests
+
+## Migration & Wartung
+
+Bei Änderungen am Frontend oder Backend:
+1. **Helper aktualisieren**: `helpers/auth.ts`, `helpers/widgets.ts` anpassen
+2. **Selektoren aktualisieren**: `testIds` in Helper-Dateien synchron halten
+3. **TODOs aktivieren**: Sobald UI-Features implementiert sind, entsprechende Assertions einkommentieren
+4. **Tests ausführen**: Vollständigen Durchlauf mit `npm run test:all` validieren

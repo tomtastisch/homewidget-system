@@ -175,7 +175,7 @@ step_e2e_expo_web_start() {
         cd "${MOBILE_DIR}" || exit 1
         ensure_npm || exit 1
         export EXPO_PUBLIC_API_BASE_URL="${EXPO_PUBLIC_API_BASE_URL:-http://127.0.0.1:8100}"
-        npx expo start --web --port 19006
+        exec npx expo start --web --port 19006
     ) &
     
     local expo_pid=$!

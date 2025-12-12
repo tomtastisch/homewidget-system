@@ -1,19 +1,3 @@
-/**
- * @module storage/tokens
- * @description Persistierung von Authentifizierungstoken mit plattformabhängigen Speichermechanismen.
- *
- * Das Modul realisiert ein plattformabhängiges Persistierungskonzept für Refresh-Tokens:
- * - Native Plattformen (iOS/Android): Verschlüsselte Persistierung über expo-secure-store
- * - Web: Unverschlüsselte Persistierung über localStorage
- *
- * Der Access-Token wird ausschließlich im flüchtigen Speicher (State) gehalten und
- * nicht persistiert.
- *
- * Die Web-Implementierung abstrahiert die synchrone localStorage-API als Promise-basierte
- * Schnittstelle mit Auflösung in der nachfolgenden Microtask-Phase, wodurch Konsistenz
- * zu den nativen Implementierungen gewährleistet wird.
- */
-
 import * as SecureStore from 'expo-secure-store';
 import {Platform} from 'react-native';
 
@@ -43,9 +27,6 @@ const refreshStorage: RefreshStorage = Platform.OS === 'web'
 		},
 		clear: async () => {
 			localStorage.removeItem(REFRESH_KEY);
-			// Kompatibilität mit vorherigen Token-Schlüsseln
-			localStorage.removeItem('access_token');
-			localStorage.removeItem('refreshToken');
 			await Promise.resolve();
 		},
 	}

@@ -45,11 +45,7 @@ export async function getRefreshToken(): Promise<string | null> {
 export async function clearTokens(): Promise<void> {
 	if (Platform.OS === 'web') {
 		localStorage.removeItem(REFRESH_KEY);
-		// Für Abwärtskompatibilität auch andere mögliche Keys löschen
-		localStorage.removeItem('access_token');
-		localStorage.removeItem('refreshToken');
 	} else {
-		// Für Abwärtskompatibilität: löscht alle auth‑bezogenen Einträge.
 		await SecureStore.deleteItemAsync(REFRESH_KEY);
 	}
 }

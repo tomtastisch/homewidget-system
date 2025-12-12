@@ -77,9 +77,9 @@ test.describe('@minimal Auth Basic', () => {
 	
 	// Verifiziere: Login-Form noch sichtbar (Login fehlgeschlagen)
 	await expect(page.getByTestId('login.email')).toBeVisible();
-	
-		// TODO: Prüfe auf Fehlermeldung in UI (sobald Error-State-Handling implementiert)
-		// Erwarte einen Text wie "Invalid credentials" oder ähnlich
+		
+		// Verifiziere: Fehlermeldung ist sichtbar und enthält den erwarteten Backend-Detailtext
+		await expect(page.getByTestId('login.error')).toHaveText('Invalid credentials');
 		
 		// Screenshot
 		await page.screenshot({path: 'test-results/auth-03-login-error.png'});

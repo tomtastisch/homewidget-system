@@ -218,3 +218,7 @@ test_e2e.db
 # Local CI helper script (not intended for version control)
 # tools/dev/run_ci_job.sh <- ToDo Später noch überlegen ob sinnvoll
 
+# Playwright artifacts
+**/test-results/
+**/*last-run.json
+**/playwright-report/

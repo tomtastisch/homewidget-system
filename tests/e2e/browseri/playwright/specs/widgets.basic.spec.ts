@@ -4,7 +4,7 @@ import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
 /**
- * Widget-Tests: Hybrid-Ansatz (Minimum-Ebene)
+ * Widget-Tests: Hybrid-Ansatz (Minimal-Ebene)
  * 
  * Login/Navigation über UI, Widget-CRUD über API
  * (da die App aktuell keine UI für Widget-Erstellung/Löschung hat)

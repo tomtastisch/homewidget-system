@@ -3,7 +3,7 @@ import {loginAs, logout} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
- * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web (Minimum-Ebene)
+ * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web (Minimal-Ebene)
  * 
  * Diese Tests verwenden die echte UI und bilden Nutzerflüsse ab.
  * Tag: @minimal

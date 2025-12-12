@@ -4,7 +4,7 @@ import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
 /**
- * Widget-Security-Tests: Hybrid-Ansatz (Minimum-Ebene)
+ * Widget-Security-Tests: Hybrid-Ansatz (Minimal-Ebene)
  * 
  * Login über UI, Security-Checks über API
  * Tag: @minimal

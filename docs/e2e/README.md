@@ -91,7 +91,8 @@ bash tools/dev/pipeline/ui_release_todo_mapping.sh
 ```
 
 **Test-Ebenen:**
-- **@minimum** (10 Tests): Kritische Basis-Funktionalität
+
+- **@minimal** (10 Tests): Kritische Basis-Funktionalität
 - **@standard** (26 Tests): Erweiterte Fehlerbehandlung
 - **@advanced** (60 Tests): Edge-Cases, komplexe Szenarien
 
@@ -148,8 +149,8 @@ cd tests/e2e/browseri/playwright
 # Standard (empfohlen für lokale Entwicklung)
 npm test
 
-# Nur Minimum (schnell)
-npm run test:minimum
+# Nur Minimal (schnell)
+npm run test:minimal
 
 # Alle Tests (inkl. Advanced)
 npm run test:all

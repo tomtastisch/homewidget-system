@@ -109,7 +109,7 @@ jobs:
                     echo "::notice::Alle CI-Prüfungen wurden erfolgreich abgeschlossen."
 
     # =============================================================
-    # BROWSER E2E (Playwright – Minimum)
+    # BROWSER E2E (Playwright – Minimal)
     # =============================================================
 
     e2e-core-minimal:
@@ -162,12 +162,12 @@ jobs:
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
 
-            -   name: 🌐 E2E Browser Tests (Playwright – Minimum)
+            -   name: 🌐 E2E Browser Tests (Playwright – Minimal)
                 env:
                     PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
                     E2E_API_BASE_URL: http://127.0.0.1:8100
                 run: |
-                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimum_tests
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimal_tests
 
     # =============================================================
     # BROWSER E2E (Playwright – STANDARD)

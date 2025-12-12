@@ -138,7 +138,10 @@ export async function loginViaApi(
 ): Promise<string> {
 	const baseUrl = getApiBaseUrl();
 	const res = await api.post(`${baseUrl}/api/auth/login`, {
-		data: {email, password},
+		form: {
+			username: email,  // OAuth2PasswordRequestForm erwartet 'username'
+			password: password,
+		},
 	});
 	
 	if (!res.ok()) {

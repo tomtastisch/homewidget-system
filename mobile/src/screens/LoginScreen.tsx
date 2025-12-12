@@ -41,10 +41,10 @@ export default function LoginScreen({ navigation }: Props) {
 		<View style={styles.container}>
 			<Text style={styles.title}>HomeWidget Login</Text>
 			{!!(localError || error) && (
-				<View>
+				<View testID={isRateLimited ? 'login.error.rateLimit' : undefined}>
 					<Text 
 						style={styles.error} 
-						testID={isRateLimited ? 'login.error.rateLimit' : 'login.error'}
+						testID="login.error"
 					>
 						{localError || error}
 					</Text>

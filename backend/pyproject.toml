@@ -3,11 +3,7 @@ name = "homewidget-backend"
 version = "0.1.0"
 description = "FastAPI/SQLModel backend for the homewidget-system"
 readme = "README.md"
-# Die minimale Python-Version wurde von 3.13 auf 3.12 herabgesetzt.
-# Grund: Kompatibilität mit CI/CD-Umgebungen und Produktionsservern, auf denen Python 3.13
-# zum aktuellen Zeitpunkt noch nicht flächendeckend verfügbar ist.
-# Es werden keine Features verwendet, die exklusiv in Python 3.13 eingeführt wurden.
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
   "fastapi>=0.124",
   "sqlmodel>=0.0.27",

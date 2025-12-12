@@ -24,7 +24,11 @@ export default function LoginScreen({ navigation }: Props) {
 			await login(email.trim(), password);
 			// Navigation wird durch Router/Status gesteuert
 		} catch (e: any) {
-			if (e?.message) setLocalError(e.message);
+			if (e?.status === 429) {
+				setLocalError('Zu viele Anmeldeversuche. Bitte versuche es später erneut.');
+			} else if (e?.message) {
+				setLocalError(e.message);
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -34,9 +38,14 @@ export default function LoginScreen({ navigation }: Props) {
 		<View style={styles.container}>
 			<Text style={styles.title}>HomeWidget Login</Text>
 			{!!(localError || error) && (
-				<Text style={styles.error} testID="login.error">
-					{localError || error}
-				</Text>
+				<View>
+					<Text 
+						style={styles.error} 
+						testID={localError?.includes('Zu viele Anmeldeversuche') || error?.includes('Zu viele') ? 'login.error.rateLimit' : 'login.error'}
+					>
+						{localError || error}
+					</Text>
+				</View>
 			)}
 			<TextInput
 				style={styles.input}

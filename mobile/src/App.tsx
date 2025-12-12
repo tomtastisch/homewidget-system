@@ -6,6 +6,8 @@ import HomeScreen from './screens/HomeScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import AccountScreen from './screens/AccountScreen';
 import {AuthProvider, useAuth} from './auth/AuthContext';
+import {ToastProvider} from './ui/ToastContext';
+import {OfflineIndicator} from './ui/OfflineIndicator';
 
 export type RootStackParamList = {
 	// Unauth stack
@@ -41,8 +43,11 @@ function Router() {
 
 export default function App() {
 	return (
-		<AuthProvider>
-			<Router/>
-		</AuthProvider>
+		<ToastProvider>
+			<AuthProvider>
+				<OfflineIndicator />
+				<Router/>
+			</AuthProvider>
+		</ToastProvider>
 	);
 }

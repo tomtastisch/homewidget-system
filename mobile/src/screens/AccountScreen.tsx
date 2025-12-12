@@ -23,7 +23,7 @@ export default function AccountScreen(_: Props) {
 					<Text style={styles.label}>E‑Mail</Text>
 					<Text style={styles.value}>{user.email}</Text>
 					<Text style={styles.label}>Rolle</Text>
-					<Text style={styles.value}>{role}</Text>
+					<Text style={styles.value} testID="account.role">{role}</Text>
 					<View style={{marginTop: 8}}>
 						<Text>isDemo: {String(isDemo())}</Text>
 						<Text>isCommon: {String(isCommon())}</Text>

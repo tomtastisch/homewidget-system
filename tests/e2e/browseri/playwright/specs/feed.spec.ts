@@ -12,8 +12,6 @@ import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 test.describe('@standard Feed', () => {
 	// FEED-01 – Home-Feed lädt Widgets des Users
 	test('@standard FEED-01: Home-Feed zeigt eigene Widgets', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Widget-Namen sind im Feed-UI nicht sichtbar. Entfernen sobald Widget-Namen-Anzeige implementiert ist.');
-		
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'feed01');
 		
@@ -31,9 +29,9 @@ test.describe('@standard Feed', () => {
 		expect(widgets.some(w => w.name === 'Feed Test Widget 1')).toBeTruthy();
 		expect(widgets.some(w => w.name === 'Feed Test Widget 2')).toBeTruthy();
 		
-		// TODO: Sobald Widget-Namen in UI sichtbar sind, prüfe direkt im DOM
-		// await expect(page.getByText('Feed Test Widget 1')).toBeVisible();
-		// await expect(page.getByText('Feed Test Widget 2')).toBeVisible();
+		// UI-Validierung: Widget-Namen sind jetzt im Feed sichtbar (testID: feed.widget.name)
+		await expect(page.getByText('Feed Test Widget 1')).toBeVisible();
+		await expect(page.getByText('Feed Test Widget 2')).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/feed-01-widgets-loaded.png'});
 		
@@ -88,8 +86,6 @@ test.describe('@standard Feed', () => {
 	
 	// FEED-03 – Rate-Limit (429) → UI-Fehlermeldung
 	test('@standard FEED-03: Feed Rate-Limit zeigt Fehlermeldung', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Error-Toast/Fehlermeldung für Rate-Limit fehlt im Feed-UI. Entfernen sobald Feed-Error-Handling implementiert ist.');
-		
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'feed03');
 		
 		// Login über UI
@@ -113,17 +109,15 @@ test.describe('@standard Feed', () => {
 		await page.reload();
 		await page.waitForTimeout(2000);
 		
-		// TODO: Sobald Error-Handling in UI implementiert:
-		// await expect(page.getByTestId('feed.error')).toBeVisible();
-		// await expect(page.getByText(/Rate limit/i)).toBeVisible();
+		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
+		await expect(page.getByTestId('error.toast')).toBeVisible();
+		await expect(page.getByText(/Rate limit/i)).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/feed-03-rate-limit.png'});
 	});
 	
 	// FEED-04 – XSS-Inhalte im Feed werden nicht ausgeführt
 	test('@standard FEED-04: XSS in Feed-Inhalten wird escaped', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Widget-Namen nicht im DOM sichtbar für XSS-Text-Verifizierung. Entfernen sobald Widget-Namen-Anzeige implementiert ist.');
-		
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'feed04');
 		
@@ -154,10 +148,9 @@ test.describe('@standard Feed', () => {
 		const finalScriptCount = await page.locator('script').count();
 		expect(finalScriptCount).toBe(initialScriptCount);
 		
-		// Verifiziere, dass XSS-Payloads als Text escaped wurden
-		// TODO: Sobald Widget-Namen im DOM sichtbar:
-		// const content = await page.textContent('body');
-		// expect(content).toContain('<script>'); // Als Text, nicht als Element
+		// UI-Validierung: XSS-Payloads werden als Text escaped (testID: feed.widget.name)
+		const content = await page.textContent('body');
+		expect(content).toContain('<script>'); // Als Text, nicht als Element
 		
 		// Prüfe, dass keine Alerts ausgelöst wurden (indirekt durch Script-Count)
 		await page.screenshot({path: 'test-results/feed-04-xss-escaped.png'});
@@ -168,8 +161,6 @@ test.describe('@standard Feed', () => {
 	
 	// FEED-05 – Leerer Feed wird korrekt angezeigt
 	test('@standard FEED-05: Leerer Feed zeigt passende Nachricht', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Empty-State-Anzeige für leeren Feed fehlt. Entfernen sobald Feed-Empty-State implementiert ist.');
-		
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'feed05');
 		
@@ -181,10 +172,9 @@ test.describe('@standard Feed', () => {
 		const widgets = await listWidgets(api, user.access_token);
 		expect(widgets.length).toBe(0);
 		
-		// TODO: Sobald Empty-State im UI implementiert:
-		// await expect(page.getByText(/Keine Widgets/i)).toBeVisible();
-		// oder
-		// await expect(page.getByTestId('feed.empty')).toBeVisible();
+		// UI-Validierung: Empty-State wird angezeigt (testID: feed.empty)
+		await expect(page.getByTestId('feed.empty')).toBeVisible();
+		await expect(page.getByText(/Keine Widgets/i)).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/feed-05-empty.png'});
 	});

@@ -11,8 +11,6 @@ import {loginAsRole, createUserWithRole} from '../helpers/auth';
 test.describe('@standard Infrastructure Resilience', () => {
 	// INFRA-03 – Backend nicht erreichbar → „Server nicht verfügbar"
 	test('@standard INFRA-03: Backend nicht erreichbar zeigt Fehler', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Error-State für Backend-Unavailable nicht im UI implementiert. Entfernen sobald Backend-Error-Handling implementiert ist.');
-		
 		// Mock vollständiges Backend-Failure
 		await page.route('**/api/**', async (route) => {
 			await route.abort('failed');
@@ -24,10 +22,9 @@ test.describe('@standard Infrastructure Resilience', () => {
 		// Warte kurz für potentielle Error-Anzeige
 		await page.waitForTimeout(3000);
 		
-		// TODO: Sobald Error-State in UI implementiert:
-		// await expect(page.getByText(/Server nicht verfügbar/i)).toBeVisible();
-		// oder
-		// await expect(page.getByTestId('error.backend-unavailable')).toBeVisible();
+		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
+		await expect(page.getByTestId('error.toast')).toBeVisible();
+		await expect(page.getByText(/Server nicht verfügbar/i)).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/infra-03-backend-down.png'});
 	});
@@ -72,7 +69,6 @@ test.describe('@standard Infrastructure Resilience', () => {
 test.describe('@advanced Infrastructure - Performance & Network', () => {
 	// INFRA-05 – langsame Netzwerke simulieren, Loading-States
 	test('@advanced INFRA-05: Langsames Netzwerk zeigt Loading-States', async ({page, context}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Loading-Indicator/Spinner nicht im UI implementiert. Entfernen sobald Loading-States implementiert sind.');
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra05');
 		
 		// Simuliere langsames Netzwerk durch Verzögerung aller API-Calls
@@ -85,22 +81,20 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		// Navigiere zur App
 		await page.goto('/');
 		
-		// TODO: Sobald Loading-Indicator implementiert:
-		// await expect(page.getByTestId('loading.spinner')).toBeVisible();
+		// UI-Validierung: Loading-Indicator wird angezeigt (testID: loading.spinner)
+		await expect(page.getByTestId('loading.spinner')).toBeVisible();
 		
 		// Warte auf vollständiges Laden
 		await page.waitForTimeout(5000);
 		
-		// TODO: Verifiziere, dass Loading-Indicator verschwindet nach erfolgreichem Load
-		// await expect(page.getByTestId('loading.spinner')).not.toBeVisible();
+		// UI-Validierung: Loading-Indicator verschwindet nach erfolgreichem Load
+		await expect(page.getByTestId('loading.spinner')).not.toBeVisible();
 		
 		await page.screenshot({path: 'test-results/infra-05-slow-network.png'});
 	});
 	
 	// INFRA-06 – Offline-Modus und Reconnect
 	test('@advanced INFRA-06: Offline-Modus wird erkannt', async ({page, context}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Offline-Indikator nicht im UI implementiert. Entfernen sobald Offline-Detection implementiert ist.');
-		
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra06');
 		
 		// Login zunächst mit funktionierendem Netzwerk
@@ -114,10 +108,9 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		await page.reload();
 		await page.waitForTimeout(3000);
 		
-		// TODO: Sobald Offline-Indikator implementiert:
-		// await expect(page.getByText(/Offline/i)).toBeVisible();
-		// oder
-		// await expect(page.getByTestId('status.offline')).toBeVisible();
+		// UI-Validierung: Offline-Indikator wird angezeigt (testID: status.offline)
+		await expect(page.getByTestId('status.offline')).toBeVisible();
+		await expect(page.getByText(/Offline/i)).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/infra-06-offline.png'});
 		
@@ -128,16 +121,14 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		await page.reload();
 		await page.waitForTimeout(2000);
 		
-		// TODO: Verifiziere, dass Offline-Indikator verschwindet
-		// await expect(page.getByTestId('status.offline')).not.toBeVisible();
+		// UI-Validierung: Offline-Indikator verschwindet
+		await expect(page.getByTestId('status.offline')).not.toBeVisible();
 		
 		await page.screenshot({path: 'test-results/infra-06-online-again.png'});
 	});
 	
 	// INFRA-07 – Timeout-Handling bei langsamen Responses
 	test('@advanced INFRA-07: Request-Timeouts werden korrekt behandelt', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Timeout-Error-Handling nicht im UI implementiert. Entfernen sobald Timeout-Error-States implementiert sind.');
-		
 		// Mock sehr langsamen Backend-Response (Timeout simulieren durch abort)
 		await page.route('**/api/widgets/**', async (route) => {
 			if (route.request().method() === 'GET') {
@@ -157,10 +148,9 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		// Warte kurz auf Fehlerbehandlung
 		await page.waitForTimeout(3000);
 		
-		// TODO: Sobald Timeout-Error-Handling implementiert:
-		// await expect(page.getByText(/Zeitüberschreitung/i)).toBeVisible();
-		// oder
-		// await expect(page.getByTestId('error.timeout')).toBeVisible();
+		// UI-Validierung: Timeout-Error wird angezeigt (testID: error.toast)
+		await expect(page.getByTestId('error.toast')).toBeVisible();
+		await expect(page.getByText(/Zeitüberschreitung/i)).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/infra-07-timeout.png'});
 	});
@@ -169,8 +159,6 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 test.describe('@advanced Infrastructure - Error Recovery', () => {
 	// INFRA-08 – Backend-Recovery nach temporärem Ausfall
 	test('@advanced INFRA-08: App erholt sich nach Backend-Wiederherstellung', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Error-Recovery-Anzeige nicht im UI implementiert. Entfernen sobald Backend-Error-Recovery-Handling implementiert ist.');
-		
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra08');
 		
 		let failureMode = true;
@@ -196,7 +184,8 @@ test.describe('@advanced Infrastructure - Error Recovery', () => {
 		await page.reload();
 		await page.waitForTimeout(2000);
 		
-		// TODO: Verifiziere Fehler-Anzeige
+		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
+		await expect(page.getByTestId('error.toast')).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/infra-08-backend-down.png'});
 		
@@ -207,7 +196,7 @@ test.describe('@advanced Infrastructure - Error Recovery', () => {
 		await page.reload();
 		await page.waitForTimeout(2000);
 		
-		// TODO: Verifiziere, dass App wieder normal funktioniert
+		// UI-Validierung: App funktioniert wieder normal
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
 		await page.screenshot({path: 'test-results/infra-08-backend-recovered.png'});

@@ -136,7 +136,7 @@ step_e2e_backend_start() {
         bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh"
     ) &
     
-    local backend_pid=$!
+    local backend_pid=$! # Hintergrundprozess-ID
     
     # Warte kurz auf potentielle Startup-Fehler
     sleep 2
@@ -210,25 +210,57 @@ step_e2e_playwright_install() {
     )
 }
 
-## @brief Playwright Minimum-Tests ausführen.
-step_e2e_playwright_minimum_tests() {
+## @brief Playwright Minimal-Tests ausführen.
+step_e2e_playwright_minimal_tests() {
     local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
     if [[ ! -d "${playwright_dir}" ]]; then
         log_error "Playwright-Verzeichnis fehlt – Tests können nicht ausgeführt werden."
         return 1
     fi
     
-    log_info "Führe Playwright Minimum-Tests aus..."
+    log_info "Führe Playwright Minimal-Tests aus..."
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
-        npx playwright test \
-            specs/auth.basic.spec.ts \
-            specs/widgets.basic.spec.ts \
-            specs/widgets.security.spec.ts \
-            specs/infra.health.spec.ts
+        npx playwright test --project=minimal
+    )
+}
+
+## @brief Playwright Standard-Tests ausführen (Minimal + Standard).
+step_e2e_playwright_standard_tests() {
+    local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
+    if [[ ! -d "${playwright_dir}" ]]; then
+        log_error "Playwright-Verzeichnis fehlt – Tests können nicht ausgeführt werden."
+        return 1
+    fi
+    
+    log_info "Führe Playwright Standard-Tests aus (Minimal + Standard)..."
+    (
+        cd "${playwright_dir}" || exit 1
+        ensure_npm || exit 1
+        export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
+        export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+        npx playwright test --project=standard
+    )
+}
+
+## @brief Playwright alle Tests ausführen (Minimal + Standard + Advanced).
+step_e2e_playwright_all_tests() {
+    local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
+    if [[ ! -d "${playwright_dir}" ]]; then
+        log_error "Playwright-Verzeichnis fehlt – Tests können nicht ausgeführt werden."
+        return 1
+    fi
+    
+    log_info "Führe alle Playwright-Tests aus (Minimal + Standard + Advanced)..."
+    (
+        cd "${playwright_dir}" || exit 1
+        ensure_npm || exit 1
+        export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
+        export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+        npx playwright test --project=advanced
     )
 }
 
@@ -351,7 +383,9 @@ Verfügbare Kommandos:
   e2e_backend_start               Backend im E2E-Modus starten (Port 8100)
   e2e_expo_web_start              Expo-Web im E2E-Modus starten (Port 19006)
   e2e_playwright_install          Playwright-Dependencies installieren
-  e2e_playwright_minimum_tests    Playwright Minimum-Tests ausführen
+  e2e_playwright_minimal_tests    Playwright Minimal-Tests ausführen
+  e2e_playwright_standard_tests   Playwright Standard-Tests ausführen (Minimal + Standard)
+  e2e_playwright_all_tests        Playwright alle Tests ausführen (inkl. Advanced)
 
   mobile_install_deps             Mobile-Abhängigkeiten installieren (npm ci)
   mobile_expo_doctor              Expo-Konfiguration prüfen (expo-doctor)
@@ -399,8 +433,14 @@ main() {
         e2e_playwright_install)
             step_e2e_playwright_install
             ;;
-        e2e_playwright_minimum_tests)
-            step_e2e_playwright_minimum_tests
+        e2e_playwright_minimal_tests)
+            step_e2e_playwright_minimal_tests
+            ;;
+        e2e_playwright_standard_tests)
+            step_e2e_playwright_standard_tests
+            ;;
+        e2e_playwright_all_tests)
+            step_e2e_playwright_all_tests
             ;;
         mobile_install_deps)
             step_mobile_install_deps

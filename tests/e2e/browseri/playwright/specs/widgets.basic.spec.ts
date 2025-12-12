@@ -4,13 +4,15 @@ import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
 /**
- * Widget-Tests: Hybrid-Ansatz
+ * Widget-Tests: Hybrid-Ansatz (Minimal-Ebene)
  * 
  * Login/Navigation über UI, Widget-CRUD über API
  * (da die App aktuell keine UI für Widget-Erstellung/Löschung hat)
+ * Tag: @minimal
  */
 
-test('WIDGET-01: Eigene Widgets anzeigen nach Login', async ({page}) => {
+test.describe('@minimal Widget Basic', () => {
+	test('@minimal WIDGET-01: Eigene Widgets anzeigen nach Login', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w1+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
@@ -29,11 +31,11 @@ test('WIDGET-01: Eigene Widgets anzeigen nach Login', async ({page}) => {
 	const widgets = await listWidgets(api, login.access_token);
 	expect(Array.isArray(widgets)).toBeTruthy();
 	
-	// Screenshot
-	await page.screenshot({path: 'test-results/widget-01-home-feed.png'});
-});
+		// Screenshot
+		await page.screenshot({path: 'test-results/widget-01-home-feed.png'});
+	});
 
-test('WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
+	test('@minimal WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w2+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
@@ -48,12 +50,13 @@ test('WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
 	// Login über UI und prüfe Feed
 	await loginAs(page, email, password);
 	
-	// TODO: Sobald Widget-Details in UI sichtbar sind, hier auf Widget-Name im Feed prüfen
-	// Aktuell nur visuell über Screenshot verifizierbar
-	await page.screenshot({path: 'test-results/widget-02-created.png'});
-});
+		// UI-Validierung: Widget-Namen wird im Feed angezeigt (testID: feed.widget.name)
+		await expect(page.getByText(name)).toBeVisible();
+		
+		await page.screenshot({path: 'test-results/widget-02-created.png'});
+	});
 
-test('WIDGET-03: Eigenes Widget löschen', async ({page}) => {
+	test('@minimal WIDGET-03: Eigenes Widget löschen', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w3+${Date.now()}@example.com`;
 	const password = 'Secret1234!';
@@ -70,7 +73,8 @@ test('WIDGET-03: Eigenes Widget löschen', async ({page}) => {
 	const after = await listWidgets(api, login.access_token);
 	expect(after.find((w) => w.id === created.id)).toBeFalsy();
 	
-	// Login über UI und prüfe Feed (Widget sollte nicht mehr da sein)
-	await loginAs(page, email, password);
-	await page.screenshot({path: 'test-results/widget-03-deleted.png'});
+		// Login über UI und prüfe Feed (Widget sollte nicht mehr da sein)
+		await loginAs(page, email, password);
+		await page.screenshot({path: 'test-results/widget-03-deleted.png'});
+	});
 });

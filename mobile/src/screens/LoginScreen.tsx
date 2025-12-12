@@ -12,9 +12,11 @@ export default function LoginScreen({ navigation }: Props) {
 	const [password, setPassword] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
+	const [isRateLimited, setIsRateLimited] = useState(false);
 	
 	const onLogin = async () => {
 		setLocalError(null);
+		setIsRateLimited(false);
 		if (!email || !password) {
 			setLocalError('Bitte E‑Mail und Passwort ausfüllen.');
 			return;
@@ -24,7 +26,12 @@ export default function LoginScreen({ navigation }: Props) {
 			await login(email.trim(), password);
 			// Navigation wird durch Router/Status gesteuert
 		} catch (e: any) {
-			if (e?.message) setLocalError(e.message);
+			if (e?.status === 429) {
+				setLocalError('Zu viele Anmeldeversuche. Bitte versuche es später erneut.');
+				setIsRateLimited(true);
+			} else if (e?.message) {
+				setLocalError(e.message);
+			}
 		} finally {
 			setLoading(false);
 		}
@@ -34,9 +41,14 @@ export default function LoginScreen({ navigation }: Props) {
 		<View style={styles.container}>
 			<Text style={styles.title}>HomeWidget Login</Text>
 			{!!(localError || error) && (
-				<Text style={styles.error} testID="login.error">
-					{localError || error}
-				</Text>
+				<View testID={isRateLimited ? 'login.error.rateLimit' : undefined}>
+					<Text 
+						style={styles.error} 
+						testID="login.error"
+					>
+						{localError || error}
+					</Text>
+				</View>
 			)}
 			<TextInput
 				style={styles.input}

@@ -1,16 +1,18 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {Alert, Button, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {ActivityIndicator, Alert, Button, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {type BackendWidget, getHomeWidgets} from '../api/homeApi';
 import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
 import {parseBackendWidget, type ParsedWidget} from '../types/widgets';
 import {WidgetBanner, WidgetCard} from '../components/widgets';
+import {useToast} from '../ui/ToastContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
 export default function HomeScreen({ navigation }: Props) {
 	const {status, role} = useAuth();
+	const {showError} = useToast();
 	const isAuthed = status === 'authenticated';
 	const [widgets, setWidgets] = useState<BackendWidget[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -25,11 +27,12 @@ export default function HomeScreen({ navigation }: Props) {
 		} catch (e: any) {
 			const msg = e?.message || 'Fehler beim Laden des Feeds.';
 			setError(msg);
+			showError(msg);
 			setWidgets([]);
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [showError]);
 	
 	useEffect(() => {
 		// Reload feed when auth status or role changes to reflect personalized content
@@ -82,6 +85,12 @@ export default function HomeScreen({ navigation }: Props) {
 					</View>
 				</View>
 			)}
+			{loading && !error && (
+				<View style={styles.loadingContainer}>
+					<ActivityIndicator size="large" color="#0066cc" testID="loading.spinner"/>
+					<Text style={styles.loadingText}>Laden...</Text>
+				</View>
+			)}
 			<FlatList
 				data={parsed}
 				keyExtractor={(w) => String(w.id)}
@@ -113,7 +122,7 @@ export default function HomeScreen({ navigation }: Props) {
 							);
 					}
 				}}
-				ListEmptyComponent={!loading && !error ? <Text>Aktuell keine Widgets verfügbar.</Text> : null}
+				ListEmptyComponent={!loading && !error ? <Text testID="feed.empty">Aktuell keine Widgets verfügbar.</Text> : null}
 			/>
 		</View>
 	);
@@ -147,4 +156,12 @@ const styles = StyleSheet.create({
 		marginBottom: 8
 	},
 	errorText: {color: '#b00020'},
+	loadingContainer: {
+		alignItems: 'center',
+		padding: 20,
+	},
+	loadingText: {
+		marginTop: 8,
+		color: '#666',
+	},
 });

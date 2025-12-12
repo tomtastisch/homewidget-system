@@ -4,12 +4,14 @@ import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
 /**
- * Widget-Security-Tests: Hybrid-Ansatz
+ * Widget-Security-Tests: Hybrid-Ansatz (Minimal-Ebene)
  * 
  * Login über UI, Security-Checks über API
+ * Tag: @minimal
  */
 
-test('WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
+test.describe('@minimal Widget Security', () => {
+	test('@minimal WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
 	const api = await newApiRequestContext();
 	
 	// User A erstellt Widget
@@ -35,11 +37,11 @@ test('WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
 	const del = await deleteWidgetById(api, w.id, accessTokenB);
 	expect(del.status()).toBe(404);
 	
-	// Screenshot
-	await page.screenshot({path: 'test-results/widget-04-security.png'});
-});
+		// Screenshot
+		await page.screenshot({path: 'test-results/widget-04-security.png'});
+	});
 
-test('WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
+	test('@minimal WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `xss+${Date.now()}@example.com`;
 	const pwd = 'Secret1234!';
@@ -65,7 +67,8 @@ test('WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
 	// Screenshot für manuelle Verifikation
 	await page.screenshot({path: 'test-results/widget-06-xss-escaped.png'});
 	
-	// Verifiziere, dass kein zusätzliches Script-Tag hinzugefügt wurde
-	const finalScriptCount = await page.locator('script').count();
-	expect(finalScriptCount).toBe(initialScriptCount);
+		// Verifiziere, dass kein zusätzliches Script-Tag hinzugefügt wurde
+		const finalScriptCount = await page.locator('script').count();
+		expect(finalScriptCount).toBe(initialScriptCount);
+	});
 });

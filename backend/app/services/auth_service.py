@@ -18,6 +18,7 @@ from ..core.security import (
 from ..core.types.token import ACCESS
 from ..models.user import User
 from ..models.widget import RefreshToken
+from .token.refresh_lock import get_refresh_lock_manager
 
 
 def ensure_utc_aware(dt: datetime) -> datetime:
@@ -117,6 +118,10 @@ class AuthService:
         """
         Rotiert ein Refresh-Token und stellt neue Tokens aus.
 
+        Diese Methode ist durch einen Token-spezifischen Mutex geschützt, um Race-Conditions
+        bei parallelen Refresh-Anfragen zu verhindern. Nur eine Refresh-Operation pro Token
+        kann gleichzeitig ausgeführt werden.
+
         Args:
             token: Aktuelles Refresh-Token.
 
@@ -126,31 +131,35 @@ class AuthService:
         Raises:
             HTTPException: Falls Token ungültig, abgelaufen oder widerrufen ist.
         """
-        now = datetime.now(tz=UTC)
         token_digest = compute_refresh_token_digest(token)
-        rt = self.session.exec(
-            select(RefreshToken).where(
-                RefreshToken.token_digest == token_digest,
-                cast(Any, RefreshToken.revoked).is_(False),
-            )
-        ).first()
+        lock_manager = get_refresh_lock_manager()
+        # Lock für diesen spezifischen Token-Digest erwerben
+        # Dies verhindert parallele Refresh-Operationen für denselben Token
+        with lock_manager.acquire(token_digest):
+            now = datetime.now(tz=UTC)
+            rt = self.session.exec(
+                select(RefreshToken).where(
+                    RefreshToken.token_digest == token_digest,
+                    cast(Any, RefreshToken.revoked).is_(False),
+                )
+            ).first()
 
-        if not rt:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+            if not rt:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-        expires_at = ensure_utc_aware(rt.expires_at)
+            expires_at = ensure_utc_aware(rt.expires_at)
 
-        if expires_at < now:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+            if expires_at < now:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
-        user: User | None = self.session.get(User, rt.user_id)
+            user: User | None = self.session.get(User, rt.user_id)
 
-        if not user or not user.is_active:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")
+            if not user or not user.is_active:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user")
 
-        rt.revoked = True
-        self.session.add(rt)
-        self.session.commit()
-        self.log.info("refresh_rotated", extra={"user_id": user.id})
-        access, refresh, expires_in = self.issue_tokens(user)
-        return access, refresh, expires_in, user
+            rt.revoked = True
+            self.session.add(rt)
+            self.session.commit()
+            self.log.info("refresh_rotated", extra={"user_id": user.id})
+            access, refresh, expires_in = self.issue_tokens(user)
+            return access, refresh, expires_in, user

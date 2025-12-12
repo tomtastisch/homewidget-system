@@ -21,6 +21,7 @@ exports[`WidgetCard renders title, description and CTA 1`] = `
         "marginBottom": 6,
       }
     }
+    testID="feed.widget.name"
   >
     Hello
   </Text>

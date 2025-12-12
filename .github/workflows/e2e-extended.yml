@@ -1,0 +1,126 @@
+name: E2E Extended Tests
+
+# Dieser Workflow läuft:
+# - Manuell (workflow_dispatch)
+# - Zeitgesteuert (z.B. nightly)
+# - Auf bestimmten Branches (z.B. develop, release/*)
+
+on:
+    workflow_dispatch:
+        inputs:
+            test_level:
+                description: 'Test-Level (standard oder bestenfalls)'
+                required: true
+                default: 'standard'
+                type: choice
+                options:
+                    - standard
+                    - bestenfalls
+    schedule:
+        # Täglich um 2 Uhr UTC (Standard-Tests)
+        - cron: '0 2 * * *'
+    push:
+        branches:
+            - develop
+            - 'release/**'
+
+jobs:
+    e2e-extended:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+
+            # =============================================================
+            # BACKEND-UMGEBUNG
+            # =============================================================
+
+            -   name: 🐍 Python 3.13 einrichten
+                uses: actions/setup-python@v5
+                with:
+                    python-version: '3.13'
+                    cache: 'pip'
+                    cache-dependency-path: |
+                        backend/pyproject.toml
+                        backend/setup.py
+                        backend/requirements*.txt
+
+            -   name: 📦 Backend-Setup
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh backend_setup_env
+
+            -   name: 🚀 Backend im E2E-Modus starten
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_backend_start
+
+            # =============================================================
+            # MOBILE/EXPO-WEB-UMGEBUNG
+            # =============================================================
+
+            -   name: 🟢 Node.js 20 einrichten
+                uses: actions/setup-node@v4
+                with:
+                    node-version: '20'
+                    cache: 'npm'
+                    cache-dependency-path: mobile/package-lock.json
+
+            -   name: 📦 Mobile-Dependencies installieren
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_install_deps
+
+            -   name: 🚀 Expo-Web im E2E-Modus starten
+                env:
+                    EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8100
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
+
+            # =============================================================
+            # E2E BROWSER TESTS (ERWEITERT)
+            # =============================================================
+
+            -   name: 🎭 Playwright-Dependencies installieren
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
+
+            -   name: 🌐 E2E Browser Tests (Playwright – Standard)
+                if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_level == 'standard') || github.event_name == 'push'
+                env:
+                    PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
+                    E2E_API_BASE_URL: http://127.0.0.1:8100
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_standard_tests
+
+            -   name: 🌐 E2E Browser Tests (Playwright – Alle/Bestenfalls)
+                if: github.event_name == 'workflow_dispatch' && github.event.inputs.test_level == 'bestenfalls'
+                env:
+                    PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
+                    E2E_API_BASE_URL: http://127.0.0.1:8100
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_all_tests
+
+            # =============================================================
+            # ARTEFAKTE & CLEANUP
+            # =============================================================
+
+            -   name: 📦 Test-Ergebnisse hochladen
+                if: always()
+                uses: actions/upload-artifact@v4
+                with:
+                    name: playwright-test-results
+                    path: |
+                        tests/e2e/browseri/playwright/test-results/
+                        tests/e2e/browseri/playwright/playwright-report/
+                    retention-days: 7
+
+            -   name: 🧹 Backend-Prozess stoppen
+                if: always()
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_backend_stop || true
+
+            -   name: 🧹 Expo-Web-Prozess stoppen
+                if: always()
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_stop || true

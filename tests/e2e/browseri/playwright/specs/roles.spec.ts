@@ -3,7 +3,7 @@ import {loginAsRole, createUserWithRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
- * Rollen-Tests: Standard- und Bestenfalls-Ebene
+ * Rollen-Tests: Standard- und Advanced-Ebene
  * 
  * Tests für rollenbasierte Funktionalität und Feature-Sichtbarkeit.
  */

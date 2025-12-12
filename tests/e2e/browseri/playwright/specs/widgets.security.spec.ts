@@ -40,7 +40,7 @@ test.describe('@minimal Widget Security', () => {
 		// Screenshot
 		await page.screenshot({path: 'test-results/widget-04-security.png'});
 	});
-	
+
 	test('@minimal WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `xss+${Date.now()}@example.com`;

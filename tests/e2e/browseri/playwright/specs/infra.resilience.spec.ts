@@ -3,7 +3,7 @@ import {newApiRequestContext} from '../helpers/api';
 import {loginAs, loginAsRole, createUserWithRole} from '../helpers/auth';
 
 /**
- * Infrastruktur-Resilience-Tests: Standard- und Bestenfalls-Ebene
+ * Infrastruktur-Resilience-Tests: Standard- und Advanced-Ebene
  * 
  * Tests für Infrastruktur-Fehlerbehandlung, CORS, Netzwerk-Probleme.
  */

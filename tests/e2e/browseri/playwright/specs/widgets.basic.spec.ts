@@ -34,7 +34,7 @@ test.describe('@minimal Widget Basic', () => {
 		// Screenshot
 		await page.screenshot({path: 'test-results/widget-01-home-feed.png'});
 	});
-	
+
 	test('@minimal WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w2+${Date.now()}@example.com`;
@@ -55,7 +55,7 @@ test.describe('@minimal Widget Basic', () => {
 		
 		await page.screenshot({path: 'test-results/widget-02-created.png'});
 	});
-	
+
 	test('@minimal WIDGET-03: Eigenes Widget löschen', async ({page}) => {
 	const api = await newApiRequestContext();
 	const email = `w3+${Date.now()}@example.com`;

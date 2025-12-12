@@ -18,7 +18,8 @@ test.describe('@standard Infrastructure Resilience', () => {
 		await loginAs(page, user.email, user.password);
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
-		// Jetzt Backend-Failure simulieren
+		// Jetzt Backend-Failure für Feed-Endpoint simulieren (nicht für Auth, da Login bereits erfolgt)
+		// Wir simulieren komplettes Backend-Down für alle API-Calls NACH Login
 		await page.route('**/api/**', async (route) => {
 			await route.abort('failed');
 		});
@@ -35,6 +36,7 @@ test.describe('@standard Infrastructure Resilience', () => {
 		const bodyText = await page.textContent('body');
 		const hasErrorText = bodyText && /fehler|error|nicht verfügbar|unavailable|laden/i.test(bodyText);
 		
+		// Erwarte mindestens eine Form von Error-Anzeige (Toast bevorzugt, aber Error-Box akzeptabel)
 		expect(hasErrorToast || hasErrorText).toBeTruthy();
 		
 		await page.screenshot({path: 'test-results/infra-03-backend-down.png'});

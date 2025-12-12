@@ -32,12 +32,12 @@ export default defineConfig({
 	},
 	
 	/**
-	 * Test-Projekte für verschiedene Testebenen (Minimum/Standard/Bestenfalls)
-	 * 
+	 * Test-Projekte für verschiedene Testebenen (Minimum/Standard/Advanced)
+	 *
 	 * Verwendung:
 	 * - npx playwright test --project=minimum      # Nur Minimum-Tests
 	 * - npx playwright test --project=standard     # Minimum + Standard
-	 * - npx playwright test --project=bestenfalls  # Alle Tests inkl. Bestenfalls
+	 * - npx playwright test --project=advanced     # Alle Tests inkl. Advanced
 	 * - npx playwright test                        # Standard (Minimum + Standard)
 	 */
 	projects: [
@@ -54,9 +54,9 @@ export default defineConfig({
 			use: {...devices['Desktop Chrome']},
 		},
 		{
-			name: 'bestenfalls',
+			name: 'advanced',
 			testMatch: /.*\.spec\.ts$/,
-			// Kein grep-Filter: alle Tests (minimum + standard + bestenfalls)
+			// Kein grep-Filter: alle Tests (minimum + standard + advanced)
 			use: {...devices['Desktop Chrome']},
 		},
 	],

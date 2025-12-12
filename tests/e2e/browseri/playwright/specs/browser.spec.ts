@@ -1,16 +1,16 @@
 import {expect, test} from '@playwright/test';
-import {loginAsRole, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAsRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
- * Browser-UX-Tests: Bestenfalls-Ebene
+ * Browser-UX-Tests: Advanced-Ebene
  * 
  * Tests für Browser-spezifische Features wie Session-Persistence, Storage-Fallbacks.
  */
 
-test.describe('@bestenfalls Browser & UX', () => {
+test.describe('@advanced Browser & UX', () => {
 	// BROWSER-01 – Session-Persistence über Reload
-	test('@bestenfalls BROWSER-01: Session bleibt nach Reload erhalten', async ({page}) => {
+	test('@advanced BROWSER-01: Session bleibt nach Reload erhalten', async ({page}) => {
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'browser01');
 		
 		// Login
@@ -35,7 +35,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 		await page.screenshot({path: 'test-results/browser-01-reload-persist.png'});
 	});
 	
-	test('@bestenfalls BROWSER-01: Session bleibt nach Navigation erhalten', async ({page}) => {
+	test('@advanced BROWSER-01: Session bleibt nach Navigation erhalten', async ({page}) => {
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'browser01-nav');
 		
 		// Login
@@ -54,7 +54,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 	
 	// BROWSER-02 – Fallback bei eingeschränktem Storage (sofern relevant)
 	test.skip(
-		'@bestenfalls BROWSER-02: App funktioniert mit deaktiviertem LocalStorage',
+		'@advanced BROWSER-02: App funktioniert mit deaktiviertem LocalStorage',
 		async ({page}) => {
 			// Hinweis: Expo-Web auf Browser benötigt localStorage für Token-Speicherung.
 			// Dieser Test ist konzeptionell und wird übersprungen, da das Überschreiben von localStorage
@@ -90,7 +90,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 		}
 	);
 	
-	test('@bestenfalls BROWSER-02: App degradiert gracefully bei Storage-Quota-Überschreitung', async ({page}) => {
+	test('@advanced BROWSER-02: App degradiert gracefully bei Storage-Quota-Überschreitung', async ({page}) => {
 		await page.goto('/');
 		
 		// Versuche, LocalStorage zu füllen bis Quota überschritten
@@ -118,7 +118,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 	});
 	
 	// BROWSER-03 – Back-Button-Navigation
-	test('@bestenfalls BROWSER-03: Browser Back-Button funktioniert korrekt', async ({page}) => {
+	test('@advanced BROWSER-03: Browser Back-Button funktioniert korrekt', async ({page}) => {
 		await page.goto('/');
 		
 		// Klicke auf Login-Link
@@ -139,7 +139,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 	});
 	
 	// BROWSER-04 – Fokus-Management für Accessibility
-	test('@bestenfalls BROWSER-04: Fokus wird korrekt gesetzt nach Navigation', async ({page}) => {
+	test('@advanced BROWSER-04: Fokus wird korrekt gesetzt nach Navigation', async ({page}) => {
 		await page.goto('/');
 		
 		// Klicke auf Login-Link
@@ -159,7 +159,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 	});
 	
 	// BROWSER-05 – Keyboard-Navigation
-	test('@bestenfalls BROWSER-05: Keyboard-Navigation funktioniert', async ({page}) => {
+	test('@advanced BROWSER-05: Keyboard-Navigation funktioniert', async ({page}) => {
 		await page.goto('/');
 		
 		// Nutze Tab-Taste für Navigation
@@ -172,7 +172,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 	});
 	
 	// BROWSER-06 – Responsive Design / Mobile Viewport
-	test('@bestenfalls BROWSER-06: App funktioniert auf Mobile-Viewport', async ({page}) => {
+	test('@advanced BROWSER-06: App funktioniert auf Mobile-Viewport', async ({page}) => {
 		// Setze Mobile-Viewport
 		await page.setViewportSize({width: 375, height: 667}); // iPhone SE
 		
@@ -186,7 +186,7 @@ test.describe('@bestenfalls Browser & UX', () => {
 		await page.screenshot({path: 'test-results/browser-06-mobile.png'});
 	});
 	
-	test('@bestenfalls BROWSER-06: App funktioniert auf Tablet-Viewport', async ({page}) => {
+	test('@advanced BROWSER-06: App funktioniert auf Tablet-Viewport', async ({page}) => {
 		// Setze Tablet-Viewport
 		await page.setViewportSize({width: 768, height: 1024}); // iPad
 		

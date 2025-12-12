@@ -1,16 +1,16 @@
 import {expect, test} from '@playwright/test';
-import {loginAs, createUserWithRole, logout} from '../helpers/auth';
+import {createUserWithRole, loginAs, logout} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
- * Auth-Edge-Cases-Tests: Bestenfalls-Ebene
+ * Auth-Edge-Cases-Tests: Advanced-Ebene
  * 
  * Tests für komplexe Edge-Cases und Race-Conditions bei Authentifizierung.
  */
 
-test.describe('@bestenfalls Auth Edge Cases', () => {
+test.describe('@advanced Auth Edge Cases', () => {
 	// AUTH-09 – Token-Refresh während paralleler Requests
-	test('@bestenfalls AUTH-09: Token-Refresh während paralleler API-Calls', async ({page}) => {
+	test('@advanced AUTH-09: Token-Refresh während paralleler API-Calls', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'auth09');
 		
@@ -52,7 +52,7 @@ test.describe('@bestenfalls Auth Edge Cases', () => {
 	});
 	
 	// AUTH-10 – mehrfacher Logout
-	test('@bestenfalls AUTH-10: Mehrfacher Logout verursacht keine Fehler', async ({page}) => {
+	test('@advanced AUTH-10: Mehrfacher Logout verursacht keine Fehler', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'auth10');
 		
@@ -83,7 +83,7 @@ test.describe('@bestenfalls Auth Edge Cases', () => {
 	});
 	
 	// AUTH-11 – leere/getrimmte Tokens im Refresh-Request
-	test('@bestenfalls AUTH-11: Leere oder getrimmte Tokens werden korrekt abgelehnt', async ({page}) => {
+	test('@advanced AUTH-11: Leere oder getrimmte Tokens werden korrekt abgelehnt', async ({page}) => {
 		// Test mit leerem Token - erst navigieren, dann Token setzen
 		await page.goto('/');
 		await page.waitForLoadState('domcontentloaded');
@@ -128,7 +128,7 @@ test.describe('@bestenfalls Auth Edge Cases', () => {
 	});
 	
 	// AUTH-12 – Session-Hijacking-Schutz
-	test('@bestenfalls AUTH-12: Token aus anderem Browser funktioniert nicht', async ({page, context}) => {
+	test('@advanced AUTH-12: Token aus anderem Browser funktioniert nicht', async ({page, context}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'auth12');
 		
@@ -168,7 +168,7 @@ test.describe('@bestenfalls Auth Edge Cases', () => {
 	});
 	
 	// AUTH-13 – Gleichzeitige Login-Versuche desselben Users
-	test('@bestenfalls AUTH-13: Gleichzeitige Logins desselben Users', async ({page, context}) => {
+	test('@advanced AUTH-13: Gleichzeitige Logins desselben Users', async ({page, context}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'auth13');
 		

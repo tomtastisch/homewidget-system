@@ -1,17 +1,17 @@
 import {expect, test} from '@playwright/test';
-import {loginAsRole, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAsRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 import {deleteWidgetById} from '../helpers/widgets';
 
 /**
- * Security-Advanced-Tests: Bestenfalls-Ebene
+ * Security-Advanced-Tests: Advanced-Ebene
  * 
  * Tests für erweiterte Security-Funktionalität (CSP, Payload-Validierung, etc.).
  */
 
-test.describe('@bestenfalls Security Advanced', () => {
+test.describe('@advanced Security Advanced', () => {
 	// SEC-01 – manipulierte API-Payloads (z. B. negative `widget_id`) → korrekte Validierung
-	test('@bestenfalls SEC-01: Negative Widget-ID wird abgelehnt', async ({page}) => {
+	test('@advanced SEC-01: Negative Widget-ID wird abgelehnt', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'sec01');
 		
@@ -26,7 +26,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 		await page.screenshot({path: 'test-results/sec-01-negative-id.png'});
 	});
 	
-	test('@bestenfalls SEC-01: Widget-ID als String wird abgelehnt', async ({page}) => {
+	test('@advanced SEC-01: Widget-ID als String wird abgelehnt', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'sec01-string');
 		
@@ -39,7 +39,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 		expect([404, 422]).toContain(deleteRes.status());
 	});
 	
-	test('@bestenfalls SEC-01: SQL-Injection in Widget-Name wird verhindert', async ({page}) => {
+	test('@advanced SEC-01: SQL-Injection in Widget-Name wird verhindert', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'sec01-sql');
 		
@@ -60,7 +60,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 		await deleteWidgetById(api, widget.id, user.access_token);
 	});
 	
-	test('@bestenfalls SEC-01: Extrem lange Strings werden limitiert', async ({page}) => {
+	test('@advanced SEC-01: Extrem lange Strings werden limitiert', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'sec01-long');
 		
@@ -85,7 +85,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 	});
 	
 	// SEC-02 – CSP verhindert Inline-Scripts (Browser-Console prüfen)
-	test('@bestenfalls SEC-02: CSP verhindert Inline-Scripts', async ({page}) => {
+	test('@advanced SEC-02: CSP verhindert Inline-Scripts', async ({page}) => {
 		// Track CSP-Violations
 		const cspViolations: any[] = [];
 		page.on('console', (msg) => {
@@ -120,7 +120,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 		await page.screenshot({path: 'test-results/sec-02-csp.png'});
 	});
 	
-	test('@bestenfalls SEC-02: Externe Scripts werden durch CSP kontrolliert', async ({page}) => {
+	test('@advanced SEC-02: Externe Scripts werden durch CSP kontrolliert', async ({page}) => {
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'sec02-external');
 		
 		// Login
@@ -147,7 +147,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 	});
 	
 	// SEC-03 – HTTPS-Enforcement (falls relevant)
-	test.skip('@bestenfalls SEC-03: HTTP wird zu HTTPS redirected', async ({page}) => {
+	test.skip('@advanced SEC-03: HTTP wird zu HTTPS redirected', async ({page}) => {
 		// Dieser Test ist nur relevant, wenn die App in Produktion läuft
 		// Im lokalen E2E-Setup mit http://localhost ist HTTPS nicht erzwungen
 		
@@ -157,7 +157,7 @@ test.describe('@bestenfalls Security Advanced', () => {
 	});
 	
 	// SEC-04 – Sensitive Daten werden nicht im LocalStorage gespeichert
-	test('@bestenfalls SEC-04: Keine sensiblen Daten im LocalStorage', async ({page}) => {
+	test('@advanced SEC-04: Keine sensiblen Daten im LocalStorage', async ({page}) => {
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'sec04');
 		
 		// Login

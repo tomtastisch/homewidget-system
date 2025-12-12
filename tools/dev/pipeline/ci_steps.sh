@@ -246,7 +246,7 @@ step_e2e_playwright_standard_tests() {
     )
 }
 
-## @brief Playwright alle Tests ausführen (Minimum + Standard + Bestenfalls).
+## @brief Playwright alle Tests ausführen (Minimum + Standard + Advanced).
 step_e2e_playwright_all_tests() {
     local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
     if [[ ! -d "${playwright_dir}" ]]; then
@@ -254,13 +254,13 @@ step_e2e_playwright_all_tests() {
         return 1
     fi
     
-    log_info "Führe alle Playwright-Tests aus (Minimum + Standard + Bestenfalls)..."
+    log_info "Führe alle Playwright-Tests aus (Minimum + Standard + Advanced)..."
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
-        npx playwright test --project=bestenfalls
+        npx playwright test --project=advanced
     )
 }
 
@@ -385,7 +385,7 @@ Verfügbare Kommandos:
   e2e_playwright_install          Playwright-Dependencies installieren
   e2e_playwright_minimum_tests    Playwright Minimum-Tests ausführen
   e2e_playwright_standard_tests   Playwright Standard-Tests ausführen (Minimum + Standard)
-  e2e_playwright_all_tests        Playwright alle Tests ausführen (inkl. Bestenfalls)
+  e2e_playwright_all_tests        Playwright alle Tests ausführen (inkl. Advanced)
 
   mobile_install_deps             Mobile-Abhängigkeiten installieren (npm ci)
   mobile_expo_doctor              Expo-Konfiguration prüfen (expo-doctor)

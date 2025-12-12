@@ -1,10 +1,10 @@
 import {expect, test} from '@playwright/test';
-import {loginAsRole, createUserWithRole} from '../helpers/auth';
-import {newApiRequestContext, mockBackendError} from '../helpers/api';
+import {createUserWithRole, loginAsRole} from '../helpers/auth';
+import {mockBackendError, newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
 /**
- * Widget-Resilience-Tests: Standard- und Bestenfalls-Ebene
+ * Widget-Resilience-Tests: Standard- und Advanced-Ebene
  * 
  * Tests für Fehlerbehandlung und Edge-Cases bei Widget-Operationen.
  */
@@ -58,9 +58,9 @@ test.describe('@standard Widget Resilience', () => {
 	});
 });
 
-test.describe('@bestenfalls Widget Edge Cases', () => {
+test.describe('@advanced Widget Edge Cases', () => {
 	// WIDGET-07 – Löschen eines bereits gelöschten Widgets
-	test('@bestenfalls WIDGET-07: Bereits gelöschtes Widget erneut löschen gibt 404', async ({page}) => {
+	test('@advanced WIDGET-07: Bereits gelöschtes Widget erneut löschen gibt 404', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'widget07');
 		
@@ -84,7 +84,7 @@ test.describe('@bestenfalls Widget Edge Cases', () => {
 	});
 	
 	// WIDGET-08 – gleichzeitiges Erstellen vieler Widgets
-	test('@bestenfalls WIDGET-08: Viele Widgets gleichzeitig erstellen', async ({page}) => {
+	test('@advanced WIDGET-08: Viele Widgets gleichzeitig erstellen', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'widget08');
 		
@@ -114,7 +114,7 @@ test.describe('@bestenfalls Widget Edge Cases', () => {
 	});
 	
 	// WIDGET-09 – Widget-Update mit konkurrierenden Änderungen
-	test('@bestenfalls WIDGET-09: Konkurrierende Widget-Updates', async ({page}) => {
+	test('@advanced WIDGET-09: Konkurrierende Widget-Updates', async ({page}) => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'widget09');
 		

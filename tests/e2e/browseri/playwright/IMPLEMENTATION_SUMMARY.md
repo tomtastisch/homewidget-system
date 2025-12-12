@@ -1,4 +1,4 @@
-# Ticket 15 – Browser-E2E mit Playwright: Standard- & Bestens-Abdeckung
+# Ticket 15 – Browser-E2E mit Playwright: Standard- & Advanced-Abdeckung
 
 ## Implementierungs-Zusammenfassung
 
@@ -8,7 +8,7 @@
 
 **Neue Test-Specs (8 Dateien, 60 Tests gesamt)**:
 - `auth.resilience.spec.ts` - Standard-Level Auth-Fehlerbehandlung (5 Tests)
-- `auth.edge-cases.spec.ts` - Bestenfalls-Level Auth Edge-Cases (5 Tests)
+- `auth.edge-cases.spec.ts` - Advanced-Level Auth Edge-Cases (5 Tests)
 - `roles.spec.ts` - Rollen-basierte Features (6 Tests)
 - `widgets.resilience.spec.ts` - Widget-Fehlerbehandlung und Edge-Cases (4 Tests)
 - `feed.spec.ts` - Feed-Funktionalität und Security (5 Tests)
@@ -33,10 +33,11 @@
 **Test-Ebenen**:
 - `@minimum` (10 Tests) - Kritische Basis-Szenarien
 - `@standard` (26 Tests) - Minimum + erweiterte Fehlerbehandlung
-- `@bestenfalls` (60 Tests) - Alle Tests inkl. Edge-Cases
+- `@advanced` (60 Tests) - Alle Tests inkl. Edge-Cases
 
 **Playwright-Konfiguration**:
-- 3 Projekte definiert: `minimum`, `standard`, `bestenfalls`
+
+- 3 Projekte definiert: `minimum`, `standard`, `advanced`
 - Grep-basierte Filterung nach Tags
 - Dedizierte npm-Scripts für jede Ebene
 
@@ -49,9 +50,9 @@
 
 **GitHub Workflows**:
 - `ci.yml` - Standard-CI läuft @minimum (schnell, bei jedem Push)
-- `e2e-extended.yml` - Nightly/manuell für Standard/Bestenfalls
+- `e2e-extended.yml` - Nightly/manuell für Standard/Advanced
   - Zeitgesteuert: täglich 2 Uhr UTC (Standard-Tests)
-  - Manuell: mit Auswahl zwischen standard/bestenfalls
+  - Manuell: mit Auswahl zwischen standard/advanced
   - Feature-Branches: automatisch Standard-Tests
 
 #### 4. Dokumentation
@@ -70,7 +71,7 @@ Testebene      | Tests | Dateien | Status
 ---------------|-------|---------|------------------
 Minimum        | 10    | 4       | ✅ Vollständig
 Standard       | 16    | 5       | ✅ Vollständig
-Bestenfalls    | 34    | 4       | ✅ Vollständig
+Advanced       | 34    | 4       | ✅ Vollständig
 GESAMT         | 60    | 13      | ✅ Vollständig
 ```
 
@@ -118,7 +119,7 @@ tools/dev/pipeline/run_steps.sh tests
 - **Standard-CI** (ci.yml): Automatisch @minimum bei jedem Push
 - **Extended-CI** (e2e-extended.yml): 
   - Täglich: @standard Tests
-  - Manuell: Wählbar zwischen standard/bestenfalls
+  - Manuell: Wählbar zwischen standard/advanced
   - Feature-Branches: @standard Tests
 
 ### Besonderheiten
@@ -189,7 +190,7 @@ tools/dev/pipeline/run_steps.sh tests
 
 **Ticket-Ziele erreicht**:
 - ✅ Standard-Szenarien vollständig implementiert (16 Tests)
-- ✅ Bestenfalls-Szenarien vollständig implementiert (34 Tests)
+- ✅ Advanced-Szenarien vollständig implementiert (34 Tests)
 - ✅ Tagging-Strategie definiert und umgesetzt
 - ✅ CI-Integration für differenzierte Läufe vorbereitet
 - ✅ Dokumentation vollständig

@@ -1,9 +1,9 @@
 import {expect, test} from '@playwright/test';
 import {newApiRequestContext} from '../helpers/api';
-import {loginAsRole, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAsRole} from '../helpers/auth';
 
 /**
- * Infrastruktur-Resilience-Tests: Standard- und Bestenfalls-Ebene
+ * Infrastruktur-Resilience-Tests: Standard- und Advanced-Ebene
  * 
  * Tests für Infrastruktur-Fehlerbehandlung, CORS, Netzwerk-Probleme.
  */
@@ -67,9 +67,9 @@ test.describe('@standard Infrastructure Resilience', () => {
 	});
 });
 
-test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
+test.describe('@advanced Infrastructure - Performance & Network', () => {
 	// INFRA-05 – langsame Netzwerke simulieren, Loading-States
-	test('@bestenfalls INFRA-05: Langsames Netzwerk zeigt Loading-States', async ({page, context}) => {
+	test('@advanced INFRA-05: Langsames Netzwerk zeigt Loading-States', async ({page, context}) => {
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra05');
 		
 		// Simuliere langsames Netzwerk durch Verzögerung aller API-Calls
@@ -95,7 +95,7 @@ test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 	});
 	
 	// INFRA-06 – Offline-Modus und Reconnect
-	test('@bestenfalls INFRA-06: Offline-Modus wird erkannt', async ({page, context}) => {
+	test('@advanced INFRA-06: Offline-Modus wird erkannt', async ({page, context}) => {
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra06');
 		
 		// Login zunächst mit funktionierendem Netzwerk
@@ -130,7 +130,7 @@ test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 	});
 	
 	// INFRA-07 – Timeout-Handling bei langsamen Responses
-	test('@bestenfalls INFRA-07: Request-Timeouts werden korrekt behandelt', async ({page}) => {
+	test('@advanced INFRA-07: Request-Timeouts werden korrekt behandelt', async ({page}) => {
 		// Mock sehr langsamen Backend-Response (Timeout simulieren durch abort)
 		await page.route('**/api/widgets/**', async (route) => {
 			if (route.request().method() === 'GET') {
@@ -159,9 +159,9 @@ test.describe('@bestenfalls Infrastructure - Performance & Network', () => {
 	});
 });
 
-test.describe('@bestenfalls Infrastructure - Error Recovery', () => {
+test.describe('@advanced Infrastructure - Error Recovery', () => {
 	// INFRA-08 – Backend-Recovery nach temporärem Ausfall
-	test('@bestenfalls INFRA-08: App erholt sich nach Backend-Wiederherstellung', async ({page}) => {
+	test('@advanced INFRA-08: App erholt sich nach Backend-Wiederherstellung', async ({page}) => {
 		await createUserWithRole(await newApiRequestContext(), 'demo', 'infra08');
 		
 		let failureMode = true;

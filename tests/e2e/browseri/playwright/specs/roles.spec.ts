@@ -1,9 +1,9 @@
 import {expect, test} from '@playwright/test';
-import {loginAsRole, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAsRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
- * Rollen-Tests: Standard- und Bestenfalls-Ebene
+ * Rollen-Tests: Standard- und Advanced-Ebene
  * 
  * Tests für rollenbasierte Funktionalität und Feature-Sichtbarkeit.
  */
@@ -48,9 +48,9 @@ test.describe('@standard Roles', () => {
 	});
 });
 
-test.describe('@bestenfalls Roles - Feature Visibility', () => {
+test.describe('@advanced Roles - Feature Visibility', () => {
 	// ROLE-02 – rollenspezifische Features sichtbar/unsichtbar
-	test('@bestenfalls ROLE-02: Demo-Rolle hat eingeschränkten Zugriff', async ({page}) => {
+	test('@advanced ROLE-02: Demo-Rolle hat eingeschränkten Zugriff', async ({page}) => {
 		await loginAsRole(page, 'demo');
 		
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
@@ -65,7 +65,7 @@ test.describe('@bestenfalls Roles - Feature Visibility', () => {
 		await page.screenshot({path: 'test-results/role-02-demo-limited.png'});
 	});
 	
-	test('@bestenfalls ROLE-02: Premium-Rolle hat vollen Zugriff', async ({page}) => {
+	test('@advanced ROLE-02: Premium-Rolle hat vollen Zugriff', async ({page}) => {
 		await loginAsRole(page, 'premium');
 		
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
@@ -80,7 +80,7 @@ test.describe('@bestenfalls Roles - Feature Visibility', () => {
 		await page.screenshot({path: 'test-results/role-02-premium-full.png'});
 	});
 	
-	test('@bestenfalls ROLE-02: Rolle beeinflusst verfügbare Widget-Typen', async ({page}) => {
+	test('@advanced ROLE-02: Rolle beeinflusst verfügbare Widget-Typen', async ({page}) => {
 		// Test für rollenbasierte Widget-Beschränkungen
 		
 		// Demo-User: möglicherweise limitierte Widget-Anzahl oder -Typen

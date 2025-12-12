@@ -108,9 +108,9 @@ jobs:
                 run: |
                     echo "::notice::Alle CI-Prüfungen wurden erfolgreich abgeschlossen."
 
-            # =============================================================
-            # BROWSER E2E (Playwright – Minimum)
-            # =============================================================
+    # =============================================================
+    # BROWSER E2E (Playwright – Minimum)
+    # =============================================================
 
     e2e-core-minimal:
         runs-on: ubuntu-latest
@@ -168,17 +168,9 @@ jobs:
                     E2E_API_BASE_URL: http://127.0.0.1:8100
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimum_tests
-            
-            # Optionale erweiterte Tests (Standard: Minimum + Standard, aktivierbar für Feature-Branches)
-            # Für aktivierung: GitHub Workflow manuell mit Input-Parameter erweitern
-            # oder in Feature-Branch-Workflow separate Job definieren mit:
-            #     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_standard_tests
-            
-            # Vollständige Test-Suite (inkl. Bestenfalls) für manuelle/Release-Runs:
-            #     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_all_tests
 
     # =============================================================
-    # BROWSER E2E (Playwright – Standard)
+    # BROWSER E2E (Playwright – STANDARD)
     # =============================================================
 
     e2e-core-standard:
@@ -239,7 +231,7 @@ jobs:
                     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_standard_tests
 
     # =============================================================
-    # BROWSER E2E (Playwright – Alle)
+    # BROWSER E2E (Playwright – ADVANCED)
     # =============================================================
 
     e2e-core-all:

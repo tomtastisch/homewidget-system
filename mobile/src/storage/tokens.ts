@@ -1,16 +1,27 @@
+/**
+ * @module storage/tokens
+ * @description Persistierung von Authentifizierungstoken mit plattformabhängigen Speichermechanismen.
+ *
+ * Das Modul realisiert ein plattformabhängiges Persistierungskonzept für Refresh-Tokens:
+ * - Native Plattformen (iOS/Android): Verschlüsselte Persistierung über expo-secure-store
+ * - Web: Unverschlüsselte Persistierung über localStorage
+ *
+ * Der Access-Token wird ausschließlich im flüchtigen Speicher (State) gehalten und
+ * nicht persistiert.
+ *
+ * Die Web-Implementierung abstrahiert die synchrone localStorage-API als Promise-basierte
+ * Schnittstelle mit Auflösung in der nachfolgenden Microtask-Phase, wodurch Konsistenz
+ * zu den nativen Implementierungen gewährleistet wird.
+ */
+
 import * as SecureStore from 'expo-secure-store';
 import {Platform} from 'react-native';
 
-// WICHTIG: Nur den Refresh‑Token sicher persistieren.
-// Der Access‑Token wird ausschließlich im Speicher (State) gehalten.
-//
-// Plattformabhängige Storage-Implementierung:
-// - Native (iOS/Android): expo-secure-store (verschlüsselt)
-// - Web: localStorage (keine Verschlüsselung, aber funktional)
-
 const REFRESH_KEY = 'hw_refresh_token';
 
-// Kleine Abstraktionsschicht für plattformspezifischen Storage
+/**
+ * Schnittstelle für plattformspezifischen Persistierungsmechanismus.
+ */
 type RefreshStorage = {
 	set: (value: string) => Promise<void>;
 	get: () => Promise<string | null>;
@@ -21,15 +32,21 @@ const refreshStorage: RefreshStorage = Platform.OS === 'web'
 	? {
 		set: async (value: string) => {
 			localStorage.setItem(REFRESH_KEY, value);
+			// Auflösung in der nachfolgenden Microtask-Phase für Promise-Konsistenz
+			await Promise.resolve();
 		},
 		get: async () => {
-			return localStorage.getItem(REFRESH_KEY);
+			const value = localStorage.getItem(REFRESH_KEY);
+			// Auflösung in der nachfolgenden Microtask-Phase für Promise-Konsistenz
+			await Promise.resolve();
+			return value;
 		},
 		clear: async () => {
 			localStorage.removeItem(REFRESH_KEY);
-			// Für Abwärtskompatibilität auch andere mögliche Keys löschen
+			// Kompatibilität mit vorherigen Token-Schlüsseln
 			localStorage.removeItem('access_token');
 			localStorage.removeItem('refreshToken');
+			await Promise.resolve();
 		},
 	}
 	: {
@@ -39,17 +56,25 @@ const refreshStorage: RefreshStorage = Platform.OS === 'web'
 	};
 
 /**
- * Speichert das Refresh-Token plattformabhängig.
- * - Native: SecureStore (verschlüsselt)
- * - Web: localStorage (unverschlüsselt, da SecureStore auf Web nicht verfügbar)
+ * Speichert das Refresh-Token persistent.
+ *
+ * @param refresh Refresh-Token-Wert
+ *
+ * Speicherung:
+ * - Native (iOS/Android): expo-secure-store (verschlüsselt)
+ * - Web: localStorage (unverschlüsselt)
  */
 export async function saveRefreshToken(refresh: string): Promise<void> {
 	await refreshStorage.set(refresh);
 }
 
 /**
- * Liest das Refresh-Token plattformabhängig.
- * - Native: SecureStore
+ * Ruft das persistierte Refresh-Token ab.
+ *
+ * @returns Refresh-Token-Wert oder null, falls nicht vorhanden
+ *
+ * Zugriff:
+ * - Native (iOS/Android): expo-secure-store
  * - Web: localStorage
  */
 export async function getRefreshToken(): Promise<string | null> {
@@ -57,9 +82,11 @@ export async function getRefreshToken(): Promise<string | null> {
 }
 
 /**
- * Löscht alle auth-bezogenen Tokens plattformabhängig.
- * - Native: SecureStore
- * - Web: localStorage
+ * Löscht alle persistierten authentifizierungsbezogenen Tokens.
+ *
+ * Löschung:
+ * - Native (iOS/Android): expo-secure-store
+ * - Web: localStorage und Kompatibilitätschlüssel
  */
 export async function clearTokens(): Promise<void> {
 	await refreshStorage.clear();

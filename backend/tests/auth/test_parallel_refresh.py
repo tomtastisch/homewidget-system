@@ -20,7 +20,7 @@ pytestmark = pytest.mark.integration
 def test_parallel_refresh_with_same_token_one_succeeds_others_fail(client: TestClient) -> None:
     """
     Parallele Refresh-Anfragen mit demselben Token: Nur eine darf erfolgreich sein.
-    
+
     Dieser Test validiert das Mutex-Verhalten:
     - Mehrere Threads versuchen gleichzeitig, denselben Refresh-Token zu rotieren
     - Aufgrund des Token-spezifischen Locks wird nur eine Anfrage erfolgreich sein
@@ -48,7 +48,8 @@ def test_parallel_refresh_with_same_token_one_succeeds_others_fail(client: TestC
     # Parallele Ausführung mit ThreadPoolExecutor
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         futures = [executor.submit(refresh_request, i) for i in range(5)]
-        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+        # Warte auf alle Futures in der Reihenfolge ihrer Submission für besseres Debugging
+        results = [future.result() for future in futures]
 
     # Assert: Genau eine Anfrage muss erfolgreich sein, alle anderen müssen fehlschlagen
     successful_results = [r for r in results if r["success"]]
@@ -78,7 +79,7 @@ def test_parallel_refresh_with_same_token_one_succeeds_others_fail(client: TestC
 def test_parallel_refresh_with_different_tokens_all_succeed(client: TestClient) -> None:
     """
     Parallele Refresh-Anfragen mit unterschiedlichen Tokens: Alle müssen erfolgreich sein.
-    
+
     Dieser Test validiert, dass der Mutex nur pro Token-Digest wirkt und nicht global:
     - Mehrere Benutzer (oder Sessions) mit unterschiedlichen Tokens
     - Alle sollten parallel erfolgreich refreshen können
@@ -111,7 +112,8 @@ def test_parallel_refresh_with_different_tokens_all_succeed(client: TestClient) 
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = [executor.submit(refresh_user_token, user) for user in users]
-        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+        # Warte auf alle Futures in der Reihenfolge ihrer Submission
+        results = [future.result() for future in futures]
 
     # Assert: Alle Anfragen müssen erfolgreich sein
     successful_results = [r for r in results if r["success"]]
@@ -137,7 +139,7 @@ def test_parallel_refresh_with_different_tokens_all_succeed(client: TestClient) 
 def test_sequential_refresh_after_parallel_attempt(client: TestClient) -> None:
     """
     Sequenzieller Refresh nach parallelem Versuch: Der neue Token muss funktionieren.
-    
+
     Dieser Test validiert die End-to-End-Funktionalität:
     - Parallele Anfragen mit demselben Token (nur eine erfolgreich)
     - Der neue Token aus der erfolgreichen Anfrage wird für einen weiteren Refresh verwendet
@@ -162,7 +164,8 @@ def test_sequential_refresh_after_parallel_attempt(client: TestClient) -> None:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         futures = [executor.submit(refresh_request, i) for i in range(3)]
-        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+        # Warte auf alle Futures in der Reihenfolge ihrer Submission
+        results = [future.result() for future in futures]
 
     # Finde den erfolgreichen Refresh
     successful_results = [r for r in results if r["status_code"] == 200]
@@ -188,7 +191,7 @@ def test_sequential_refresh_after_parallel_attempt(client: TestClient) -> None:
 def test_parallel_refresh_stress_test(client: TestClient) -> None:
     """
     Stress-Test mit vielen parallelen Refresh-Anfragen (10+).
-    
+
     Dieser Test validiert die Robustheit des Mutex-Mechanismus unter Last:
     - Viele gleichzeitige Anfragen mit demselben Token
     - Genau eine muss erfolgreich sein
@@ -213,7 +216,8 @@ def test_parallel_refresh_stress_test(client: TestClient) -> None:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_requests) as executor:
         futures = [executor.submit(refresh_request, i) for i in range(num_requests)]
-        status_codes = [future.result() for future in concurrent.futures.as_completed(futures)]
+        # Warte auf alle Futures in der Reihenfolge ihrer Submission
+        status_codes = [future.result() for future in futures]
 
     # Assert: Genau ein 200, alle anderen 401
     success_count = sum(1 for code in status_codes if code == 200)

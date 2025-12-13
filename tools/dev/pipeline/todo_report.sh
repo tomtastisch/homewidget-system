@@ -100,6 +100,18 @@ is_glob_pattern() {
     [[ "${s}" == *"*"* || "${s}" == *"?"* || "${s}" == *"["* ]]
 }
 
+is_excluded_category() {
+    local cat="$1"
+    local ex
+    for ex in "${EXCLUDED_CATEGORIES[@]}"; do
+        [[ -z "${ex}" ]] && continue
+        if [[ "${cat}" == "${ex}" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 is_excluded_file() {
     local abs_file="$1"
 
@@ -157,30 +169,17 @@ if (( ${#SPEC_FILES[@]} == 0 )); then
 fi
 
 KNOWN_CATEGORIES_CSV="$(join_by_comma "${KNOWN_CATEGORIES[@]}")"
-EXCLUDED_CATEGORIES_CSV="$(join_by_comma "${EXCLUDED_CATEGORIES[@]}")"
 
 # =============================================================
 # SCAN (awk): 1 Pass
 # Output TSV:
 #     category \t file \t line \t policy_ok(1/0) \t content
-# Kategorie-Excludes werden bereits im awk angewandt
 # =============================================================
 
 scan_todos_tsv() {
     awk \
         -v known_cats_csv="${KNOWN_CATEGORIES_CSV}" \
-        -v excluded_cats_csv="${EXCLUDED_CATEGORIES_CSV}" \
         '
-        function csv_has(csv, value,    n, i, tok) {
-            if (csv == "") return 0
-            n = split(csv, arr, ",")
-            for (i = 1; i <= n; i++) {
-                tok = arr[i]
-                if (tok != "" && tok == value) return 1
-            }
-            return 0
-        }
-
         function detect_category(line,    n, i, cat, tag) {
             if (known_cats_csv == "") return ""
             n = split(known_cats_csv, cats, ",")
@@ -204,7 +203,6 @@ scan_todos_tsv() {
             }
 
             if ($0 ~ /TODO/) {
-                if (csv_has(excluded_cats_csv, current_cat)) next
                 policy_ok = ($0 ~ /TODO\([^)]+\):/) ? 1 : 0
                 printf "%s\t%s\t%d\t%d\t%s\n", current_cat, FILENAME, FNR, policy_ok, $0
             }
@@ -215,7 +213,7 @@ scan_todos_tsv() {
 mapfile -t TODO_ROWS < <(scan_todos_tsv 2>/dev/null || true)
 
 # =============================================================
-# AGGREGATION (dynamisch basierend auf KNOWN_CATEGORIES + unknown)
+# AGGREGATION
 # =============================================================
 
 declare -A GROUP_COUNT=()
@@ -243,6 +241,7 @@ append_group_line() {
 }
 
 total_todos=0
+excluded_by_search=0
 policy_compliant=0
 non_compliant=0
 NON_COMPLIANT_LINES=""
@@ -262,6 +261,11 @@ for row in "${TODO_ROWS[@]}"; do
     IFS=$'\t' read -r cat file line policy_ok content <<< "${row}"
     [[ -z "${cat}" ]] && cat="unknown"
     [[ -z "${GROUP_COUNT[${cat}]+x}" ]] && cat="unknown"
+
+    if is_excluded_category "${cat}"; then
+        (( excluded_by_search += 1 ))
+        continue
+    fi
 
     (( total_todos += 1 ))
     (( GROUP_COUNT["${cat}"] += 1 ))
@@ -293,22 +297,21 @@ printf "%sTODO-Limit:%s %s (MAX_TODOS)\n" "${BLUE}" "${NC}" "${MAX_TODOS}"
 printf "%sKnown categories:%s %s\n" "${BLUE}" "${NC}" "${KNOWN_CATEGORIES_CSV:-"(none)"}"
 
 printf "%sExcluded specs:%s %d\n" "${BLUE}" "${NC}" "${#EXCLUDED_SPECS[@]}"
-for p in "${EXCLUDED_SPECS[@]}"; do
-    printf "    - %s\n" "${p}"
-done
+if (( ${#EXCLUDED_SPECS[@]} > 0 )); then
+    for p in "${EXCLUDED_SPECS[@]}"; do
+        printf "    - %s\n" "${p}"
+    done
+fi
 
-printf "%sExcluded categories:%s " "${BLUE}" "${NC}"
+printf "%sExcluded categories:%s %d\n" "${BLUE}" "${NC}" "${#EXCLUDED_CATEGORIES[@]}"
 if (( ${#EXCLUDED_CATEGORIES[@]} > 0 )); then
-    printf "%d\n" "${#EXCLUDED_CATEGORIES[@]}"
     for c in "${EXCLUDED_CATEGORIES[@]}"; do
         printf "    - %s\n" "${c}"
     done
-else
-    printf "0\n"
-    printf "    - (none)\n"
 fi
 printf "\n"
 
+printf "%sExcluded by Search:%s %d\n" "${BLUE}" "${NC}" "${excluded_by_search}"
 printf "%sGesamt-TODOs (nach Excludes):%s %d\n" "${BLUE}" "${NC}" "${total_todos}"
 printf "%sPolicy-konform:%s %d\n" "${GREEN}" "${NC}" "${policy_compliant}"
 if (( non_compliant > 0 )); then
@@ -329,28 +332,44 @@ if (( non_compliant > 0 )); then
     printf "%sBitte aktualisieren gemäß TODO_POLICY.md%s\n\n" "${YELLOW}" "${NC}"
 fi
 
-print_group() {
-    local label="$1"
-    local key="$2"
-    local count="${GROUP_COUNT[${key}]:-0}"
+print_category_block() {
+    local cat="$1"
+    local label="$2"
 
-    (( count == 0 )) && return 0
+    if is_excluded_category "${cat}"; then
+        printf "%s%s:%s Excluded by Search\n\n" "${BLUE}" "${label}" "${NC}"
+        return 0
+    fi
 
-    printf "%s%s (%d):%s\n" "${BLUE}" "${label}" "${count}" "${NC}"
-    printf "%b\n\n" "${GROUP_LINES[${key}]}"
+    local count="${GROUP_COUNT[${cat}]:-0}"
+    printf "%s%s:%s %d\n" "${BLUE}" "${label}" "${NC}" "${count}"
+
+    if (( count > 0 )); then
+        printf "%b\n\n" "${GROUP_LINES[${cat}]}"
+    else
+        printf "\n"
+    fi
 }
 
 title "TODOs nach Test-Kategorie (nach Excludes)"
 for cat in "${KNOWN_CATEGORIES[@]}"; do
-    print_group "@${cat}" "${cat}"
+    print_category_block "${cat}" "@${cat}"
 done
-print_group "unknown (kein @tag gefunden)" "unknown"
+print_category_block "unknown" "unknown (kein @tag gefunden)"
 
 title "Zusammenfassung"
 for cat in "${KNOWN_CATEGORIES[@]}"; do
-    printf "@%s: %d\n" "${cat}" "${GROUP_COUNT[${cat}]}"
+    if is_excluded_category "${cat}"; then
+        printf "@%s: Excluded by Search\n" "${cat}"
+    else
+        printf "@%s: %d\n" "${cat}" "${GROUP_COUNT[${cat}]}"
+    fi
 done
-printf "unknown: %d\n" "${GROUP_COUNT[unknown]}"
+if is_excluded_category "unknown"; then
+    printf "unknown: Excluded by Search\n"
+else
+    printf "unknown: %d\n" "${GROUP_COUNT[unknown]}"
+fi
 printf "\n"
 printf "%sPolicy-konforme TODOs:%s %d\n" "${GREEN}" "${NC}" "${policy_compliant}"
 

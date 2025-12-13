@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {createUserWithRole, loginAsRole} from '../helpers/auth';
+import {createUserWithRole, loginAs, loginAsRole} from '../helpers/auth';
 import {mockBackendError, newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
@@ -60,7 +60,8 @@ test.describe('@advanced Widget Edge Cases', () => {
 		const user = await createUserWithRole(api, 'demo', 'widget07');
 		
 		// Erstelle Widget
-		const widget = await createWidget(api, 'To be deleted', '{}', user.access_token);
+		const widgetName = 'To be deleted';
+		const widget = await createWidget(api, widgetName, '{}', user.access_token);
 		
 		// Lösche Widget (erster Versuch)
 		const deleteRes1 = await deleteWidgetById(api, widget.id, user.access_token);
@@ -70,10 +71,18 @@ test.describe('@advanced Widget Edge Cases', () => {
 		const deleteRes2 = await deleteWidgetById(api, widget.id, user.access_token);
 		expect(deleteRes2.status()).toBe(404);
 		
-		// Login über UI und verifiziere, dass Widget nicht im Feed ist
-		await loginAsRole(page, 'demo', 'widget07-ui');
+		// Login über UI mit demselben User
+		await loginAs(page, user.email, user.password);
+		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
-		// TODO: Sobald Widget-Liste in UI verfügbar, prüfe dass Widget nicht vorhanden ist
+		// Optional: warten bis Laden fertig ist (falls Spinner existiert)
+		const spinner = page.getByTestId('loading.spinner');
+		if (await spinner.count()) {
+			await expect(spinner).toBeHidden();
+		}
+		
+		// Verifiziere: gelöschtes Widget ist nicht im Feed sichtbar
+		await expect(page.getByText(widgetName)).toHaveCount(0);
 		
 		await page.screenshot({path: 'test-results/widget-07-already-deleted.png'});
 	});

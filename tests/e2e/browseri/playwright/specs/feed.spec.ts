@@ -140,10 +140,8 @@ test.describe('@standard Feed', () => {
 		
 		// Trigger Feed-Reload
 		await page.reload();
-		
 		// Warte länger auf Toast (Toast hat Animation + Delay)
 		await page.waitForTimeout(1500);
-		
 		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
 		await expect(page.getByTestId('error.toast')).toBeVisible({timeout: 10_000});
 		// Text-Check auf Toast-Element beschränken, um strict mode violation zu vermeiden

@@ -20,7 +20,7 @@ test.describe('@minimal Infrastructure Health', () => {
 	await mockBackendError(page, new RegExp(`${apiBase.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}/health`), 500, {
 		detail: 'Simulated failure',
 	});
-	
+
 	// Trigger the request explicitly via page.evaluate fetch (acts like the UI would)
 	const status = await page.evaluate(async (url: string) => {
 		try {
@@ -30,11 +30,11 @@ test.describe('@minimal Infrastructure Health', () => {
 			return -1;
 		}
 		}, `${apiBase}/health`);
-		
-		expect(status).toBe(500);
-		
-		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
-		// Note: Dies funktioniert nur, wenn die UI tatsächlich auf /health zugreift
-		// Für einen vollständigen Test sollte ein echter UI-Flow verwendet werden
+
+        expect(status).toBe(500);
+
+        // UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
+        // TODO: Dies funktioniert nur, wenn die UI tatsächlich auf /health zugreift
+        //       Für einen vollständigen Test sollte ein echter UI-Flow verwendet werden
 	});
 });

@@ -1,22 +1,3 @@
-/**
- * =============================================================================
- * Modul: Feed – Standard (E2E)
- * Datei: tests/e2e/browseri/playwright/specs/feed.spec.ts
- * =============================================================================
- *
- * Zweck
- * - Validiert Feed-Verhalten (Rendering, Fehlerfälle, Security) auf Standard-Ebene.
- *
- * Geltungsbereich
- * - Playwright E2E (Expo Web / Mobile-Frontend über Web-Renderer).
- *
- * Qualitätsregeln
- * - Keine „Sleep“-Tests ohne Anlass: bevorzugt explizite UI-Signale (`expect(...).toBeVisible()`).
- * - Setup/Cleanup robust: Ressourcen werden auch bei Test-Failure entfernt (`try/finally`).
- * - Assertions bevorzugt über stabile Selektoren (testIds) statt unspezifischer DOM-Abfragen.
- * =============================================================================
- */
-
 import {expect, test} from '@playwright/test';
 import {createUserWithRole, loginAs} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
@@ -45,10 +26,6 @@ test.describe('@standard Feed', () => {
     test('@standard FEED-01: Home-Feed zeigt eigene Widgets',
         async ({page}) => {
             /**
-             * =============================================================================
-             * FEED-01: Home-Feed zeigt eigene Widgets
-             * =============================================================================
-             *
              * Ziel
              * - Feed rendert Widgets des eingeloggten Users zuverlässig.
              *
@@ -93,10 +70,6 @@ test.describe('@standard Feed', () => {
     test('@standard FEED-02: Feed-Caching verhindert redundante API-Calls',
         async ({page}) => {
             /**
-             * =============================================================================
-             * FEED-02: Feed-Caching verhindert redundante API-Calls
-             * =============================================================================
-             *
              * Ziel
              * - Nach initialem Feed-Load soll eine Navigation weg vom HomeScreen und zurück
              *   innerhalb des Cache-Fensters keinen zusätzlichen GET auf `/api/home/feed`
@@ -110,7 +83,7 @@ test.describe('@standard Feed', () => {
              * Durchführung
              * - Widget vor UI-Login erzeugen (damit initialer Feed-Load es enthalten kann)
              * - Nach initialem Render: Tracking aktivieren
-             * - Tab-Navigation: Home → Account → Home (kein Hard-Reload)
+             * - Bottom-Navigation: Home → Account → Home (kein Hard-Reload)
              *
              * Erwartung
              * - Kein zusätzlicher Feed-GET während des Navigation-Roundtrips
@@ -143,11 +116,11 @@ test.describe('@standard Feed', () => {
 
                 trackApiCalls = true;
 
-                await page.getByRole('button', {name: 'Account'}).click();
+                await page.getByTestId('navigation.account').click();
                 await expect(page.getByTestId(TEST_ID_ACCOUNT_ROLE)).toBeVisible({timeout: 10_000});
 
                 // Explizit zurück über Tab-Navigation (robuster als `page.goBack()` in SPA-Setups)
-                await page.getByRole('button', {name: 'Home'}).click();
+                await page.getByTestId('navigation.home').click();
                 await expectWidgetNameVisible(page, 'Cache Test Widget');
 
                 await page.waitForTimeout(500);
@@ -164,10 +137,6 @@ test.describe('@standard Feed', () => {
     test('@standard FEED-03: Feed-Rate-Limit zeigt Fehlermeldung',
         async ({page}) => {
             /**
-             * =============================================================================
-             * FEED-03: Feed-Rate-Limit zeigt Fehlermeldung
-             * =============================================================================
-             *
              * Ziel
              * - Ein 429 vom Feed-Endpoint muss in der UI als Error-Toast erscheinen.
              *
@@ -214,10 +183,6 @@ test.describe('@standard Feed', () => {
     test('@standard FEED-04: XSS in Feed-Inhalten wird escaped',
         async ({page}) => {
             /**
-             * =============================================================================
-             * FEED-04: XSS in Feed-Inhalten wird escaped
-             * =============================================================================
-             *
              * Ziel
              * - XSS-Payloads im Widget-Namen dürfen nicht ausgeführt werden.
              *
@@ -277,10 +242,6 @@ test.describe('@standard Feed', () => {
     test('@standard FEED-05: Leerer Feed zeigt passende Nachricht',
         async ({page}) => {
             /**
-             * =============================================================================
-             * FEED-05: Leerer Feed zeigt passende Nachricht
-             * =============================================================================
-             *
              * Ziel
              * - Ein neuer User ohne Widgets soll einen Empty-State anzeigen.
              *

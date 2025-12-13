@@ -4,16 +4,41 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
 
+/**
+ * Props für LoginScreen.
+ *
+ * @see RootStackParamList
+ */
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
+/**
+ * LoginScreen (Screen-Komponente)
+ *
+ * Ablauf
+ * - Verwaltet lokale Eingaben (E-Mail/Passwort) inkl. Client-Validierung (leer -> Fehlermeldung).
+ * - Triggert `login(email, password)` aus dem Auth-Kontext.
+ * - Behandelt Rate-Limit (429) separat und zeigt eine passende Meldung.
+ * - Rendert Formular, Fehlerzustände und Navigation zur Registrierung.
+ *
+ * Zusätzliche IO-Punkte:
+ * - `login(...)` (Auth/Netzwerk über Context).
+ * - `navigation.replace('Register')` (Screen-Wechsel).
+ */
 export default function LoginScreen({ navigation }: Props) {
+    // Context / State
 	const {login, error} = useAuth();
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [localError, setLocalError] = useState<string | null>(null);
 	const [isRateLimited, setIsRateLimited] = useState(false);
-	
+
+    /**
+     * Führt den Login aus.
+     * - Reset lokaler Fehlerzustände.
+     * - Validiert Pflichtfelder.
+     * - Setzt Loading-Status und leitet Fehler in UI-taugliche Meldungen ab.
+     */
 	const onLogin = async () => {
 		setLocalError(null);
 		setIsRateLimited(false);
@@ -36,14 +61,14 @@ export default function LoginScreen({ navigation }: Props) {
 			setLoading(false);
 		}
 	};
-	
+
 	return (
 		<View style={styles.container}>
 			<Text style={styles.title}>HomeWidget Login</Text>
 			{!!(localError || error) && (
 				<View testID={isRateLimited ? 'login.error.rateLimit' : undefined}>
-					<Text 
-						style={styles.error} 
+                    <Text
+                        style={styles.error}
 						testID="login.error"
 					>
 						{localError || error}
@@ -83,6 +108,9 @@ export default function LoginScreen({ navigation }: Props) {
 	);
 }
 
+// =============================================================
+// Styles
+// =============================================================
 const styles = StyleSheet.create({
 	container: {flex: 1, padding: 24, justifyContent: 'center'},
 	title: {fontSize: 22, fontWeight: '600', marginBottom: 16},

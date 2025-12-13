@@ -26,6 +26,7 @@ def test_request_logging_emits_request_and_response_with_ids_and_duration(client
     response_logs = []
     for msg in captured:
         rec = msg.record
+
         # We rely on our adapter setting extra['logger'] to the full logger name
         if rec["extra"].get("logger") == "backend.app.api.middleware":
             if rec["message"] == "request":

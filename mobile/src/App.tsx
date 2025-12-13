@@ -1,53 +1,56 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import LoginScreen from './screens/LoginScreen';
-import HomeScreen from './screens/HomeScreen';
-import RegisterScreen from './screens/RegisterScreen';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {QueryClientProvider} from '@tanstack/react-query';
+
 import AccountScreen from './screens/AccountScreen';
+import HomeScreen from './screens/HomeScreen';
+import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
 import {AuthProvider, useAuth} from './auth/AuthContext';
-import {ToastProvider} from './ui/ToastContext';
+import {queryClient} from './query/queryClient';
 import {OfflineIndicator} from './ui/OfflineIndicator';
+import {ToastProvider} from './ui/ToastContext';
 
 export type RootStackParamList = {
-	// Unauth stack
-  Login: undefined;
-	Register: undefined;
-	// Auth stack
-  Home: undefined;
-	Account: undefined;
+    Login: undefined;
+    Register: undefined;
+    Home: undefined;
+    Account: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function Router() {
-	const {status} = useAuth();
-	const isAuthed = status === 'authenticated';
-  return (
-	  <NavigationContainer>
-      <Stack.Navigator>
-	      {/* Home is accessible for both demo (guest) and authenticated users */}
-	      <Stack.Screen name="Home" component={HomeScreen} options={{title: 'Home'}}/>
-	      {isAuthed ? (
-		      <Stack.Screen name="Account" component={AccountScreen} options={{title: 'Account'}}/>
-	      ) : (
-		      <>
-			      <Stack.Screen name="Login" component={LoginScreen} options={{title: 'Login'}}/>
-			      <Stack.Screen name="Register" component={RegisterScreen} options={{title: 'Registrieren'}}/>
-		      </>
-	      )}
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+    const {status} = useAuth();
+    const isAuthed = status === 'authenticated';
+
+    return (
+        <NavigationContainer>
+            <Stack.Navigator>
+                <Stack.Screen name="Home" component={HomeScreen} options={{title: 'Home'}}/>
+                {isAuthed ? (
+                    <Stack.Screen name="Account" component={AccountScreen} options={{title: 'Account'}}/>
+                ) : (
+                    <>
+                        <Stack.Screen name="Login" component={LoginScreen} options={{title: 'Login'}}/>
+                        <Stack.Screen name="Register" component={RegisterScreen} options={{title: 'Registrieren'}}/>
+                    </>
+                )}
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
 }
 
 export default function App() {
-	return (
-		<ToastProvider>
-			<AuthProvider>
-				<OfflineIndicator />
-				<Router/>
-			</AuthProvider>
-		</ToastProvider>
-	);
+    return (
+        <QueryClientProvider client={queryClient}>
+            <ToastProvider>
+                <AuthProvider>
+                    <OfflineIndicator/>
+                    <Router/>
+                </AuthProvider>
+            </ToastProvider>
+        </QueryClientProvider>
+    );
 }

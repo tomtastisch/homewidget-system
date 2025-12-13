@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # TODO-Report für Playwright E2E Tests
 #
-# - Listet alle TODOs in Playwright-Specs auf
-# - Prüft TODO-Policy: TODO(<ISSUE-ID>): <Beschreibung>
-# - Gruppiert nach Kategorie (FRONTEND / BACKEND / INFRA / Sonstige)
-# - Erzwingt ein zentrales TODO-Limit (default: 10)
+# Features
+# - Sucht TODOs in Playwright *.spec.ts (mit File- und Kategorie-Excludes)
+# - Kategorie = zuletzt gesehener Test-Tag im Titel: @<KNOWN_CATEGORIES> (sonst: unknown)
+# - Policy-Check: TODO(<ISSUE-ID>): <Beschreibung>
+# - Zentrales TODO-Limit (default: 10), optional als CI-Gate
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -13,14 +14,29 @@ IFS=$'\n\t'
 # ZENTRALE KONFIG
 # =============================================================
 
-# Maximal erlaubte TODOs (kann via ENV überschrieben werden: MAX_TODOS=12 ./todo_report.sh)
-MAX_TODOS="${MAX_TODOS:-10}"
-
-# Wenn true: Exit != 0, sobald MAX_TODOS überschritten ist (CI-Gate)
+MAX_TODOS="${MAX_TODOS:-0}"
 FAIL_ON_OVER_LIMIT="${FAIL_ON_OVER_LIMIT:-true}"
-
-# Wenn true: Exit != 0, sobald nicht-policy-konforme TODOs gefunden werden
 FAIL_ON_NON_COMPLIANT="${FAIL_ON_NON_COMPLIANT:-false}"
+
+KNOWN_CATEGORIES=(
+    "minimal"
+    "standard"
+    "advanced"
+)
+
+# Kategorien, die komplett ignoriert werden (z. B. "advanced" oder "unknown")
+EXCLUDED_CATEGORIES=(
+    "advanced"
+    # "unknown"
+)
+
+# Excludes: Basename oder glob patterns relativ zum SPECS_DIR.
+EXCLUDED_SPECS=(
+    "auth.resilience.spec.ts"
+    "browser.spec.ts"
+    # "legacy/*.spec.ts"
+    # "*experimental*.spec.ts"
+)
 
 # =============================================================
 # PATHS
@@ -41,11 +57,7 @@ if [[ -t 1 ]]; then
     BLUE=$'\033[0;34m'
     NC=$'\033[0m'
 else
-    RED=''
-    GREEN=''
-    YELLOW=''
-    BLUE=''
-    NC=''
+    RED='' GREEN='' YELLOW='' BLUE='' NC=''
 fi
 
 die() {
@@ -64,6 +76,15 @@ title() {
     printf "\n"
 }
 
+bool_is_true() {
+    [[ "${1}" == "true" ]]
+}
+
+join_by_comma() {
+    local IFS=,
+    printf "%s" "$*"
+}
+
 # =============================================================
 # VALIDATION
 # =============================================================
@@ -71,39 +92,224 @@ title() {
 [[ -d "${SPECS_DIR}" ]] || die "Specs-Verzeichnis nicht gefunden: ${SPECS_DIR}"
 
 # =============================================================
-# COLLECTION
+# EXCLUDES
 # =============================================================
 
-# Alle TODO-Zeilen (file:line:content)
-mapfile -t ALL_TODOS < <(grep -RIn --include="*.spec.ts" "TODO" "${SPECS_DIR}" 2>/dev/null || true)
+is_glob_pattern() {
+    local s="$1"
+    [[ "${s}" == *"*"* || "${s}" == *"?"* || "${s}" == *"["* ]]
+}
 
-# Policy-konform: TODO(<...>): <...>
-# (grep -E ist portable; kein -P wegen macOS)
-mapfile -t COMPLIANT < <(grep -REn --include="*.spec.ts" "TODO\([^)]+\):" "${SPECS_DIR}" 2>/dev/null || true)
+is_excluded_file() {
+    local abs_file="$1"
 
-total_todos="${#ALL_TODOS[@]}"
-policy_compliant="${#COMPLIANT[@]}"
-
-# Nicht-konform = TODO vorhanden, aber nicht im Policy-Format
-NON_COMPLIANT=()
-for line in "${ALL_TODOS[@]}"; do
-    if [[ ! "${line}" =~ TODO\([^\)]+\): ]]; then
-        NON_COMPLIANT+=("${line}")
+    # Robust ohne Pattern-Expansion (kein ${var#${other}/})
+    local rel_file="${abs_file}"
+    local prefix="${SPECS_DIR}/"
+    if [[ "${abs_file}" == "${prefix}"* ]]; then
+        rel_file="${abs_file:${#prefix}}"
     fi
-done
-non_compliant="${#NON_COMPLIANT[@]}"
+
+    local base_file
+    base_file="$(basename -- "${abs_file}")"
+
+    local pattern
+    for pattern in "${EXCLUDED_SPECS[@]}"; do
+        [[ -z "${pattern}" ]] && continue
+
+        if is_glob_pattern "${pattern}"; then
+            # Intentionally enable glob matching when config contains glob meta chars.
+            # shellcheck disable=SC2053
+            if [[ "${base_file}" == ${pattern} ]] || [[ "${rel_file}" == ${pattern} ]]; then
+                return 0
+            fi
+        else
+            if [[ "${base_file}" == "${pattern}" ]] || [[ "${rel_file}" == "${pattern}" ]]; then
+                return 0
+            fi
+        fi
+    done
+
+    return 1
+}
+
+collect_spec_files() {
+    local -a files=()
+    local f
+
+    while IFS= read -r -d '' f; do
+        if is_excluded_file "${f}"; then
+            continue
+        fi
+        files+=("${f}")
+    done < <(find "${SPECS_DIR}" -type f -name "*.spec.ts" -print0)
+
+    printf "%s\n" "${files[@]}"
+}
+
+mapfile -t SPEC_FILES < <(collect_spec_files)
+
+if (( ${#SPEC_FILES[@]} == 0 )); then
+    title "Playwright E2E TODO-Report"
+    printf "%sSpecs:%s %s\n\n" "${BLUE}" "${NC}" "${SPECS_DIR}"
+    printf "%sKeine Spec-Files gefunden (nach Excludes).%s\n" "${YELLOW}" "${NC}"
+    exit 0
+fi
+
+KNOWN_CATEGORIES_CSV="$(join_by_comma "${KNOWN_CATEGORIES[@]}")"
+EXCLUDED_CATEGORIES_CSV="$(join_by_comma "${EXCLUDED_CATEGORIES[@]}")"
 
 # =============================================================
-# HEADER + LIMIT CHECK
+# SCAN (awk): 1 Pass
+# Output TSV:
+#     category \t file \t line \t policy_ok(1/0) \t content
+# Kategorie-Excludes werden bereits im awk angewandt
+# =============================================================
+
+scan_todos_tsv() {
+    awk \
+        -v known_cats_csv="${KNOWN_CATEGORIES_CSV}" \
+        -v excluded_cats_csv="${EXCLUDED_CATEGORIES_CSV}" \
+        '
+        function csv_has(csv, value,    n, i, tok) {
+            if (csv == "") return 0
+            n = split(csv, arr, ",")
+            for (i = 1; i <= n; i++) {
+                tok = arr[i]
+                if (tok != "" && tok == value) return 1
+            }
+            return 0
+        }
+
+        function detect_category(line,    n, i, cat, tag) {
+            if (known_cats_csv == "") return ""
+            n = split(known_cats_csv, cats, ",")
+            for (i = 1; i <= n; i++) {
+                cat = cats[i]
+                if (cat == "") continue
+                tag = "@" cat
+                if (index(line, tag) > 0) return cat
+            }
+            return ""
+        }
+
+        BEGIN {
+            current_cat = "unknown"
+        }
+
+        {
+            if ($0 ~ /test\(/) {
+                c = detect_category($0)
+                if (c != "") current_cat = c
+            }
+
+            if ($0 ~ /TODO/) {
+                if (csv_has(excluded_cats_csv, current_cat)) next
+                policy_ok = ($0 ~ /TODO\([^)]+\):/) ? 1 : 0
+                printf "%s\t%s\t%d\t%d\t%s\n", current_cat, FILENAME, FNR, policy_ok, $0
+            }
+        }
+    ' "${SPEC_FILES[@]}"
+}
+
+mapfile -t TODO_ROWS < <(scan_todos_tsv 2>/dev/null || true)
+
+# =============================================================
+# AGGREGATION (dynamisch basierend auf KNOWN_CATEGORIES + unknown)
+# =============================================================
+
+declare -A GROUP_COUNT=()
+declare -A GROUP_LINES=()
+
+init_groups() {
+    local cat
+    for cat in "${KNOWN_CATEGORIES[@]}"; do
+        GROUP_COUNT["${cat}"]=0
+        GROUP_LINES["${cat}"]=""
+    done
+    GROUP_COUNT["unknown"]=0
+    GROUP_LINES["unknown"]=""
+}
+
+append_group_line() {
+    local cat="$1"
+    local line="$2"
+
+    if [[ -z "${GROUP_LINES[${cat}]}" ]]; then
+        GROUP_LINES["${cat}"]="${line}"
+    else
+        GROUP_LINES["${cat}"]+=$'\n'"${line}"
+    fi
+}
+
+total_todos=0
+policy_compliant=0
+non_compliant=0
+NON_COMPLIANT_LINES=""
+
+append_non_compliant() {
+    local line="$1"
+    if [[ -z "${NON_COMPLIANT_LINES}" ]]; then
+        NON_COMPLIANT_LINES="${line}"
+    else
+        NON_COMPLIANT_LINES+=$'\n'"${line}"
+    fi
+}
+
+init_groups
+
+for row in "${TODO_ROWS[@]}"; do
+    IFS=$'\t' read -r cat file line policy_ok content <<< "${row}"
+    [[ -z "${cat}" ]] && cat="unknown"
+    [[ -z "${GROUP_COUNT[${cat}]+x}" ]] && cat="unknown"
+
+    (( total_todos += 1 ))
+    (( GROUP_COUNT["${cat}"] += 1 ))
+
+    if [[ "${policy_ok}" == "1" ]]; then
+        (( policy_compliant += 1 ))
+    else
+        (( non_compliant += 1 ))
+        append_non_compliant "    - ${cat}: ${file}:${line}: ${content}"
+    fi
+
+    file_short="$(basename -- "${file}")"
+    append_group_line "${cat}" "    - ${file_short}:${line}"$'\n'"        ${content}"
+done
+
+over_limit=false
+if (( total_todos > MAX_TODOS )); then
+    over_limit=true
+fi
+
+# =============================================================
+# REPORT
 # =============================================================
 
 title "Playwright E2E TODO-Report"
 
 printf "%sSpecs:%s %s\n" "${BLUE}" "${NC}" "${SPECS_DIR}"
 printf "%sTODO-Limit:%s %s (MAX_TODOS)\n" "${BLUE}" "${NC}" "${MAX_TODOS}"
+printf "%sKnown categories:%s %s\n" "${BLUE}" "${NC}" "${KNOWN_CATEGORIES_CSV:-"(none)"}"
+
+printf "%sExcluded specs:%s %d\n" "${BLUE}" "${NC}" "${#EXCLUDED_SPECS[@]}"
+for p in "${EXCLUDED_SPECS[@]}"; do
+    printf "    - %s\n" "${p}"
+done
+
+printf "%sExcluded categories:%s " "${BLUE}" "${NC}"
+if (( ${#EXCLUDED_CATEGORIES[@]} > 0 )); then
+    printf "%d\n" "${#EXCLUDED_CATEGORIES[@]}"
+    for c in "${EXCLUDED_CATEGORIES[@]}"; do
+        printf "    - %s\n" "${c}"
+    done
+else
+    printf "0\n"
+    printf "    - (none)\n"
+fi
 printf "\n"
 
-printf "%sGesamt-TODOs:%s %d\n" "${BLUE}" "${NC}" "${total_todos}"
+printf "%sGesamt-TODOs (nach Excludes):%s %d\n" "${BLUE}" "${NC}" "${total_todos}"
 printf "%sPolicy-konform:%s %d\n" "${GREEN}" "${NC}" "${policy_compliant}"
 if (( non_compliant > 0 )); then
     printf "%sNicht policy-konform:%s %d\n" "${RED}" "${NC}" "${non_compliant}"
@@ -111,102 +317,48 @@ else
     printf "%sAlle TODOs sind policy-konform.%s\n" "${GREEN}" "${NC}"
 fi
 
-# Limit enforcement (hart)
-over_limit=false
-if (( total_todos > MAX_TODOS )); then
-    over_limit=true
+if [[ "${over_limit}" == "true" ]]; then
     printf "\n%sLIMIT:%s %d TODOs gefunden, erlaubt sind max. %d.\n" "${RED}" "${NC}" "${total_todos}" "${MAX_TODOS}"
 fi
-
 printf "\n"
-
-# =============================================================
-# NON-COMPLIANT DETAILS
-# =============================================================
 
 if (( non_compliant > 0 )); then
     title "WARNUNG: Nicht-konforme TODOs"
     printf "%sErwartetes Format:%s TODO(<ISSUE-ID>): <Beschreibung>\n\n" "${YELLOW}" "${NC}"
-    for entry in "${NON_COMPLIANT[@]}"; do
-        printf "    - %s\n" "${entry}"
-    done
-    printf "\n"
+    printf "%b\n\n" "${NON_COMPLIANT_LINES}"
     printf "%sBitte aktualisieren gemäß TODO_POLICY.md%s\n\n" "${YELLOW}" "${NC}"
 fi
 
-# =============================================================
-# GROUPING (single pass over compliant TODOs)
-# =============================================================
-
-FRONTEND=()
-BACKEND=()
-INFRA=()
-OTHER=()
-
-for entry in "${COMPLIANT[@]}"; do
-    # entry: file:line:content
-    IFS=: read -r file line content <<< "${entry}"
-
-    # meta = Inhalt innerhalb TODO(...)
-    meta="${content#*TODO(}"
-    meta="${meta%%)*}"
-
-    # desc = alles nach "):"
-    desc="${content#*):}"
-    desc="${desc# }"
-
-    file_short="$(basename "${file}")"
-    pretty="    - ${file_short}:${line}\n        ${meta}: ${desc}"
-
-    if [[ "${meta}" == FRONTEND* ]]; then
-        FRONTEND+=("${pretty}")
-    elif [[ "${meta}" == BACKEND* ]]; then
-        BACKEND+=("${pretty}")
-    elif [[ "${meta}" == TEST-INFRA* || "${meta}" == INFRA* ]]; then
-        INFRA+=("${pretty}")
-    else
-        OTHER+=("${pretty}")
-    fi
-done
-
 print_group() {
-    local name="$1"
-    shift
-    local -a items=("$@")
-    local count="${#items[@]}"
+    local label="$1"
+    local key="$2"
+    local count="${GROUP_COUNT[${key}]:-0}"
+
     (( count == 0 )) && return 0
 
-    printf "%s%s (%d):%s\n" "${BLUE}" "${name}" "${count}" "${NC}"
-    for item in "${items[@]}"; do
-        # item enthält \n Sequenzen bewusst
-        printf "%b\n" "${item}"
-    done
-    printf "\n"
+    printf "%s%s (%d):%s\n" "${BLUE}" "${label}" "${count}" "${NC}"
+    printf "%b\n\n" "${GROUP_LINES[${key}]}"
 }
 
-title "TODOs nach Kategorie"
-print_group "Frontend-Features" "${FRONTEND[@]}"
-print_group "Backend-Features" "${BACKEND[@]}"
-print_group "Test-Infrastruktur" "${INFRA[@]}"
-print_group "Sonstige" "${OTHER[@]}"
-
-# =============================================================
-# SUMMARY + EXIT CODE
-# =============================================================
+title "TODOs nach Test-Kategorie (nach Excludes)"
+for cat in "${KNOWN_CATEGORIES[@]}"; do
+    print_group "@${cat}" "${cat}"
+done
+print_group "unknown (kein @tag gefunden)" "unknown"
 
 title "Zusammenfassung"
-printf "Frontend-blockiert: %d\n" "${#FRONTEND[@]}"
-printf "Backend-blockiert:  %d\n" "${#BACKEND[@]}"
-printf "Test-Infra:         %d\n" "${#INFRA[@]}"
-printf "Sonstige:           %d\n" "${#OTHER[@]}"
+for cat in "${KNOWN_CATEGORIES[@]}"; do
+    printf "@%s: %d\n" "${cat}" "${GROUP_COUNT[${cat}]}"
+done
+printf "unknown: %d\n" "${GROUP_COUNT[unknown]}"
 printf "\n"
 printf "%sPolicy-konforme TODOs:%s %d\n" "${GREEN}" "${NC}" "${policy_compliant}"
 
 exit_code=0
-if [[ "${FAIL_ON_OVER_LIMIT}" == "true" ]] && [[ "${over_limit}" == "true" ]]; then
+if bool_is_true "${FAIL_ON_OVER_LIMIT}" && [[ "${over_limit}" == "true" ]]; then
     exit_code=2
 fi
-if [[ "${FAIL_ON_NON_COMPLIANT}" == "true" ]] && (( non_compliant > 0 )); then
+if bool_is_true "${FAIL_ON_NON_COMPLIANT}" && (( non_compliant > 0 )); then
     exit_code=1
 fi
 

@@ -1,139 +1,218 @@
 #!/usr/bin/env bash
 # TODO-Report für Playwright E2E Tests
 #
-# Zeigt alle TODOs in Test-Spezifikationen mit Issue-Referenzen an.
-# Gruppiert nach Kategorien und prüft auf Policy-Konformität.
+# - Listet alle TODOs in Playwright-Specs auf
+# - Prüft TODO-Policy: TODO(<ISSUE-ID>): <Beschreibung>
+# - Gruppiert nach Kategorie (FRONTEND / BACKEND / INFRA / Sonstige)
+# - Erzwingt ein zentrales TODO-Limit (default: 10)
 
 set -euo pipefail
+IFS=$'\n\t'
+
+# =============================================================
+# ZENTRALE KONFIG
+# =============================================================
+
+# Maximal erlaubte TODOs (kann via ENV überschrieben werden: MAX_TODOS=12 ./todo_report.sh)
+MAX_TODOS="${MAX_TODOS:-10}"
+
+# Wenn true: Exit != 0, sobald MAX_TODOS überschritten ist (CI-Gate)
+FAIL_ON_OVER_LIMIT="${FAIL_ON_OVER_LIMIT:-true}"
+
+# Wenn true: Exit != 0, sobald nicht-policy-konforme TODOs gefunden werden
+FAIL_ON_NON_COMPLIANT="${FAIL_ON_NON_COMPLIANT:-false}"
+
+# =============================================================
+# PATHS
+# =============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 SPECS_DIR="${PROJECT_ROOT}/tests/e2e/browseri/playwright/specs"
 
-# Farben für Terminal-Output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# =============================================================
+# OUTPUT / COLORS (nur wenn TTY)
+# =============================================================
 
-echo "==================================="
-echo "   Playwright E2E TODO-Report"
-echo "==================================="
-echo ""
-
-# Prüfe ob Specs-Verzeichnis existiert
-if [[ ! -d "${SPECS_DIR}" ]]; then
-    echo -e "${RED}ERROR: Specs-Verzeichnis nicht gefunden: ${SPECS_DIR}${NC}"
-    exit 1
-fi
-
-# Zähle TODOs
-total_todos=$(grep -r "TODO" "${SPECS_DIR}" --include="*.spec.ts" | wc -l)
-policy_compliant=$(grep -r "TODO(" "${SPECS_DIR}" --include="*.spec.ts" | wc -l || true)
-non_compliant=$((total_todos - policy_compliant))
-
-echo -e "${BLUE}Gesamt-TODOs:${NC} ${total_todos}"
-echo -e "${GREEN}Policy-konform (mit Issue-ID):${NC} ${policy_compliant}"
-if [[ ${non_compliant} -gt 0 ]]; then
-    echo -e "${RED}Nicht policy-konform (ohne Issue-ID):${NC} ${non_compliant}"
+if [[ -t 1 ]]; then
+    RED=$'\033[0;31m'
+    GREEN=$'\033[0;32m'
+    YELLOW=$'\033[0;33m'
+    BLUE=$'\033[0;34m'
+    NC=$'\033[0m'
 else
-    echo -e "${GREEN}Alle TODOs sind policy-konform!${NC}"
-fi
-echo ""
-
-# Zeige nicht-konforme TODOs (falls vorhanden)
-if [[ ${non_compliant} -gt 0 ]]; then
-    echo -e "${YELLOW}=== WARNUNG: Nicht-konforme TODOs ===${NC}"
-    echo ""
-    grep -rn "TODO:" "${SPECS_DIR}" --include="*.spec.ts" | grep -v "TODO(" || true
-    echo ""
-    echo -e "${YELLOW}Diese TODOs müssen aktualisiert werden gemäß TODO_POLICY.md${NC}"
-    echo ""
+    RED=''
+    GREEN=''
+    YELLOW=''
+    BLUE=''
+    NC=''
 fi
 
-# Gruppiere TODOs nach Kategorie (basierend auf Issue-Prefix)
-echo "==================================="
-echo "   TODOs nach Kategorie"
-echo "==================================="
-echo ""
+die() {
+    printf "%sERROR:%s %s\n" "${RED}" "${NC}" "$*" >&2
+    exit 1
+}
 
-# Frontend-blockierte TODOs
-frontend_count=$(grep -r "TODO(FRONTEND" "${SPECS_DIR}" --include="*.spec.ts" | wc -l || true)
-if [[ ${frontend_count} -gt 0 ]]; then
-    echo -e "${BLUE}Frontend-Features (${frontend_count}):${NC}"
-    grep -rn "TODO(FRONTEND" "${SPECS_DIR}" --include="*.spec.ts" | while IFS=: read -r file line content; do
-        file_short=$(basename "${file}")
-        echo "  - ${file_short}:${line}"
-        # Extrahiere Issue-ID und Beschreibung
-        issue_id=$(echo "${content}" | grep -oP 'TODO\(\K[^)]+' || echo "N/A")
-        description=$(echo "${content}" | sed 's/.*TODO([^)]*): //' | cut -c 1-80)
-        echo "    ${issue_id}: ${description}"
+hr() {
+    printf "===================================\n"
+}
+
+title() {
+    hr
+    printf "   %s\n" "$1"
+    hr
+    printf "\n"
+}
+
+# =============================================================
+# VALIDATION
+# =============================================================
+
+[[ -d "${SPECS_DIR}" ]] || die "Specs-Verzeichnis nicht gefunden: ${SPECS_DIR}"
+
+# =============================================================
+# COLLECTION
+# =============================================================
+
+# Alle TODO-Zeilen (file:line:content)
+mapfile -t ALL_TODOS < <(grep -RIn --include="*.spec.ts" "TODO" "${SPECS_DIR}" 2>/dev/null || true)
+
+# Policy-konform: TODO(<...>): <...>
+# (grep -E ist portable; kein -P wegen macOS)
+mapfile -t COMPLIANT < <(grep -REn --include="*.spec.ts" "TODO\([^)]+\):" "${SPECS_DIR}" 2>/dev/null || true)
+
+total_todos="${#ALL_TODOS[@]}"
+policy_compliant="${#COMPLIANT[@]}"
+
+# Nicht-konform = TODO vorhanden, aber nicht im Policy-Format
+NON_COMPLIANT=()
+for line in "${ALL_TODOS[@]}"; do
+    if [[ ! "${line}" =~ TODO\([^\)]+\): ]]; then
+        NON_COMPLIANT+=("${line}")
+    fi
+done
+non_compliant="${#NON_COMPLIANT[@]}"
+
+# =============================================================
+# HEADER + LIMIT CHECK
+# =============================================================
+
+title "Playwright E2E TODO-Report"
+
+printf "%sSpecs:%s %s\n" "${BLUE}" "${NC}" "${SPECS_DIR}"
+printf "%sTODO-Limit:%s %s (MAX_TODOS)\n" "${BLUE}" "${NC}" "${MAX_TODOS}"
+printf "\n"
+
+printf "%sGesamt-TODOs:%s %d\n" "${BLUE}" "${NC}" "${total_todos}"
+printf "%sPolicy-konform:%s %d\n" "${GREEN}" "${NC}" "${policy_compliant}"
+if (( non_compliant > 0 )); then
+    printf "%sNicht policy-konform:%s %d\n" "${RED}" "${NC}" "${non_compliant}"
+else
+    printf "%sAlle TODOs sind policy-konform.%s\n" "${GREEN}" "${NC}"
+fi
+
+# Limit enforcement (hart)
+over_limit=false
+if (( total_todos > MAX_TODOS )); then
+    over_limit=true
+    printf "\n%sLIMIT:%s %d TODOs gefunden, erlaubt sind max. %d.\n" "${RED}" "${NC}" "${total_todos}" "${MAX_TODOS}"
+fi
+
+printf "\n"
+
+# =============================================================
+# NON-COMPLIANT DETAILS
+# =============================================================
+
+if (( non_compliant > 0 )); then
+    title "WARNUNG: Nicht-konforme TODOs"
+    printf "%sErwartetes Format:%s TODO(<ISSUE-ID>): <Beschreibung>\n\n" "${YELLOW}" "${NC}"
+    for entry in "${NON_COMPLIANT[@]}"; do
+        printf "    - %s\n" "${entry}"
     done
-    echo ""
+    printf "\n"
+    printf "%sBitte aktualisieren gemäß TODO_POLICY.md%s\n\n" "${YELLOW}" "${NC}"
 fi
 
-# Backend-blockierte TODOs
-backend_count=$(grep -r "TODO(BACKEND" "${SPECS_DIR}" --include="*.spec.ts" | wc -l || true)
-if [[ ${backend_count} -gt 0 ]]; then
-    echo -e "${BLUE}Backend-Features (${backend_count}):${NC}"
-    grep -rn "TODO(BACKEND" "${SPECS_DIR}" --include="*.spec.ts" | while IFS=: read -r file line content; do
-        file_short=$(basename "${file}")
-        echo "  - ${file_short}:${line}"
-        issue_id=$(echo "${content}" | grep -oP 'TODO\(\K[^)]+' || echo "N/A")
-        description=$(echo "${content}" | sed 's/.*TODO([^)]*): //' | cut -c 1-80)
-        echo "    ${issue_id}: ${description}"
+# =============================================================
+# GROUPING (single pass over compliant TODOs)
+# =============================================================
+
+FRONTEND=()
+BACKEND=()
+INFRA=()
+OTHER=()
+
+for entry in "${COMPLIANT[@]}"; do
+    # entry: file:line:content
+    IFS=: read -r file line content <<< "${entry}"
+
+    # meta = Inhalt innerhalb TODO(...)
+    meta="${content#*TODO(}"
+    meta="${meta%%)*}"
+
+    # desc = alles nach "):"
+    desc="${content#*):}"
+    desc="${desc# }"
+
+    file_short="$(basename "${file}")"
+    pretty="    - ${file_short}:${line}\n        ${meta}: ${desc}"
+
+    if [[ "${meta}" == FRONTEND* ]]; then
+        FRONTEND+=("${pretty}")
+    elif [[ "${meta}" == BACKEND* ]]; then
+        BACKEND+=("${pretty}")
+    elif [[ "${meta}" == TEST-INFRA* || "${meta}" == INFRA* ]]; then
+        INFRA+=("${pretty}")
+    else
+        OTHER+=("${pretty}")
+    fi
+done
+
+print_group() {
+    local name="$1"
+    shift
+    local -a items=("$@")
+    local count="${#items[@]}"
+    (( count == 0 )) && return 0
+
+    printf "%s%s (%d):%s\n" "${BLUE}" "${name}" "${count}" "${NC}"
+    for item in "${items[@]}"; do
+        # item enthält \n Sequenzen bewusst
+        printf "%b\n" "${item}"
     done
-    echo ""
+    printf "\n"
+}
+
+title "TODOs nach Kategorie"
+print_group "Frontend-Features" "${FRONTEND[@]}"
+print_group "Backend-Features" "${BACKEND[@]}"
+print_group "Test-Infrastruktur" "${INFRA[@]}"
+print_group "Sonstige" "${OTHER[@]}"
+
+# =============================================================
+# SUMMARY + EXIT CODE
+# =============================================================
+
+title "Zusammenfassung"
+printf "Frontend-blockiert: %d\n" "${#FRONTEND[@]}"
+printf "Backend-blockiert:  %d\n" "${#BACKEND[@]}"
+printf "Test-Infra:         %d\n" "${#INFRA[@]}"
+printf "Sonstige:           %d\n" "${#OTHER[@]}"
+printf "\n"
+printf "%sPolicy-konforme TODOs:%s %d\n" "${GREEN}" "${NC}" "${policy_compliant}"
+
+exit_code=0
+if [[ "${FAIL_ON_OVER_LIMIT}" == "true" ]] && [[ "${over_limit}" == "true" ]]; then
+    exit_code=2
+fi
+if [[ "${FAIL_ON_NON_COMPLIANT}" == "true" ]] && (( non_compliant > 0 )); then
+    exit_code=1
 fi
 
-# Test-Infra TODOs
-infra_count=$(grep -r "TODO(TEST-INFRA\|TODO(INFRA" "${SPECS_DIR}" --include="*.spec.ts" | wc -l || true)
-if [[ ${infra_count} -gt 0 ]]; then
-    echo -e "${BLUE}Test-Infrastruktur (${infra_count}):${NC}"
-    grep -rn "TODO(TEST-INFRA\|TODO(INFRA" "${SPECS_DIR}" --include="*.spec.ts" | while IFS=: read -r file line content; do
-        file_short=$(basename "${file}")
-        echo "  - ${file_short}:${line}"
-        issue_id=$(echo "${content}" | grep -oP 'TODO\(\K[^)]+' || echo "N/A")
-        description=$(echo "${content}" | sed 's/.*TODO([^)]*): //' | cut -c 1-80)
-        echo "    ${issue_id}: ${description}"
-    done
-    echo ""
+if (( exit_code != 0 )); then
+    printf "\n%sExit-Code:%s %d\n" "${YELLOW}" "${NC}" "${exit_code}"
 fi
 
-# Allgemeine TODOs (ohne spezifisches Prefix)
-other_count=$(grep -r "TODO(" "${SPECS_DIR}" --include="*.spec.ts" | grep -v "TODO(FRONTEND\|TODO(BACKEND\|TODO(TEST-INFRA\|TODO(INFRA" | wc -l || true)
-if [[ ${other_count} -gt 0 ]]; then
-    echo -e "${BLUE}Sonstige (${other_count}):${NC}"
-    grep -rn "TODO(" "${SPECS_DIR}" --include="*.spec.ts" | grep -v "TODO(FRONTEND\|TODO(BACKEND\|TODO(TEST-INFRA\|TODO(INFRA" | while IFS=: read -r file line content; do
-        file_short=$(basename "${file}")
-        echo "  - ${file_short}:${line}"
-        issue_id=$(echo "${content}" | grep -oP 'TODO\(\K[^)]+' || echo "N/A")
-        description=$(echo "${content}" | sed 's/.*TODO([^)]*): //' | cut -c 1-80)
-        echo "    ${issue_id}: ${description}"
-    done
-    echo ""
-fi
-
-# Zusammenfassung
-echo "==================================="
-echo "   Zusammenfassung"
-echo "==================================="
-echo ""
-echo "Frontend-blockiert: ${frontend_count}"
-echo "Backend-blockiert:  ${backend_count}"
-echo "Test-Infra:         ${infra_count}"
-echo "Sonstige:           ${other_count}"
-echo ""
-echo -e "${GREEN}Gesamt policy-konforme TODOs: ${policy_compliant}${NC}"
-
-# Exit-Code basierend auf nicht-konformen TODOs
-if [[ ${non_compliant} -gt 0 ]]; then
-    echo ""
-    echo -e "${YELLOW}HINWEIS: ${non_compliant} TODOs sind nicht policy-konform.${NC}"
-    echo -e "${YELLOW}Bitte aktualisiere sie gemäß TODO_POLICY.md${NC}"
-    # Kein Exit 1, da dies keine harten Fehler sind (nur Warnings)
-fi
-
-echo ""
-echo "Report abgeschlossen."
+printf "\nReport abgeschlossen.\n"
+exit "${exit_code}"

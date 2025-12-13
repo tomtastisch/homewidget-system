@@ -1,7 +1,7 @@
 import {expect, test} from '@playwright/test';
 import {createUserWithRole, loginAs, loginAsRole} from '../helpers/auth';
 import {mockBackendError, newApiRequestContext} from '../helpers/api';
-import {createWidget, deleteWidgetById} from '../helpers/widgets';
+import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
 /**
  * Widget-Resilience-Tests: Standard- und Advanced-Ebene
@@ -92,29 +92,55 @@ test.describe('@advanced Widget Edge Cases', () => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'widget08');
 		
-		// Erstelle mehrere Widgets parallel
-		const createPromises = Array.from({length: 10}, (_, i) =>
-			createWidget(api, `Parallel Widget ${i}`, '{}', user.access_token)
-		);
+		const widgetNames = Array.from({length: 10}, (_, i) => `Parallel Widget ${i}`);
 		
-		const widgets = await Promise.all(createPromises);
+		type CreatedWidget = Awaited<ReturnType<typeof createWidget>>;
+		let widgets: CreatedWidget[] = [];
 		
-		// Verifiziere, dass alle erfolgreich erstellt wurden
-		expect(widgets).toHaveLength(10);
-		widgets.forEach((w, i) => {
-			expect(w.name).toBe(`Parallel Widget ${i}`);
-		});
-		
-		// Login über UI und verifiziere Feed
-		await loginAsRole(page, 'demo', 'widget08-ui');
-		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
-		
-		// TODO: Sobald Widget-Details in UI sichtbar, prüfe Anzahl
-		
-		await page.screenshot({path: 'test-results/widget-08-many-widgets.png'});
-		
-		// Cleanup: Lösche alle erstellten Widgets
-		await Promise.all(widgets.map(w => deleteWidgetById(api, w.id, user.access_token)));
+		try {
+			// Erstelle mehrere Widgets parallel
+			const createPromises = widgetNames.map((name) =>
+				createWidget(api, name, '{}', user.access_token)
+			);
+			widgets = await Promise.all(createPromises);
+			
+			// Verifiziere, dass alle erfolgreich erstellt wurden
+			expect(widgets).toHaveLength(10);
+			widgets.forEach((w, i) => {
+				expect(w.name).toBe(widgetNames[i]);
+			});
+			
+			// Login über UI mit demselben User und verifiziere Feed
+			await loginAs(page, user.email, user.password);
+			await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+			
+			// Optional: warten bis Laden fertig ist (falls Spinner existiert)
+			const spinner = page.getByTestId('loading.spinner');
+			if (await spinner.count()) {
+				await expect(spinner).toBeHidden();
+			}
+			
+			// Verifiziere: alle Widgets sind im Feed sichtbar (über widget-name TestId)
+			const nameLocator = page.getByTestId('feed.widget.name');
+			await expect(nameLocator).toHaveCount(10);
+			
+			const visibleNames = await nameLocator.allTextContents();
+			expect(visibleNames).toHaveLength(10);
+			expect(visibleNames).toEqual(expect.arrayContaining(widgetNames));
+			
+			await page.screenshot({path: 'test-results/widget-08-many-widgets.png'});
+		} finally {
+			// Cleanup: Lösche alle erstellten Widgets (best effort)
+			await Promise.all(
+				widgets.map(async (w) => {
+					try {
+						await deleteWidgetById(api, w.id, user.access_token);
+					} catch {
+						// ignore cleanup failures
+					}
+				})
+			);
+		}
 	});
 	
 	// WIDGET-09 – Widget-Update mit konkurrierenden Änderungen
@@ -122,27 +148,58 @@ test.describe('@advanced Widget Edge Cases', () => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'widget09');
 		
-		// Erstelle Widget
-		const widget = await createWidget(api, 'Original Name', '{"version": 1}', user.access_token);
+		type CreatedWidget = Awaited<ReturnType<typeof createWidget>>;
+		let widget: CreatedWidget | null = null;
 		
-		// Simuliere konkurrierende Updates (falls Update-Endpoint existiert)
-		// TODO: Sobald PATCH/PUT für Widgets implementiert:
-		// const update1 = api.patch(`/api/widgets/${widget.id}`, {
-		//     data: {name: 'Updated by User 1'},
-		//     headers: {Authorization: `Bearer ${user.access_token}`}
-		// });
-		// const update2 = api.patch(`/api/widgets/${widget.id}`, {
-		//     data: {name: 'Updated by User 2'},
-		//     headers: {Authorization: `Bearer ${user.access_token}`}
-		// });
-		// const results = await Promise.all([update1, update2]);
-		// Verifiziere, dass beide erfolgreich waren oder eine Konflikt-Behandlung stattfand
-		
-		// Für jetzt: Dokumentiere Test als konzeptionell
-		await loginAsRole(page, 'demo', 'widget09-ui');
-		await page.screenshot({path: 'test-results/widget-09-concurrent.png'});
-		
-		// Cleanup
-		await deleteWidgetById(api, widget.id, user.access_token);
+		try {
+			// Erstelle Widget
+			widget = await createWidget(api, 'Original Name', '{"version": 1}', user.access_token);
+			
+			// PATCH/PUT ist im Backend aktuell nicht implementiert -> erwartetes Verhalten: 405 (Method Not Allowed)
+			const headers = {Authorization: `Bearer ${user.access_token}`};
+			
+			const update1 = api.patch(`/api/widgets/${widget.id}`, {
+				data: {name: 'Updated by User 1'},
+				headers,
+			});
+			const update2 = api.patch(`/api/widgets/${widget.id}`, {
+				data: {name: 'Updated by User 2'},
+				headers,
+			});
+			
+			const [res1, res2] = await Promise.all([update1, update2]);
+			
+			expect(res1.status()).toBe(405);
+			expect(res2.status()).toBe(405);
+			
+			// Verifiziere via API: Widget ist unverändert
+			const widgets = await listWidgets(api, user.access_token);
+			const stillThere = widgets.find((w) => w.id === widget!.id);
+			expect(stillThere?.name).toBe('Original Name');
+			
+			// Login über UI mit demselben User und verifiziere Feed-Zustand
+			await loginAs(page, user.email, user.password);
+			await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+			
+			const spinner = page.getByTestId('loading.spinner');
+			if (await spinner.count()) {
+				await expect(spinner).toBeHidden();
+			}
+			
+			await expect(page.getByText('Original Name')).toBeVisible();
+			await expect(page.getByText('Updated by User 1')).toHaveCount(0);
+			await expect(page.getByText('Updated by User 2')).toHaveCount(0);
+			
+			await page.screenshot({path: 'test-results/widget-09-concurrent.png'});
+		} finally {
+			// Cleanup
+			if (widget) {
+				try {
+					await deleteWidgetById(api, widget.id, user.access_token);
+				} catch {
+					// ignore cleanup failures
+				}
+			}
+		}
 	});
 });

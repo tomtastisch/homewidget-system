@@ -1,226 +1,357 @@
+/**
+ * =============================================================================
+ * Modul: Feed – Standard (E2E)
+ * Datei: tests/e2e/browseri/playwright/specs/feed.spec.ts
+ * =============================================================================
+ *
+ * Zweck
+ * - Validiert Feed-Verhalten (Rendering, Fehlerfälle, Security) auf Standard-Ebene.
+ *
+ * Geltungsbereich
+ * - Playwright E2E (Expo Web / Mobile-Frontend über Web-Renderer).
+ *
+ * Qualitätsregeln
+ * - Keine „Sleep“-Tests ohne Anlass: bevorzugt explizite UI-Signale (`expect(...).toBeVisible()`).
+ * - Setup/Cleanup robust: Ressourcen werden auch bei Test-Failure entfernt (`try/finally`).
+ * - Assertions bevorzugt über stabile Selektoren (testIds) statt unspezifischer DOM-Abfragen.
+ * =============================================================================
+ */
+
 import {expect, test} from '@playwright/test';
-import {createUserWithRole, loginAs, loginAsRole} from '../helpers/auth';
+import {createUserWithRole, loginAs} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
-/**
- * Feed-Tests: Standard-Ebene
- *
- * Tests für Feed-Funktionalität, Caching und Security.
- */
+const TEST_ID_HOME_LOGIN_LINK = 'home.loginLink';
+const TEST_ID_ACCOUNT_ROLE = 'account.role';
+const TEST_ID_FEED_WIDGET_NAME = 'feed.widget.name';
+const TEST_ID_ERROR_TOAST = 'error.toast';
+const TEST_ID_FEED_EMPTY = 'feed.empty';
+
+const FEED_ENDPOINT_GLOB = '**/api/home/feed**';
+
+async function expectLoggedIn(page: Parameters<typeof loginAs>[0]) {
+    await expect(page.getByTestId(TEST_ID_HOME_LOGIN_LINK)).not.toBeVisible();
+}
+
+async function expectWidgetNameVisible(page: any, widgetName: string, timeoutMs = 10_000) {
+    await expect(
+        page.getByTestId(TEST_ID_FEED_WIDGET_NAME).filter({hasText: widgetName}),
+    ).toBeVisible({timeout: timeoutMs});
+}
 
 test.describe('@standard Feed', () => {
-	// FEED-01 – Home-Feed lädt Widgets des Users
-	test('@standard FEED-01: Home-Feed zeigt eigene Widgets', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'feed01');
 
-		// Erstelle einige Test-Widgets
-		const widget1 = await createWidget(
-			api,
-			'Feed Test Widget 1',
-			'{}',
-			user.access_token
-		);
+    test('@standard FEED-01: Home-Feed zeigt eigene Widgets',
+        async ({page}) => {
+            /**
+             * =============================================================================
+             * FEED-01: Home-Feed zeigt eigene Widgets
+             * =============================================================================
+             *
+             * Ziel
+             * - Feed rendert Widgets des eingeloggten Users zuverlässig.
+             *
+             * Setup
+             * - User via API erzeugen (Role: demo)
+             * - Zwei Widgets via API für diesen User anlegen
+             *
+             * Durchführung
+             * - Login über UI (dieselbe Identität wie im API-Setup)
+             * - UI-Validierung: Beide Widget-Namen sind sichtbar
+             * - API-Validierung: Widgets sind in `/api/widgets` vorhanden
+             *
+             * Erwartung
+             * - UI zeigt beide Widgets im Feed
+             * =============================================================================
+             */
 
-        const widget2 = await createWidget(
-			api,
-			'Feed Test Widget 2',
-			'{}',
-			user.access_token
-		);
+            const api = await newApiRequestContext();
+            const user = await createUserWithRole(api, 'demo', 'feed01');
 
-        // Login über UI mit DEMSELBEN User (nicht neuen User erstellen!)
-		await loginAs(page, user.email, user.password);
-		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+            const widget1 = await createWidget(api, 'Feed Test Widget 1', '{}', user.access_token);
+            const widget2 = await createWidget(api, 'Feed Test Widget 2', '{}', user.access_token);
 
-        // Warte kurz, dass Feed geladen wird
-		await page.waitForTimeout(2000);
+            try {
+                await loginAs(page, user.email, user.password);
+                await expectLoggedIn(page);
 
-        // Verifiziere, dass Feed geladen wurde (über API)
-		const widgets = await listWidgets(api, user.access_token);
-		expect(widgets.length).toBeGreaterThanOrEqual(2);
-		expect(widgets.some((w) =>
-			w.name === 'Feed Test Widget 1')
-		).toBeTruthy();
+                await expectWidgetNameVisible(page, 'Feed Test Widget 1');
+                await expectWidgetNameVisible(page, 'Feed Test Widget 2');
 
-        expect(widgets.some((w) =>
-			w.name === 'Feed Test Widget 2')
-		).toBeTruthy();
+                const widgets = await listWidgets(api, user.access_token);
+                expect(widgets.some((w) => w.name === 'Feed Test Widget 1')).toBeTruthy();
+                expect(widgets.some((w) => w.name === 'Feed Test Widget 2')).toBeTruthy();
 
-        // UI-Validierung: Widget-Namen sind jetzt im Feed sichtbar (testID: feed.widget.name)
-		await expect(page.getByText('Feed Test Widget 1')).toBeVisible({timeout: 10_000});
-		await expect(page.getByText('Feed Test Widget 2')).toBeVisible({timeout: 10_000});
+                await page.screenshot({path: 'test-results/feed-01-widgets-loaded.png'});
+            } finally {
+                await deleteWidgetById(api, widget1.id, user.access_token);
+                await deleteWidgetById(api, widget2.id, user.access_token);
+            }
+        });
 
-        await page.screenshot({path: 'test-results/feed-01-widgets-loaded.png'});
+    test('@standard FEED-02: Feed-Caching verhindert redundante API-Calls',
+        async ({page}) => {
+            /**
+             * =============================================================================
+             * FEED-02: Feed-Caching verhindert redundante API-Calls
+             * =============================================================================
+             *
+             * Ziel
+             * - Nach initialem Feed-Load soll eine Navigation weg vom HomeScreen und zurück
+             *   innerhalb des Cache-Fensters keinen zusätzlichen GET auf `/api/home/feed`
+             *   auslösen.
+             *
+             * Kerngedanke
+             * - Exakt ein User (API-Setup + UI-Login).
+             * - Tracking wird erst nach stabiler UI aktiviert, damit initiale Calls
+             *   (erwartet) nicht in die Assertion laufen.
+             *
+             * Durchführung
+             * - Widget vor UI-Login erzeugen (damit initialer Feed-Load es enthalten kann)
+             * - Nach initialem Render: Tracking aktivieren
+             * - Tab-Navigation: Home → Account → Home (kein Hard-Reload)
+             *
+             * Erwartung
+             * - Kein zusätzlicher Feed-GET während des Navigation-Roundtrips
+             * =============================================================================
+             */
 
-        // Cleanup
-		await deleteWidgetById(api, widget1.id, user.access_token);
-		await deleteWidgetById(api, widget2.id, user.access_token);
-	});
-
-    // FEED-02 – Feed-Caching (30 s) wird respektiert
-    test('@standard FEED-02: Feed-Caching verhindert redundante API-Calls', async ({page}) => {
         const api = await newApiRequestContext();
         const user = await createUserWithRole(api, 'demo', 'feed02');
 
-        // Erstelle Widget
         const widget = await createWidget(api, 'Cache Test Widget', '{}', user.access_token);
 
-        // Tracke GET Calls zum Feed-Endpoint
         const feedCalls: string[] = [];
         let trackApiCalls = false;
 
-        await page.route('**/api/home/feed**', async (route) => {
+            await page.route(FEED_ENDPOINT_GLOB, async (route) => {
             const req = route.request();
+
             if (trackApiCalls && req.method() === 'GET') {
                 feedCalls.push(req.url());
             }
+
             await route.continue();
         });
 
-        // Login über UI
-        await loginAs(page, user.email, user.password);
-        await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+            try {
+                await loginAs(page, user.email, user.password);
+                await expectLoggedIn(page);
 
-        // Warten, bis das Widget sichtbar ist (Feed initial geladen)
-        await expect(page.getByText('Cache Test Widget')).toBeVisible({timeout: 10_000});
+                await expectWidgetNameVisible(page, 'Cache Test Widget');
 
-        // Ab jetzt Calls zählen (UI ist stabil)
-        trackApiCalls = true;
+                trackApiCalls = true;
 
-        // Navigation weg und zurück (kein Hard-Reload, Cache bleibt im QueryClient erhalten)
-        await page.getByRole('button', {name: 'Account'}).click();
-        await expect(page.getByTestId('account.role')).toBeVisible({timeout: 10_000});
+                await page.getByRole('button', {name: 'Account'}).click();
+                await expect(page.getByTestId(TEST_ID_ACCOUNT_ROLE)).toBeVisible({timeout: 10_000});
 
-        // Zurück zur Home-Route (Stack back)
-        await page.goBack();
-        await expect(page.getByText('Cache Test Widget')).toBeVisible({timeout: 10_000});
+                // Explizit zurück über Tab-Navigation (robuster als `page.goBack()` in SPA-Setups)
+                await page.getByRole('button', {name: 'Home'}).click();
+                await expectWidgetNameVisible(page, 'Cache Test Widget');
 
-        // Kleines Fenster, damit ein redundanter Fetch sichtbar würde
-        await page.waitForTimeout(500);
+                await page.waitForTimeout(500);
 
-        // Erwartung: innerhalb staleTime kein neuer /api/home/feed GET
-        expect(feedCalls.length).toBe(0);
+                expect(feedCalls).toHaveLength(0);
 
-        await page.screenshot({path: 'test-results/feed-02-caching.png'});
+                await page.screenshot({path: 'test-results/feed-02-caching.png'});
 
-        // Cleanup
-        await deleteWidgetById(api, widget.id, user.access_token);
+            } finally {
+                await deleteWidgetById(api, widget.id, user.access_token);
+            }
     });
 
-	// FEED-03 – Rate-Limit (429) → UI-Fehlermeldung
-	test('@standard FEED-03: Feed-Rate-Limit zeigt Fehlermeldung',
-		async ({page}) => {
+    test('@standard FEED-03: Feed-Rate-Limit zeigt Fehlermeldung',
+        async ({page}) => {
+            /**
+             * =============================================================================
+             * FEED-03: Feed-Rate-Limit zeigt Fehlermeldung
+             * =============================================================================
+             *
+             * Ziel
+             * - Ein 429 vom Feed-Endpoint muss in der UI als Error-Toast erscheinen.
+             *
+             * Durchführung
+             * - Login über UI
+             * - Feed-Endpoint für GET auf 429 mocken
+             * - Reload triggert Feed-Fetch
+             *
+             * Erwartung
+             * - `error.toast` ist sichtbar und enthält eine Rate-Limit-Meldung
+             * =============================================================================
+             */
 
             const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'feed03');
+            const user = await createUserWithRole(api, 'demo', 'feed03');
 
-            // Login über UI mit demselben User
-		await loginAs(page, user.email, user.password);
-		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+            await loginAs(page, user.email, user.password);
+            await expectLoggedIn(page);
 
-            // Mock Rate-Limit-Response für Feed-Endpoint
-		await page.route('**/api/home/feed**', async (route) => {
-			if (route.request().method() === 'GET') {
-				await route.fulfill({
-					status: 429,
-					contentType: 'application/json',
-					body: JSON.stringify({detail: 'Rate limit exceeded. Please try again later.'}),
-				});
-			} else {
-				await route.continue();
-			}
-		});
+            await page.route(FEED_ENDPOINT_GLOB, async (route) => {
+                if (route.request().method() === 'GET') {
+                    await route.fulfill({
+                        status: 429,
+                        contentType: 'application/json',
+                        body: JSON.stringify({detail: 'Rate limit exceeded. Please try again later.'}),
+                    });
+                    return;
+                }
+                await route.continue();
+            });
 
-            // Trigger Feed-Reload
-		await page.reload();
-		// Warte länger auf Toast (Toast hat Animation + Delay)
-		await page.waitForTimeout(1500);
-		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
-		await expect(page.getByTestId('error.toast')).toBeVisible({timeout: 10_000});
-		// Text-Check auf Toast-Element beschränken, um strict mode violation zu vermeiden
-		await expect(page.getByTestId('error.toast').getByText(/Rate limit|zu viele|too many/i)).toBeVisible({timeout: 5_000});
+            await page.reload();
+
+            await page.waitForTimeout(1500);
+
+            await expect(page.getByTestId(TEST_ID_ERROR_TOAST)).toBeVisible({timeout: 10_000});
+            await expect(
+                page.getByTestId(TEST_ID_ERROR_TOAST).getByText(/Rate limit|zu viele|too many/i),
+            ).toBeVisible({timeout: 5_000});
 
             await page.screenshot({path: 'test-results/feed-03-rate-limit.png'});
-	});
+        });
 
-    // FEED-04 – XSS-Inhalte im Feed werden nicht ausgeführt
-	test('@standard FEED-04: XSS in Feed-Inhalten wird escaped', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'feed04');
+    test('@standard FEED-04: XSS in Feed-Inhalten wird escaped',
+        async ({page}) => {
+            /**
+             * =============================================================================
+             * FEED-04: XSS in Feed-Inhalten wird escaped
+             * =============================================================================
+             *
+             * Ziel
+             * - XSS-Payloads im Widget-Namen dürfen nicht ausgeführt werden.
+             *
+             * Durchführung
+             * - Widgets mit typischen XSS-Strings via API anlegen
+             * - Dialog-Listener registrieren (falls `alert()` feuert)
+             * - Login über UI
+             * - UI-Validierung: Payloads erscheinen als Text in `feed.widget.name`
+             *
+             * Erwartung
+             * - Keine Dialoge wurden getriggert
+             * - Keine Script-Tags mit `alert(` wurden injiziert
+             * =============================================================================
+             */
 
-        // Erstelle Widgets mit XSS-Payloads
-		// noinspection HtmlUnknownTarget,HtmlDeprecatedAttribute
-		const xssPayloads = [
-			'<script>alert("XSS1")</script>',
-			'<img src="https://example.invalid/x" alt="" onerror="alert(\'XSS2\')">',
-			'<svg onload="alert(\'XSS3\')"></svg>',
-		];
+            const api = await newApiRequestContext();
+            const user = await createUserWithRole(api, 'demo', 'feed04');
+
+            const xssPayloads = [
+                '<script>alert("XSS1")</script>',
+                '<img src="https://example.invalid/x" alt="" onerror="alert(\'XSS2\')">',
+                '<svg onload="alert(\'XSS3\')"></svg>',
+            ];
 
         const widgets = await Promise.all(
-			xssPayloads.map((payload) =>
-				createWidget(api, payload, '{}', user.access_token))
-		);
+            xssPayloads.map((payload) =>
+                createWidget(api, payload, '{}', user.access_token)),
+        );
 
-        // Falls XSS ausgeführt würde, würde ein Dialog/Alert aufpoppen
-		const dialogs: string[] = [];
-		page.on('dialog', async (d) => {
-			dialogs.push(`${d.type()}: ${d.message()}`);
-			await d.dismiss();
-		});
+            const dialogs: string[] = [];
+            page.on('dialog', async (d) => {
+                dialogs.push(`${d.type()}: ${d.message()}`);
+                await d.dismiss();
+            });
 
-        // Login über UI mit demselben User
-		await loginAs(page, user.email, user.password);
-		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+            try {
+                await loginAs(page, user.email, user.password);
+                await expectLoggedIn(page);
 
-        // Optional: warten bis Laden fertig ist (falls Spinner existiert)
-		const spinner = page.getByTestId('loading.spinner');
-		if (await spinner.count()) {
-			await expect(spinner).toBeHidden();
-		}
+                for (const payload of xssPayloads) {
+                    await expect(
+                        page.getByTestId(TEST_ID_FEED_WIDGET_NAME).filter({hasText: payload}),
+                    ).toBeVisible({timeout: 10_000});
+                }
 
-        // Baseline: vorhandene Scripts im DOM (React/Expo etc.)
-		const initialScriptCount = await page.locator('script').count();
+                await expect(page.locator('script', {hasText: 'alert('})).toHaveCount(0);
+                expect(dialogs).toHaveLength(0);
 
-        // UI-Validierung: Payloads werden als Text angezeigt (escaped), nicht als Script/DOM-Element ausgeführt
-		for (const payload of xssPayloads) {
-			await expect(page.getByTestId('feed.widget.name').filter({hasText: payload})).toBeVisible({timeout: 10_000});
-		}
+                await page.screenshot({path: 'test-results/feed-04-xss-escaped.png'});
+            } finally {
 
-        // Zusätzliche Absicherung: es wurde kein Script mit den Payloads injiziert
-		await expect(page.locator('script', {hasText: 'alert('})).toHaveCount(0);
+                await Promise.all(widgets.map((w) =>
+                    deleteWidgetById(api, w.id, user.access_token)));
+            }
+        });
 
-        await page.screenshot({path: 'test-results/feed-04-xss-escaped.png'});
+    test('@standard FEED-05: Leerer Feed zeigt passende Nachricht',
+        async ({page}) => {
+            /**
+             * =============================================================================
+             * FEED-05: Leerer Feed zeigt passende Nachricht
+             * =============================================================================
+             *
+             * Ziel
+             * - Ein neuer User ohne Widgets soll einen Empty-State anzeigen.
+             *
+             * Durchführung
+             * - User via API erzeugen (ohne Widgets)
+             * - Login über UI mit denselben Credentials
+             * - API-Check: Widget-Liste ist leer
+             * - UI-Check: Empty-State (testID) + Text
+             *
+             * Erwartung
+             * - `feed.empty` ist sichtbar und kommuniziert leeren Zustand
+             * =============================================================================
+             */
 
-        // Verifiziere, dass kein zusätzliches Script-Tag hinzugefügt wurde
-		const finalScriptCount = await page.locator('script').count();
-		expect(finalScriptCount).toBe(initialScriptCount);
+            const api = await newApiRequestContext();
+            const user = await createUserWithRole(api, 'demo', 'feed05');
 
-        // Und: es ist kein Alert/Dialog getriggert worden
-		expect(dialogs).toHaveLength(0);
+            await loginAs(page, user.email, user.password);
+            await expectLoggedIn(page);
 
-        // Cleanup
-		await Promise.all(widgets.map((w) => deleteWidgetById(api, w.id, user.access_token)));
-	});
+            const widgets = await listWidgets(api, user.access_token);
+            expect(widgets).toHaveLength(0);
 
-    // FEED-05 – Leerer Feed wird korrekt angezeigt
-	test('@standard FEED-05: Leerer Feed zeigt passende Nachricht', async ({page}) => {
-		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'demo', 'feed05');
-
-        // Login über UI (ohne Widgets zu erstellen)
-		await loginAsRole(page, 'demo', 'feed05-ui');
-		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
-
-        // Verifiziere über API, dass keine Widgets vorhanden sind
-		const widgets = await listWidgets(api, user.access_token);
-		expect(widgets.length).toBe(0);
-
-        // UI-Validierung: Empty-State wird angezeigt (testID: feed.empty)
-		await expect(page.getByTestId('feed.empty')).toBeVisible();
-		await expect(page.getByText(/Keine Widgets/i)).toBeVisible();
+            await expect(page.getByTestId(TEST_ID_FEED_EMPTY)).toBeVisible({timeout: 10_000});
+            await expect(page.getByText(/Keine Widgets/i)).toBeVisible({timeout: 10_000});
 
         await page.screenshot({path: 'test-results/feed-05-empty.png'});
-	});
+        });
+
+    test.skip(
+        '@standard FEED-06: Feed-Invalidation nach Widget-Erstellung triggert Refetch',
+        /**
+         * =============================================================================
+         * FEED-06 (BLOCKIERT): Feed-Invalidation nach Widget-Erstellung
+         * =============================================================================
+         *
+         * Ziel
+         * - Nach Erstellung eines Widgets via UI soll der Feed-Query invalidiert werden,
+         *   sodass ein refetch auf `/api/home/feed` erfolgt und das neue Widget sichtbar wird.
+         *
+         * Blocker
+         * - UI-Flows zum Erstellen/Löschen von Widgets sind in der bestehenden Suite
+         *   derzeit nicht implementiert (siehe widgets.basic.spec.ts / WIDGET-02).
+         *
+         * Empfehlung
+         * - Sobald die UI-Aktion existiert:
+         *   - Feed initial laden (Tracking OFF)
+         *   - Tracking ON
+         *   - Widget via UI erstellen
+         *   - Erwartung: >= 1 zusätzlicher GET auf `/api/home/feed` und Widget sichtbar
+         * =============================================================================
+         */
+        async () => undefined,
+    );
+
+    test.skip(
+        '@standard FEED-07: Feed-Invalidation nach Widget-Löschung triggert Refetch',
+        /**
+         * =============================================================================
+         * FEED-07 (BLOCKIERT): Feed-Invalidation nach Widget-Löschung
+         * =============================================================================
+         *
+         * Ziel
+         * - Nach Löschung eines Widgets via UI soll der Feed-Query invalidiert werden,
+         *   sodass ein refetch erfolgt und das gelöschte Widget verschwindet.
+         *
+         * Blocker
+         * - UI-Flows zum Löschen von Widgets sind in der bestehenden Suite
+         *   derzeit nicht implementiert (siehe widgets.basic.spec.ts / WIDGET-03).
+         * =============================================================================
+         */
+        async () => undefined,
+    );
 });

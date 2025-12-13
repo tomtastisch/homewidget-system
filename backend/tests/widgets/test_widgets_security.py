@@ -13,7 +13,6 @@ from tests.utils import auth as auth_utils
 
 pytestmark = pytest.mark.integration
 
-
 def test_widgets_requires_auth(client: TestClient) -> None:
     """Alle BackendWidget-Endpunkte müssen ein gültiges Access-Token verlangen."""
     assert client.get("/api/widgets/").status_code == 401

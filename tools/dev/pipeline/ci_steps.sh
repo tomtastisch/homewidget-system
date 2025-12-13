@@ -136,7 +136,7 @@ step_e2e_backend_start() {
         bash "${BACKEND_DIR}/tools/start_test_backend_e2e.sh"
     ) &
     
-    local backend_pid=$! # Hintergrundprozess-ID
+    # local backend_pid=$! # Hintergrundprozess-ID
     
     # Warte kurz auf potentielle Startup-Fehler
     sleep 2

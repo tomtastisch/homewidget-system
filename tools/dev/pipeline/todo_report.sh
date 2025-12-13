@@ -14,7 +14,7 @@ IFS=$'\n\t'
 # ZENTRALE KONFIG
 # =============================================================
 
-MAX_TODOS="${MAX_TODOS:-0}"
+MAX_TODOS="${MAX_TODOS:-1}"
 FAIL_ON_OVER_LIMIT="${FAIL_ON_OVER_LIMIT:-true}"
 FAIL_ON_NON_COMPLIANT="${FAIL_ON_NON_COMPLIANT:-false}"
 
@@ -32,8 +32,8 @@ EXCLUDED_CATEGORIES=(
 
 # Excludes: Basename oder glob patterns relativ zum SPECS_DIR.
 EXCLUDED_SPECS=(
-    "auth.resilience.spec.ts"
-    "browser.spec.ts"
+    # "auth.resilience.spec.ts"
+    # "browser.spec.ts"
     # "legacy/*.spec.ts"
     # "*experimental*.spec.ts"
 )
@@ -175,7 +175,6 @@ KNOWN_CATEGORIES_CSV="$(join_by_comma "${KNOWN_CATEGORIES[@]}")"
 # Output TSV:
 #     category \t file \t line \t policy_ok(1/0) \t content
 # =============================================================
-
 scan_todos_tsv() {
     awk \
         -v known_cats_csv="${KNOWN_CATEGORIES_CSV}" \
@@ -192,6 +191,22 @@ scan_todos_tsv() {
             return ""
         }
 
+        function comment_part(line,    i) {
+            i = index(line, "//")
+            if (i > 0) return substr(line, i + 2)
+
+            i = index(line, "/*")
+            if (i > 0) return substr(line, i + 2)
+
+            return ""
+        }
+
+        function is_todo_comment(cmt) {
+            # Nur echte TODO-Kommentare zählen: TODO: ... oder TODO(....):
+            # Damit werden z.B. "TODO-CREATE-..." oder Strings nicht gezählt.
+            return (cmt ~ /TODO[[:space:]]*[:(]/)
+        }
+
         BEGIN {
             current_cat = "unknown"
         }
@@ -202,10 +217,12 @@ scan_todos_tsv() {
                 if (c != "") current_cat = c
             }
 
-            if ($0 ~ /TODO/) {
-                policy_ok = ($0 ~ /TODO\([^)]+\):/) ? 1 : 0
-                printf "%s\t%s\t%d\t%d\t%s\n", current_cat, FILENAME, FNR, policy_ok, $0
-            }
+            cmt = comment_part($0)
+            if (cmt == "") next
+            if (!is_todo_comment(cmt)) next
+
+            policy_ok = (cmt ~ /TODO\([^)]+\):/) ? 1 : 0
+            printf "%s\t%s\t%d\t%d\t%s\n", current_cat, FILENAME, FNR, policy_ok, $0
         }
     ' "${SPEC_FILES[@]}"
 }

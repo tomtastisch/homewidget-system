@@ -8,54 +8,49 @@ import {createWidget, deleteWidgetById} from '../helpers/widgets';
  * 
  * Tests für Fehlerbehandlung und Edge-Cases bei Widget-Operationen.
  */
-
-test.describe('@standard Widget Resilience', () => {
-	// WIDGET-05 – Backend-Fehler bei Creation (500) → UI-Error-Toast
-	test('@standard WIDGET-05: Backend-Fehler bei Widget-Erstellung zeigt Fehler', async ({page}) => {
-		await createUserWithRole(await newApiRequestContext(), 'demo', 'widget05');
-		
-		// Login über UI
-		await loginAsRole(page, 'demo', 'widget05-ui');
-		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
-		
-		// Mock Backend-Fehler für Widget-Creation
-		await mockBackendError(page, /\/api\/widgets\/$/, 500, {
-			detail: 'Internal server error during widget creation',
-		});
-		
-		// TODO: Sobald Widget-Erstellung in UI verfügbar:
-		// - Navigiere zu Widget-Erstellungs-Formular
-		// - Fülle Formular aus und submit
-		// - Verifiziere, dass Error-Toast/Message angezeigt wird
-		// Beispiel:
-		// await page.getByTestId('create-widget.button').click();
-		// await page.getByTestId('widget.name').fill('Test Widget');
-		// await page.getByTestId('widget.submit').click();
-		// await expect(page.getByTestId('error.toast')).toBeVisible();
-		// await expect(page.getByText(/Internal server error/i)).toBeVisible();
-		
-		// Für jetzt: Simuliere API-Call direkt über Page-Evaluation
-		const result = await page.evaluate(async (baseUrl) => {
-			try {
-				const response = await fetch(`${baseUrl}/api/widgets/`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${localStorage.getItem('hw_refresh_token')}`,
-					},
-					body: JSON.stringify({name: 'Test', config_json: '{}'}),
-				});
-				return {status: response.status, ok: response.ok};
-			} catch (error) {
-				return {error: error instanceof Error ? error.message : 'Unknown error'};
-			}
-		}, process.env.E2E_API_BASE_URL || 'http://127.0.0.1:8100');
-		
-		expect(result.status).toBe(500);
-		expect(result.ok).toBe(false);
-		
-		await page.screenshot({path: 'test-results/widget-05-error.png'});
+// WIDGET-05 – Backend-Fehler bei Creation (500)
+test('@standard WIDGET-05: Backend-Fehler bei Widget-Erstellung liefert 500', async ({page}) => {
+	// Login über UI (legt User automatisch an)
+	const user = await loginAsRole(page, 'demo', 'widget05');
+	await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+	
+	// Mock Backend-Fehler für Widget-Creation
+	await mockBackendError(page, /\/api\/widgets\/$/, 500, {
+		detail: 'Internal server error during widget creation',
 	});
+	
+	// UI für Widget-Erstellung ist aktuell nicht vorhanden.
+	// Stattdessen wird der Call im Browser-Kontext abgesetzt, um den 500er-Fehlerpfad
+	// (inkl. Interception via page.route) deterministisch zu verifizieren.
+	const result = await page.evaluate(async ({baseUrl, accessToken}) => {
+		try {
+			const response = await fetch(`${baseUrl}/api/widgets/`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${accessToken}`,
+				},
+				body: JSON.stringify({name: 'Test', config_json: '{}'}),
+			});
+			
+			let body: any = null;
+			try {
+				body = await response.json();
+			} catch {
+				// ignore (non-json)
+			}
+			
+			return {status: response.status, ok: response.ok, body};
+		} catch (error) {
+			return {error: error instanceof Error ? error.message : 'Unknown error'};
+		}
+	}, {baseUrl: process.env.E2E_API_BASE_URL || 'http://127.0.0.1:8100', accessToken: user.access_token});
+	
+	expect(result.status).toBe(500);
+	expect(result.ok).toBe(false);
+	expect(result.body?.detail).toBe('Internal server error during widget creation');
+	
+	await page.screenshot({path: 'test-results/widget-05-error.png'});
 });
 
 test.describe('@advanced Widget Edge Cases', () => {

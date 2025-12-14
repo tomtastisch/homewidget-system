@@ -11,7 +11,7 @@ jest.mock('../api/homeApi', () => ({
 			name: 'Sommer Sale',
 			config_json: JSON.stringify({
 				type: 'banner',
-				title: '-20% auf Alles',
+				title: '-20% auf alles',
 				description: 'Nur heute',
 				cta_label: 'Shop',
 				cta_target: 'shop://summer'
@@ -47,12 +47,10 @@ describe('HomeScreen', () => {
 			</ToastProvider>
 		);
 		
-		// Demo indicators
 		expect(getByText('Home‑Feed')).toBeTruthy();
 		expect(getByText('DEMO')).toBeTruthy();
-		expect(getByText(/Demonstrations/i)).toBeTruthy();
+		expect(getByText('Demonstrations‑Ansicht – Inhalte sind Beispiele')).toBeTruthy(); // ← Korrigierter Text
 		
-		// Wait for feed to render
 		await waitFor(() => {
 			expect(getByText('-20% auf Alles')).toBeTruthy(); // banner title
 			expect(getByText('Shop')).toBeTruthy(); // banner CTA
@@ -60,7 +58,6 @@ describe('HomeScreen', () => {
 			expect(getByText('Jetzt beantragen')).toBeTruthy(); // card CTA
 		});
 		
-		// Role label for premium should not be present in demo
 		expect(queryByText('PREMIUM')).toBeNull();
 	});
 });

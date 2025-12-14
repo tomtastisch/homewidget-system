@@ -40,35 +40,54 @@ test.describe('@minimal Widget Security', () => {
 		// Screenshot
 		await page.screenshot({path: 'test-results/widget-04-security.png'});
 	});
-
+	
 	test('@minimal WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
-	const api = await newApiRequestContext();
-	const email = `xss+${Date.now()}@example.com`;
-	const pwd = 'Secret1234!';
-	await api.post('/api/auth/register', {data: {email, password: pwd}});
-	const login = await (await api.post('/api/auth/login', {form: {username: email, password: pwd}})).json();
-	
-	// Erstelle Widget mit XSS-Payload im Namen
-	const payload = '<script>alert("XSS")</script>';
-	const created = await createWidget(api, payload, '{}', login.access_token);
-	expect(created.name).toBe(payload);
-	
-	// Login über UI und prüfe Home-Feed
-	await loginAs(page, email, pwd);
-	
-	// Prüfe, dass kein <script>-Tag im DOM ausgeführt wurde
-	const scriptTags = await page.locator('script').count();
-	const initialScriptCount = scriptTags; // Legale Scripts (React, Expo, etc.)
-	
-	// Prüfe, dass der XSS-String als Text angezeigt wird (escaped)
-	// TODO: Sobald Widget-Namen im UI sichtbar sind, hier spezifischen Locator verwenden
-	// und mit expectSecureText aus helpers/security.ts prüfen
-	
-	// Screenshot für manuelle Verifikation
-	await page.screenshot({path: 'test-results/widget-06-xss-escaped.png'});
-	
+		const api = await newApiRequestContext();
+		const email = `xss+${Date.now()}@example.com`;
+		const pwd = 'Secret1234!';
+		await api.post('/api/auth/register', {data: {email, password: pwd}});
+		const login = await (await api.post('/api/auth/login', {form: {username: email, password: pwd}})).json();
+		
+		// Erstelle Widget mit XSS-Payload im Namen
+		const payload = '<script>alert("XSS")</script>';
+		const created = await createWidget(api, payload, '{}', login.access_token);
+		expect(created.name).toBe(payload);
+		
+		// Falls XSS wirklich ausgeführt würde, würde ein Dialog/Alert aufpoppen
+		const dialogs: string[] = [];
+		page.on('dialog', async (d) => {
+			dialogs.push(`${d.type()}: ${d.message()}`);
+			await d.dismiss();
+		});
+		
+		// Login über UI und prüfe Home-Feed
+		await loginAs(page, email, pwd);
+		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
+		
+		// Optional: warten bis Laden fertig ist (falls Spinner existiert)
+		const spinner = page.getByTestId('loading.spinner');
+		if (await spinner.count()) {
+			await expect(spinner).toBeHidden();
+		}
+		
+		// Baseline: vorhandene Scripts im DOM (React/Expo etc.)
+		const initialScriptCount = await page.locator('script').count();
+		
+		// Prüfe: Payload wird als Text angezeigt (escaped), nicht als echtes <script>-Element interpretiert
+		const widgetName = page.getByTestId('feed.widget.name').filter({hasText: payload});
+		await expect(widgetName).toBeVisible({timeout: 10_000});
+		
+		// Zusätzliche Absicherung: es wurde kein Script mit der Payload in den DOM injiziert
+		await expect(page.locator('script', {hasText: 'alert("XSS")'})).toHaveCount(0);
+		
+		// Screenshot für manuelle Verifikation
+		await page.screenshot({path: 'test-results/widget-06-xss-escaped.png'});
+		
 		// Verifiziere, dass kein zusätzliches Script-Tag hinzugefügt wurde
 		const finalScriptCount = await page.locator('script').count();
 		expect(finalScriptCount).toBe(initialScriptCount);
+		
+		// Und: es ist kein Alert/Dialog getriggert worden
+		expect(dialogs).toHaveLength(0);
 	});
 });

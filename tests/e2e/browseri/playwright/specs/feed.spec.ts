@@ -1,11 +1,11 @@
 import {expect, test} from '@playwright/test';
-import {loginAs, loginAsRole, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAs, loginAsRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
 /**
  * Feed-Tests: Standard-Ebene
- * 
+ *
  * Tests für Feed-Funktionalität, Caching und Security.
  */
 
@@ -16,8 +16,19 @@ test.describe('@standard Feed', () => {
 		const user = await createUserWithRole(api, 'demo', 'feed01');
 		
 		// Erstelle einige Test-Widgets
-		const widget1 = await createWidget(api, 'Feed Test Widget 1', '{}', user.access_token);
-		const widget2 = await createWidget(api, 'Feed Test Widget 2', '{}', user.access_token);
+		const widget1 = await createWidget(
+			api,
+			'Feed Test Widget 1',
+			'{}',
+			user.access_token
+		);
+		
+		const widget2 = await createWidget(
+			api,
+			'Feed Test Widget 2',
+			'{}',
+			user.access_token
+		);
 		
 		// Login über UI mit DEMSELBEN User (nicht neuen User erstellen!)
 		await loginAs(page, user.email, user.password);
@@ -29,8 +40,13 @@ test.describe('@standard Feed', () => {
 		// Verifiziere, dass Feed geladen wurde (über API)
 		const widgets = await listWidgets(api, user.access_token);
 		expect(widgets.length).toBeGreaterThanOrEqual(2);
-		expect(widgets.some(w => w.name === 'Feed Test Widget 1')).toBeTruthy();
-		expect(widgets.some(w => w.name === 'Feed Test Widget 2')).toBeTruthy();
+		expect(widgets.some((w) =>
+			w.name === 'Feed Test Widget 1')
+		).toBeTruthy();
+		
+		expect(widgets.some((w) =>
+			w.name === 'Feed Test Widget 2')
+		).toBeTruthy();
 		
 		// UI-Validierung: Widget-Namen sind jetzt im Feed sichtbar (testID: feed.widget.name)
 		await expect(page.getByText('Feed Test Widget 1')).toBeVisible({timeout: 10_000});
@@ -45,29 +61,43 @@ test.describe('@standard Feed', () => {
 	
 	// FEED-02 – Feed-Caching (30 s) wird respektiert
 	test('@standard FEED-02: Feed-Caching verhindert redundante API-Calls', async ({page}) => {
+		const isCI = process.env.CI === 'true';
+		const reason =
+			'BLOCKED: Clientseitiges Feed-Caching (TTL/Store) ist im Mobile-Client aktuell nicht implementiert. HomeScreen lädt den Feed bei jedem Mount/Reload erneut via getHomeWidgets() -> /api/home/feed.';
+		
+		test.skip(isCI, reason);
+		test.fixme(!isCI, reason);
+		
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'feed02');
 		
 		// Erstelle Widget
 		const widget = await createWidget(api, 'Cache Test Widget', '{}', user.access_token);
 		
-		// Tracke API-Calls zu /api/widgets/ (Tracking erst nach Login aktiv)
-		const apiCalls: string[] = [];
+		// Tracke API-Calls zum Feed-Endpoint
+		const feedCalls: string[] = [];
 		let trackApiCalls = false;
-		await page.route('**/api/widgets/**', async (route) => {
-			if (trackApiCalls) {
-				apiCalls.push(route.request().url());
+		
+		// NOTE: feedCalls is intentionally not asserted yet; it will be used once FEED-02 caching is implemented.
+		// This keeps strict lint/tsc settings clean without weakening global rules.
+		expect(feedCalls).toBeDefined();
+		await page.route('**/api/home/feed**', async (route) => {
+			
+			const req = route.request();
+			if (trackApiCalls && req.method() === 'GET') {
+				feedCalls.push(req.url());
 			}
+			
 			await route.continue();
 		});
 		
 		// Login über UI
-		await loginAsRole(page, 'demo', 'feed02-ui');
+		await loginAs(page, user.email, user.password);
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
-		// Tracking ab jetzt aktivieren
+		
 		trackApiCalls = true;
 		
-		// Initial load (sollte API-Call triggern)
+		// Initial load
 		await page.reload();
 		await page.waitForTimeout(2000);
 		
@@ -75,11 +105,8 @@ test.describe('@standard Feed', () => {
 		await page.reload();
 		await page.waitForTimeout(2000);
 		
-		// TODO: Sobald Caching implementiert ist, verifiziere:
-		// expect(cachedCalls).toBe(initialCalls); // Kein neuer Call wegen Cache
-		
-		// Für jetzt: Dokumentiere erwartetes Verhalten
-		// Nach 30s sollte Cache invalidiert werden und neuer Call erfolgen
+		// @TODO: Sobald Caching implementiert ist, verifiziere:
+		// expect(feedCalls.length).toBe(1); // kein neuer Call wegen Cache (Beispiel)
 		
 		await page.screenshot({path: 'test-results/feed-02-caching.png'});
 		
@@ -88,7 +115,9 @@ test.describe('@standard Feed', () => {
 	});
 	
 	// FEED-03 – Rate-Limit (429) → UI-Fehlermeldung
-	test('@standard FEED-03: Feed Rate-Limit zeigt Fehlermeldung', async ({page}) => {
+	test('@standard FEED-03: Feed-Rate-Limit zeigt Fehlermeldung',
+		async ({page}) => {
+		
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'feed03');
 		
@@ -129,47 +158,57 @@ test.describe('@standard Feed', () => {
 		const user = await createUserWithRole(api, 'demo', 'feed04');
 		
 		// Erstelle Widgets mit XSS-Payloads
+		// noinspection HtmlUnknownTarget,HtmlDeprecatedAttribute
 		const xssPayloads = [
 			'<script>alert("XSS1")</script>',
-			'<img src=x onerror="alert(\'XSS2\')">',
-			'<svg/onload=alert("XSS3")>',
+			'<img src="https://example.invalid/x" alt="" onerror="alert(\'XSS2\')">',
+			'<svg onload="alert(\'XSS3\')"></svg>',
 		];
 		
 		const widgets = await Promise.all(
-			xssPayloads.map((payload, i) =>
-				createWidget(api, payload, '{}', user.access_token)
-			)
+			xssPayloads.map((payload) =>
+				createWidget(api, payload, '{}', user.access_token))
 		);
 		
-		// Login über UI mit DEMSELBEN User
+		// Falls XSS ausgeführt würde, würde ein Dialog/Alert aufpoppen
+		const dialogs: string[] = [];
+		page.on('dialog', async (d) => {
+			dialogs.push(`${d.type()}: ${d.message()}`);
+			await d.dismiss();
+		});
+		
+		// Login über UI mit demselben User
 		await loginAs(page, user.email, user.password);
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
-		// Warte auf Feed-Laden
-		await page.waitForTimeout(2000);
+		// Optional: warten bis Laden fertig ist (falls Spinner existiert)
+		const spinner = page.getByTestId('loading.spinner');
+		if (await spinner.count()) {
+			await expect(spinner).toBeHidden();
+		}
 		
-		// Zähle initiale Script-Tags (nur legitime von React/Expo)
+		// Baseline: vorhandene Scripts im DOM (React/Expo etc.)
 		const initialScriptCount = await page.locator('script').count();
 		
-		// Verifiziere, dass keine zusätzlichen Scripts hinzugefügt wurden
+		// UI-Validierung: Payloads werden als Text angezeigt (escaped), nicht als Script/DOM-Element ausgeführt
+		for (const payload of xssPayloads) {
+			await expect(page.getByTestId('feed.widget.name').filter({hasText: payload})).toBeVisible({timeout: 10_000});
+		}
+		
+		// Zusätzliche Absicherung: es wurde kein Script mit den Payloads injiziert
+		await expect(page.locator('script', {hasText: 'alert('})).toHaveCount(0);
+		
+		await page.screenshot({path: 'test-results/feed-04-xss-escaped.png'});
+		
+		// Verifiziere, dass kein zusätzliches Script-Tag hinzugefügt wurde
 		const finalScriptCount = await page.locator('script').count();
 		expect(finalScriptCount).toBe(initialScriptCount);
 		
-		// UI-Validierung: XSS-Payloads werden als Text escaped (testID: feed.widget.name)
-		const content = await page.textContent('body');
-		// Prüfe, dass mindestens einer der XSS-Payloads als Text sichtbar ist
-		const hasXssText = content && (
-			content.includes('<script>') ||
-			content.includes('<img src=x') ||
-			content.includes('<svg')
-		);
-		expect(hasXssText).toBeTruthy();
-		
-		// Prüfe, dass keine Alerts ausgelöst wurden (indirekt durch Script-Count)
-		await page.screenshot({path: 'test-results/feed-04-xss-escaped.png'});
+		// Und: es ist kein Alert/Dialog getriggert worden
+		expect(dialogs).toHaveLength(0);
 		
 		// Cleanup
-		await Promise.all(widgets.map(w => deleteWidgetById(api, w.id, user.access_token)));
+		await Promise.all(widgets.map((w) => deleteWidgetById(api, w.id, user.access_token)));
 	});
 	
 	// FEED-05 – Leerer Feed wird korrekt angezeigt

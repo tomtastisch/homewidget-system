@@ -62,6 +62,7 @@ log_error() {
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." &>/dev/null && pwd)"
 
+
 BACKEND_DIR="${PROJECT_ROOT}/backend"
 MOBILE_DIR="${PROJECT_ROOT}/mobile"
 BACKEND_VENV_DIR="${BACKEND_DIR}/.venv"
@@ -72,8 +73,8 @@ MOBILE_IMAGE="${MOBILE_IMAGE:-homewidget-mobile-ci:local}"
 USE_DOCKER_BACKEND="${USE_DOCKER_BACKEND:-0}"
 USE_DOCKER_MOBILE="${USE_DOCKER_MOBILE:-0}"
 
-# Python-Helfer-Modul für PMCD
-PMCD_MODULE="tools.dev.pipeline.pipeline_py_helpers"
+# Python-Helfer-Modul für PMCD (modernisierte Struktur)
+PMCD_MODULE="tools.scripts.e2e_orchestration"
 
 # -----------------------------------------------------------------------------
 # Generische Hilfsfunktionen
@@ -205,29 +206,33 @@ pmcd_run() {
 
 ## @brief Wartet darauf, dass eine HTTP-URL erreichbar wird (Health-Check mit Timeout).
 ## @param $1 URL (z.B. http://127.0.0.1:8100/health)
-## @param $2 Beschreibung für Logging (z.B. "Backend")
-## @param $3 Max. Anzahl Versuche (Standard: 60)
-## @param $4 Wartezeit zwischen Versuchen in Sekunden (Standard: 1)
+## @param $2 Max. Anzahl Versuche (Standard: 60)
+## @param $3 Wartezeit zwischen Versuchen in Sekunden (Standard: 1)
 ## @return 0 bei Erfolg, 1 bei Timeout
-wait_for_http_health() {
+wait_for_http() {
     local url="$1"
-    local service_name="$2"
-    local max_attempts="${3:-60}"
-    local sleep_time="${4:-1}"
-    
-    log_info "Warte auf ${service_name} unter ${url}..."
-    
+    local max_attempts="${2:-60}"
+    local sleep_time="${3:-1}"
+
+    log_info "Warte auf ${url}..."
+
     local attempt=1
     while [[ ${attempt} -le ${max_attempts} ]]; do
         if curl -fsS "${url}" >/dev/null 2>&1; then
-            log_info "${service_name} ist bereit (nach ${attempt} Versuchen)."
+            log_info "Service ist bereit (nach ${attempt} Versuchen)."
             return 0
         fi
         sleep "${sleep_time}"
         ((attempt++))
     done
-    
+
     local total_time=$((max_attempts * sleep_time))
-    log_error "${service_name} wurde nicht rechtzeitig erreichbar (Timeout nach ${total_time} Sekunden)"
+    log_error "Service wurde nicht rechtzeitig erreichbar (Timeout nach ${total_time} Sekunden)"
     return 1
+}
+
+## @brief Deprecated – nutze wait_for_http stattdessen
+## @deprecated Use wait_for_http() instead
+wait_for_http_health() {
+    wait_for_http "$@"
 }

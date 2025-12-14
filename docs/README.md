@@ -1,145 +1,158 @@
-# Projekt-Dokumentation
+# 📖 Homewidget System – Dokumentation
 
-**Zentrale Dokumentation für das homewidget-system Projekt**
+Willkommen zur Dokumentation des **Homewidget Systems**, ein PoC für ein Home-Widget-System (ähnlich CHECK24).
 
 ---
 
-## Struktur
+## 🚀 Schnelleinstieg
+
+**Du brauchst nur einen Command:**
+
+```bash
+bash tools/dev/start_local.sh
+```
+
+Danach:
+
+- 🌐 **Backend**: http://localhost:8000
+- 📱 **Frontend**: http://localhost:19006
+- 📖 **API-Docs**: http://localhost:8000/docs
+
+**Weitere Infos:** Siehe [QUICKSTART.md](QUICKSTART.md)
+
+---
+
+## 📚 Dokumentations-Übersicht
+
+### 🏗️ **Architektur & Konzepte**
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** – Systemarchitektur, Schichten, Datenfluss
+- **[CONCEPTS.md](core/CONCEPTS.md)** – Kernkonzepte (Auth, Widgets, Freemium, Cache)
+
+### 👨‍💻 **Für Entwickler**
+
+- **[GUIDELINES.md](development/GUIDELINES.md)** – Code-Standards, Type-Hints, Architektur-Vorgaben
+- **[development/TESTING.md](development/TESTING.md)** – Test-Strategie (Unit, Integration, E2E)
+- **[development/TOOLS.md](development/TOOLS.md)** – Tools, CLI-Commands, Workflows
+- **[development/TROUBLESHOOTING.md](development/TROUBLESHOOTING.md)** – Häufige Probleme & Lösungen
+
+### 🔐 **Domänen & Features**
+
+- **[core/AUTHENTICATION.md](core/AUTHENTICATION.md)** – Auth-Flow, Token, Blacklist
+- **[core/FREEMIUM.md](core/FREEMIUM.md)** – Freemium-System, Pricing-Logik
+- **[core/WIDGETS.md](core/WIDGETS.md)** – Widget-Domain, Rendering, Config
+
+### 🔄 **Infrastruktur & Deployment**
+
+- **[infrastructure/CI-CD.md](infrastructure/CI-CD.md)** – GitHub Actions, Pipeline, Checks
+- **[infrastructure/DATABASE.md](infrastructure/DATABASE.md)** – Schema, Migrations, ORM (SQLModel)
+
+### 🧪 **Testing**
+
+- **[development/TESTING.md](development/TESTING.md)** – Test-Strategie allgemein
+- **[e2e/README.md](e2e/README.md)** – E2E-Tests mit Playwright
+- **[development/TESTING_SECURITY.md](development/TESTING_SECURITY.md)** – Security-Tests
+
+---
+
+## 📁 Struktur dieser Dokumentation
 
 ```
 docs/
-├── README.md              # Dieser Index
-├── auth.md                # Authentifizierung & Autorisierung
-├── ci-cd.md               # CI/CD-Pipeline
-├── dev/                   # Entwickler-Dokumentation
-└── e2e/                   # E2E-Testing-Dokumentation
-    ├── README.md                      # E2E-Übersicht
-    ├── playwright-testing-guide.md    # Test-Entwickler-Guide
-    ├── ci-quarantine-management.md    # CI-Quarantäne-Management
-    └── ui-release-guide.md            # UI-Release-Prozess
+├── README.md                           # 👈 Du bist hier
+├── QUICKSTART.md                       # Schnelleinstieg (2 Min)
+├── ARCHITECTURE.md                     # System-Übersicht
+├── CONCEPTS.md                         # TBD: Zentrale Konzepte
+│
+├── core/                               # Domain & Feature-Doku
+│   ├── AUTHENTICATION.md
+│   ├── FREEMIUM.md
+│   ├── WIDGETS.md
+│   └── SECURITY.md
+│
+├── development/                        # Für Entwickler
+│   ├── GUIDELINES.md
+│   ├── TESTING.md
+│   ├── TESTING_SECURITY.md
+│   ├── TOOLS.md
+│   └── TROUBLESHOOTING.md
+│
+├── infrastructure/                     # Ops & Deployment
+│   ├── CI-CD.md
+│   ├── DATABASE.md
+│   └── DEPLOYMENT.md
+│
+├── e2e/                                # E2E-Tests spezifisch
+│   ├── README.md
+│   ├── playwright-testing-guide.md
+│   ├── QUARANTINE.md
+│   └── ...
+│
+├── dev/                                # Weitere Dev-Docs (zu konsolidieren)
+│   └── ...
+│
+├── backend/                            # Backend-spezifische Doku
+│   └── ...
+│
+└── archived/                           # Alte, abgeschlossene Dokumente
+    └── ...
 ```
 
 ---
 
-## Dokumentations-Übersicht
+## 🎯 Wo beginne ich?
 
-### Authentifizierung & Autorisierung
-**Datei:** [auth.md](auth.md)  
-**Zielgruppe:** Backend-Entwickler  
-**Inhalt:** JWT-Token-Handling, Rollen, Sessions
+### Ich bin neu im Projekt
 
-### CI/CD-Pipeline
-**Datei:** [ci-cd.md](ci-cd.md)  
-**Zielgruppe:** DevOps, CI/CD-Team  
-**Inhalt:** GitHub Actions Workflows, Pipeline-Struktur
+1. Lies [QUICKSTART.md](QUICKSTART.md) (2 Min)
+2. Schau dir [ARCHITECTURE.md](ARCHITECTURE.md) an (5–10 Min)
+3. Dann: [development/GUIDELINES.md](development/GUIDELINES.md) für Code-Standards
 
-### Entwickler-Dokumentation
-**Verzeichnis:** [dev/](dev/)  
-**Zielgruppe:** Alle Entwickler  
-**Inhalt:** Setup, Entwicklungs-Workflows, Best Practices
+### Ich möchte etwas Implementieren
 
-### E2E-Testing (Playwright)
-**Verzeichnis:** [e2e/](e2e/)  
-**Zielgruppe:** Test-Entwickler, Frontend-Team, CI/CD-Team
+1. **Welche Domain?** → Schau in `core/` (AUTHENTICATION, WIDGETS, etc.)
+2. **Code-Standards?** → [development/GUIDELINES.md](development/GUIDELINES.md)
+3. **Wie teste ich?** → [development/TESTING.md](development/TESTING.md)
+4. **Stuck?** → [development/TROUBLESHOOTING.md](development/TROUBLESHOOTING.md)
 
-**Dokumente:**
-- **[README.md](e2e/README.md)** - E2E-Übersicht & Schnellstart
-- **[playwright-testing-guide.md](e2e/playwright-testing-guide.md)** - Test-Entwicklung
-- **[ci-quarantine-management.md](e2e/ci-quarantine-management.md)** - Quarantäne-Management
-- **[ui-release-guide.md](e2e/ui-release-guide.md)** - UI-Release-Prozess
+### Ich muss die Infra/DevOps verstehen
+
+1. [infrastructure/CI-CD.md](infrastructure/CI-CD.md) – GitHub Actions
+2. [infrastructure/DATABASE.md](infrastructure/DATABASE.md) – Schema & Migrations
+3. [development/TOOLS.md](development/TOOLS.md) – Scripts & Automation
 
 ---
 
-## Schnellzugriff für häufige Aufgaben
+## 🔄 Konventionen
 
-### Neue E2E-Tests schreiben
-```bash
-# Lese Guide:
-cat docs/e2e/playwright-testing-guide.md
-
-# Tests ausführen:
-cd tests/e2e/browseri/playwright
-npm test
-```
-
-### CI-Pipeline debuggen
-```bash
-# Lese CI-Dokumentation:
-cat docs/ci-cd.md
-
-# Pipeline lokal simulieren:
-bash tools/dev/pipeline/ci_steps.sh backend_quality
-```
-
-### Quarantänisierte Tests verwalten
-```bash
-# Lese Quarantäne-Guide:
-cat docs/e2e/ci-quarantine-management.md
-
-# Reports generieren:
-bash tools/dev/pipeline/quarantine_report.sh
-bash tools/dev/pipeline/todo_report.sh
-```
-
-### UI-Release durchführen (nach Ticket C)
-```bash
-# Lese UI-Release-Guide:
-cat docs/e2e/ui-release-guide.md
-
-# Mapping generieren:
-bash tools/dev/pipeline/ui_release_todo_mapping.sh
-```
+- **Sprache**: Deutsch (Code, Kommentare, Docstrings, Dokumentation)
+- **Code-Stil**: Siehe [development/GUIDELINES.md](development/GUIDELINES.md) (PEP-8, Type-Hints, Clean Architecture)
+- **Tests**: `pytest`-kompatibel, deterministisch, schnell
+- **Commits**: Aussagekräftig, logisch gruppiert
+- **PRs**: Beschreibung, Testergebnisse, Review-Ready
 
 ---
 
-## Dokumentations-Prinzipien
+## 📞 Hilfreiche Links
 
-### Sprache
-- **Kommentare/Docstrings:** Deutsch
-- **Code/APIs:** Englisch
-- **Dokumentation:** Deutsch
-- **Ausnahme:** Externe APIs/Spezifikationen (Englisch)
-
-### Struktur
-- **Ein Dokument pro Thema/Zuständigkeit**
-- **Keine Duplikate** - Verweis auf zentrale Dokumentation
-- **Versionierung** - Letzte Aktualisierung dokumentieren
-- **Zielgruppe klar benennen**
-
-### Wartung
-- Dokumentation parallel zu Code-Änderungen aktualisieren
-- Veraltete Dokumente markieren oder entfernen
-- Links überprüfen (interne Verweise)
+- **Backend-Tests ausführen**: `cd backend && pytest`
+- **E2E-Tests ausführen**: `cd tests/e2e/browseri && npx playwright test --ui`
+- **Ports blockiert?** → [development/TROUBLESHOOTING.md](development/TROUBLESHOOTING.md)
+- **Alte Dokumente?** → `archived/` – aber wahrscheinlich veraltet
 
 ---
 
-## Beiträge
+## ✅ Nächste Schritte
 
-### Neue Dokumentation hinzufügen
-1. Prüfe ob Thema bereits dokumentiert ist
-2. Wähle passendes Verzeichnis (e2e/, dev/, etc.)
-3. Klare Zielgruppe definieren
-4. Inhaltsverzeichnis in diesem README aktualisieren
-5. Verweise aus alten Dokumenten hinzufügen
+Diese Dokumentation wird kontinuierlich gepflegt. Falls du:
 
-### Bestehende Dokumentation aktualisieren
-1. Datum "Letzte Aktualisierung" setzen
-2. Changelog-Sektion ergänzen (bei größeren Änderungen)
-3. Interne Links überprüfen
-4. Review durch relevante Zielgruppe
+- 🐛 Fehler findest → Issue/PR mit Besserungsvorschlag
+- 📝 Etwas ist unklar → Docstring/Kommentar im Code ergänzen
+- 🔄 Doppelte Inhalte findest → In `archived/` oder zur Konsolidierung vorschlagen
+
+**Ziel**: Eine Single Source of Truth für jede Komponente, keine Redundanz.
 
 ---
 
-## Kontakte
+*Zuletzt aktualisiert: Dezember 2025*
 
-| Team | Zuständigkeit | Dokumente |
-|------|---------------|-----------|
-| **Backend-Team** | Backend, Auth, API | auth.md |
-| **Frontend-Team** | UI, Mobile, Expo-Web | - |
-| **Test-Team** | E2E, Testing, Qualität | e2e/ |
-| **DevOps/CI-CD** | Pipeline, Infrastruktur | ci-cd.md, e2e/ci-quarantine-management.md |
-
----
-
-**Letzte Aktualisierung:** 2025-12-12  
-**Version:** 1.0 (nach Ticket 15-2-A)

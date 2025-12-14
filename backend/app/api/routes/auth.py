@@ -134,6 +134,31 @@ async def logout(current_token: str = Depends(oauth2_scheme)):
     return None
 
 
+@router.post("/upgrade-to-premium", response_model=UserRead)
+def upgrade_to_premium(user=Depends(get_current_user), session: Session = Depends(get_session)):
+    """
+    Upgraded einen Common-User zu Premium.
+
+    Erfordert Authentifizierung.
+    Ändert die Benutzerrolle von 'common' zu 'premium'.
+    """
+    from ...models.user import UserRole
+
+    if user.role == UserRole.premium:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is already premium",
+        )
+
+    user.role = UserRole.premium
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    LOG.info("premium_activated", extra={"user_id": user.id})
+    return user
+
+
 @router.get("/me", response_model=UserRead)
 def me(user=Depends(get_current_user)):
     LOG.debug("me_fetched", extra={"user_id": user.id})

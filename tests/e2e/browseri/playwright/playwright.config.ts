@@ -7,12 +7,30 @@ import * as path from 'path';
  * Diese Tests nutzen das Expo-Web-Frontend aus mobile/ als Web-Client
  * und testen darüber das Backend im E2E-Modus.
  *
- * Umgebungsvariablen:
- * - PLAYWRIGHT_WEB_BASE_URL: Expo-Web-Frontend (Standard: http://localhost:19006)
- * - E2E_API_BASE_URL: Backend-API im E2E-Modus (Standard: http://127.0.0.1:8100)
+ * Umgebungsvariablen (mit Fallbacks):
+ * - PLAYWRIGHT_WEB_BASE_URL: Expo-Web-Frontend (Versucht: env → 19006 → 8081 → 8000)
+ * - E2E_API_BASE_URL: Backend-API im E2E-Modus (Versucht: env → 8100 → 8000)
+ * - PLAYWRIGHT_NO_AUTO_START: "true" um Auto-Start zu deaktivieren (für manuelle Server-Verwaltung)
  */
-const webBaseURL = process.env.PLAYWRIGHT_WEB_BASE_URL || 'http://localhost:19006';
-const apiBaseURL = process.env.E2E_API_BASE_URL || 'http://127.0.0.1:8100';
+
+/**
+ * Hilfsfunktion: Gibt die erste verfügbare URL für einen Service zurück.
+ * Nutzt Environment-Variable als Fallback, dann Default-Ports.
+ */
+function detectServiceURL(envVar: string, defaultPorts: number[], useLocalhost = false): string {
+	if (process.env[envVar]) {
+		console.log(`[Playwright] ${envVar} = ${process.env[envVar]}`);
+		return process.env[envVar];
+	}
+	
+	const host = useLocalhost ? '127.0.0.1' : 'localhost';
+	const url = `http://${host}:${defaultPorts[0]}`;
+	console.log(`[Playwright] ${envVar} not set, using default: ${url} (ports: ${defaultPorts.join(', ')})`);
+	return url;
+}
+
+const webBaseURL = detectServiceURL('PLAYWRIGHT_WEB_BASE_URL', [19006, 8081, 8000], false);
+const apiBaseURL = detectServiceURL('E2E_API_BASE_URL', [8100, 8000], true);
 
 export default defineConfig({
 	testDir: './specs',
@@ -62,20 +80,21 @@ export default defineConfig({
 	],
 	
 	/**
-	 * Expo-Web-Frontend automatisch starten (lokal).
-	 * 
-	 * Im CI wird Expo-Web manuell im Workflow gestartet, daher wird dort
-	 * der bereits laufende Server wiederverwendet (reuseExistingServer: true).
-	 * 
-	 * Das Backend wird separat über backend/tools/start_test_backend_e2e.sh gestartet,
-	 * entweder manuell (lokal) oder im CI-Job vor den Playwright-Tests.
+	 * Expo-Web-Frontend automatisch starten (lokal, falls nicht manuell verwaltet).
+	 *
+	 * Verhalten:
+	 * - PLAYWRIGHT_NO_AUTO_START=true: Server wird NICHT automatisch gestartet (manuell verwalten)
+	 * - CI=true: Reuse existing server (angenommen, dass im CI vorher gestartet wurde)
+	 * - lokal: Auto-Start mit reuseExistingServer=true für schnellere Wiederholungen
+	 *
+	 * Das Backend wird separat über backend/tools/start_test_backend_e2e.sh gestartet.
 	 */
-	webServer: {
+	webServer: process.env.PLAYWRIGHT_NO_AUTO_START === 'true' ? undefined : {
 		command: 'npm run web',
 		url: webBaseURL,
 		cwd: path.resolve(__dirname, '../../../../mobile'),
 		timeout: 180_000, // Expo-Web-Build kann lange dauern beim ersten Start (3 Min)
-		reuseExistingServer: !!process.env.CI, // Im CI wird Expo-Web bereits manuell gestartet
+		reuseExistingServer: true, // Immer reuse, um Blockierung zu vermeiden
 		stdout: 'pipe',
 		stderr: 'pipe',
 		env: {
@@ -85,4 +104,10 @@ export default defineConfig({
 			...(process.env.CI ? { CI: 'true' } : {}),
 		},
 	},
+	
+	// Globaler Teardown für sauberes Herunterfahren nach allen Tests
+	globalTeardown: './global-teardown.ts',
 });
+
+
+

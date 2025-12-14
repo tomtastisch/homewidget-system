@@ -154,7 +154,8 @@ step_e2e_backend_start() {
     
     # Health-Check mit Timeout
     local health_result
-    wait_for_http_health "http://127.0.0.1:8100/health" "Backend" 60 1
+    log_info "Warte auf Backend Health-Check..."
+    wait_for_http "http://127.0.0.1:8100/health" 60 1 || return 1
     health_result=$?
     
     # Cleanup
@@ -190,7 +191,8 @@ step_e2e_expo_web_start() {
     fi
     
     # Health-Check mit Timeout (mehr Zeit für Expo-Web)
-    wait_for_http_health "http://localhost:19006" "Expo-Web" 60 2
+    log_info "Warte auf Expo-Web..."
+    wait_for_http "http://localhost:19006" 60 2 || return 1
 }
 
 ## @brief Playwright-Dependencies installieren.

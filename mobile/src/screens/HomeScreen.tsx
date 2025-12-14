@@ -1,5 +1,15 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {ActivityIndicator, Alert, Button, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {
+	ActivityIndicator,
+	Alert,
+	Button,
+	FlatList,
+	RefreshControl,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View
+} from 'react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {type BackendWidget, getHomeWidgets} from '../api/homeApi';
 import type {RootStackParamList} from '../App';
@@ -10,6 +20,33 @@ import {useToast} from '../ui/ToastContext';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
+const DEMO_WIDGETS: BackendWidget[] = [
+	{
+		id: 1,
+		name: 'Sommer Sale',
+		created_at: new Date(0).toISOString(),
+		config_json: JSON.stringify({
+			type: 'banner',
+			title: '-20 % auf alles',
+			description: 'Nur heute',
+			cta_label: 'Shop',
+			cta_target: 'shop://summer',
+		}),
+	},
+	{
+		id: 2,
+		name: 'Kreditkarte',
+		created_at: new Date(0).toISOString(),
+		config_json: JSON.stringify({
+			type: 'card',
+			title: 'Premium Card',
+			description: 'Mit Bonuspunkten',
+			cta_label: 'Jetzt beantragen',
+			cta_target: 'product://card',
+		}),
+	},
+];
+
 export default function HomeScreen({ navigation }: Props) {
 	const {status, role} = useAuth();
 	const {showError} = useToast();
@@ -19,6 +56,14 @@ export default function HomeScreen({ navigation }: Props) {
 	const [error, setError] = useState<string | null>(null);
 	
 	const load = useCallback(async () => {
+		// DEMO: kein Backend-Call (verhindert 401-Spam + „Session expired"-Toasts)
+		if (!isAuthed) {
+			setLoading(false);
+			setError(null);
+			setWidgets(DEMO_WIDGETS);
+			return;
+		}
+
 		setLoading(true);
 		setError(null);
 		try {
@@ -32,12 +77,12 @@ export default function HomeScreen({ navigation }: Props) {
 		} finally {
 			setLoading(false);
 		}
-	}, [showError]);
+	}, [isAuthed, showError]);
 	
 	useEffect(() => {
 		// Reload feed when auth status or role changes to reflect personalized content
 		load();
-	}, [status, role, load]);
+	}, [isAuthed, role, load]);
 	
 	const parsed: ParsedWidget[] = useMemo(() => widgets.map(parseBackendWidget), [widgets]);
 	

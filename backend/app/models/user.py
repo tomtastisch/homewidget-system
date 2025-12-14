@@ -31,8 +31,8 @@ class User(SQLModel, table=True):
     email: str = Field(index=True, unique=True)
     password_hash: str
     role: UserRole = Field(
-        default=UserRole.demo,
-        description="User role (demo/common/premium)",
+        default=UserRole.common,
+        description="User role (demo/common/premium). 'demo' is only for unauthenticated users.",
     )
 
     is_active: bool = Field(default=True)

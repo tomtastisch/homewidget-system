@@ -340,3 +340,12 @@ export async function authLogout(): Promise<void> {
 		await clearTokens();
 	}
 }
+
+/**
+ * Upgraded einen Common-User zu Premium.
+ *
+ * Erfordert Authentifizierung.
+ */
+export async function authUpgradeToPremium(): Promise<UserRead> {
+	return api.post<UserRead>('/api/auth/upgrade-to-premium');
+}

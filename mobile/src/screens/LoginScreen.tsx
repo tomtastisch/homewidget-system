@@ -38,7 +38,7 @@ export default function LoginScreen({ navigation }: Props) {
 	};
 	
 	return (
-		<View style={styles.container}>
+		<View style={styles.container} testID="login.screen">
 			<Text style={styles.title}>HomeWidget Login</Text>
 			{!!(localError || error) && (
 				<View testID={isRateLimited ? 'login.error.rateLimit' : undefined}>
@@ -75,7 +75,7 @@ export default function LoginScreen({ navigation }: Props) {
 			/>
 			<View style={styles.switchRow}>
 				<Text>Noch kein Konto?</Text>
-				<TouchableOpacity onPress={() => navigation.replace('Register')}>
+				<TouchableOpacity onPress={() => navigation.replace('Register')} testID="login.registerLink">
 					<Text style={styles.link}> Jetzt registrieren</Text>
 				</TouchableOpacity>
 			</View>

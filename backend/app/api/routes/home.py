@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi_cache.decorator import cache
 from sqlmodel import Session
 
 from ...api.deps import get_current_user
@@ -20,7 +19,6 @@ rate_limiter = InMemoryRateLimiter()
 feed_rule = parse_rule(settings.FEED_RATE_LIMIT)
 
 @router.get("/feed", response_model=list[WidgetRead])
-@cache(expire=30)
 def get_feed(
     _request: Request,
     session: Session = Depends(get_session),
@@ -29,7 +27,7 @@ def get_feed(
     """
     Ruft den BackendWidget-Feed für den aktuellen Benutzer ab.
 
-    Rate-Limiting pro Benutzer-ID. Antwort wird 30 Sekunden gecacht.
+    Rate-Limiting pro Benutzer-ID.
     """
     key = f"feed:{user.id}"
     if not rate_limiter.allow(key, feed_rule):

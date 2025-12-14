@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity} from 'react-native';
+import {Button, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
@@ -22,9 +22,8 @@ export default function RegisterScreen({navigation}: Props) {
 		try {
 			setLoading(true);
 			await register(email.trim(), password);
-			Alert.alert('Erfolg', 'Registrierung abgeschlossen. Bitte jetzt einloggen.', [
-				{text: 'OK', onPress: () => navigation.replace('Login')},
-			]);
+			// Nach erfolgreicher Registrierung zur Login-Screen navigieren
+			navigation.replace('Login');
 		} catch (e: any) {
 			// Fehler bereits im Context erfasst
 			if (e?.message) setLocalError(e.message);
@@ -34,7 +33,7 @@ export default function RegisterScreen({navigation}: Props) {
 	};
 	
 	return (
-		<View style={styles.container}>
+		<View style={styles.container} testID="register.screen">
 			<Text style={styles.title}>Konto erstellen</Text>
 			{!!(localError || error) && <Text style={styles.error}>{localError || error}</Text>}
 			<TextInput
@@ -44,6 +43,7 @@ export default function RegisterScreen({navigation}: Props) {
 				keyboardType="email-address"
 				value={email}
 				onChangeText={setEmail}
+				testID="register.email"
 			/>
 			<TextInput
 				style={styles.input}
@@ -51,11 +51,13 @@ export default function RegisterScreen({navigation}: Props) {
 				secureTextEntry
 				value={password}
 				onChangeText={setPassword}
+				testID="register.password"
 			/>
-			<Button title={loading ? 'Bitte warten…' : 'Registrieren'} onPress={onSubmit} disabled={loading}/>
+			<Button title={loading ? 'Bitte warten…' : 'Registrieren'} onPress={onSubmit} disabled={loading}
+			        testID="register.submit"/>
 			<View style={styles.switchRow}>
 				<Text>Bereits ein Konto?</Text>
-				<TouchableOpacity onPress={() => navigation.replace('Login')}>
+				<TouchableOpacity onPress={() => navigation.replace('Login')} testID="register.loginLink">
 					<Text style={styles.link}> Zum Login</Text>
 				</TouchableOpacity>
 			</View>

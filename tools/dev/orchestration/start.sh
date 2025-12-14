@@ -16,7 +16,7 @@ source "${SCRIPT_DIR}/../lib/checks.sh"
 source "${SCRIPT_DIR}/../lib/services.sh"
 
 # Konfiguration
-PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../.." &>/dev/null && pwd)"
+PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." &>/dev/null && pwd)"
 BACKEND_DIR="${PROJECT_ROOT}/backend"
 MOBILE_DIR="${PROJECT_ROOT}/mobile"
 

@@ -29,7 +29,7 @@ async function login(page: Page, email: string, password: string): Promise<void>
 
 async function openAccount(page: Page): Promise<void> {
 	await page.getByRole('button', {name: 'Account'}).click();
-	await expect(page.getByText('Account')).toBeVisible({timeout: 10_000});
+	await expect(page.getByTestId('account.role')).toBeVisible({timeout: 10_000});
 }
 
 test.describe('@minimal Freemium System', () => {
@@ -77,7 +77,10 @@ test.describe('@minimal Freemium System', () => {
 		await expect(page.getByText('isDemo: false')).toBeVisible();
 		
 		// Premium Upgrade Card + Button nur für Common sichtbar
-		await expect(page.getByText('✨ Premium Upgrade')).toBeVisible();
+		await expect(page.getByText('✨ Premium Upgrade')
+			.first())
+			.toBeVisible({timeout: 10_000});
+		
 		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'})).toBeVisible();
 	});
 	
@@ -85,7 +88,7 @@ test.describe('@minimal Freemium System', () => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'common', `freemium-button-${Date.now()}@test.com`);
 		
-		await login(page, user.email, 'DemoPass123!');
+		await login(page, user.email, user.password);
 		await openAccount(page);
 		
 		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'})).toBeVisible({timeout: 10_000});
@@ -96,7 +99,7 @@ test.describe('@minimal Freemium System', () => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'common', `freemium-dialog-${Date.now()}@test.com`);
 		
-		await login(page, user.email, 'DemoPass123!');
+		await login(page, user.email, user.password);
 		await openAccount(page);
 		
 		const roleDisplay = page.getByTestId('account.role');
@@ -117,11 +120,14 @@ test.describe('@minimal Freemium System', () => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'premium', `freemium-premium-${Date.now()}@test.com`);
 		
-		await login(page, user.email, 'DemoPass123!');
+		await login(page, user.email, user.password);
 		await openAccount(page);
 		
-		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'})).not.toBeVisible({timeout: 5_000});
-		await expect(page.getByText('✨ Premium Upgrade')).not.toBeVisible({timeout: 5_000});
+		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'}))
+			.not.toBeVisible({timeout: 5_000});
+		
+		await expect(page.getByText('✨ Premium Upgrade'))
+			.not.toBeVisible({timeout: 5_000});
 		
 		const roleDisplay = page.getByTestId('account.role');
 		await expect(roleDisplay).toContainText('👑 Premium');

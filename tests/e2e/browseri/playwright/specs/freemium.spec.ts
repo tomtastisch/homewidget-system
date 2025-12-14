@@ -11,17 +11,17 @@ async function gotoLogin(page: Page): Promise<void> {
 	
 	// In der aktuellen UI gibt es keinen "Registrieren"-Button auf Home,
 	// sondern nur den Link "Einloggen oder Registrieren".
-	await expect(page.locator('testid=home.loginLink')).toBeVisible({timeout: 10_000});
-	await page.locator('testid=home.loginLink').click();
+	await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
+	await page.getByTestId('home.loginLink').click();
 	
-	await expect(page.locator('testid=login.screen')).toBeVisible({timeout: 10_000});
+	await expect(page.getByTestId('login.screen')).toBeVisible({timeout: 10_000});
 }
 
 async function login(page: Page, email: string, password: string): Promise<void> {
 	await gotoLogin(page);
 	
-	await page.locator('testid=login.email').fill(email);
-	await page.locator('testid=login.password').fill(password);
+	await page.getByTestId('login.email').fill(email);
+	await page.getByTestId('login.password').fill(password);
 	
 	await page.getByRole('button', {name: 'Login'}).click();
 	await expect(page.getByRole('button', {name: 'Account'})).toBeVisible({timeout: 10_000});
@@ -40,7 +40,7 @@ test.describe('@minimal Freemium System', () => {
 		await expect(page.getByText('Premium Card')).toBeVisible({timeout: 10_000});
 		
 		// Login-Link statt "Registrieren"-Button
-		await expect(page.locator('testid=home.loginLink')).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
 	});
 	
 	test('@minimal FREEMIUM-02: Registrierung → Common-Rolle mit Premium-Button', async ({page}) => {
@@ -51,26 +51,26 @@ test.describe('@minimal Freemium System', () => {
 		await gotoLogin(page);
 		
 		// Von Login zur Register-Screen
-		await page.locator('testid=login.registerLink').click();
-		await expect(page.locator('testid=register.screen')).toBeVisible({timeout: 10_000});
+		await page.getByTestId('login.registerLink').click();
+		await expect(page.getByTestId('register.screen')).toBeVisible({timeout: 10_000});
 		
 		// Registrieren
-		await page.locator('testid=register.email').fill(email);
-		await page.locator('testid=register.password').fill(password);
+		await page.getByTestId('register.email').fill(email);
+		await page.getByTestId('register.password').fill(password);
 		await page.getByRole('button', {name: 'Registrieren'}).click();
 		
 		// Nach Registrierung geht es zur Login-Screen (kein Auto-Login)
-		await expect(page.locator('testid=login.screen')).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('login.screen')).toBeVisible({timeout: 10_000});
 		
 		// Login
-		await page.locator('testid=login.email').fill(email);
-		await page.locator('testid=login.password').fill(password);
+		await page.getByTestId('login.email').fill(email);
+		await page.getByTestId('login.password').fill(password);
 		await page.getByRole('button', {name: 'Login'}).click();
 		
 		// Account öffnen und Rolle prüfen
 		await openAccount(page);
 		
-		const roleDisplay = page.locator('testid=account.role');
+		const roleDisplay = page.getByTestId('account.role');
 		await expect(roleDisplay).toContainText('👤 Common');
 		
 		await expect(page.getByText('isCommon: true')).toBeVisible();
@@ -99,7 +99,7 @@ test.describe('@minimal Freemium System', () => {
 		await login(page, user.email, 'DemoPass123!');
 		await openAccount(page);
 		
-		const roleDisplay = page.locator('testid=account.role');
+		const roleDisplay = page.getByTestId('account.role');
 		await expect(roleDisplay).toContainText('👤 Common');
 		
 		page.on('dialog', async (dialog) => {
@@ -123,7 +123,7 @@ test.describe('@minimal Freemium System', () => {
 		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'})).not.toBeVisible({timeout: 5_000});
 		await expect(page.getByText('✨ Premium Upgrade')).not.toBeVisible({timeout: 5_000});
 		
-		const roleDisplay = page.locator('testid=account.role');
+		const roleDisplay = page.getByTestId('account.role');
 		await expect(roleDisplay).toContainText('👑 Premium');
 	});
 	

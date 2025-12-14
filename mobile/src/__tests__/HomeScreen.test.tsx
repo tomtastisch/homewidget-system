@@ -52,7 +52,7 @@ describe('HomeScreen', () => {
 		expect(getByText('Demonstrations‑Ansicht – Inhalte sind Beispiele')).toBeTruthy(); // ← Korrigierter Text
 		
 		await waitFor(() => {
-			expect(getByText('-20% auf Alles')).toBeTruthy(); // banner title
+			expect(getByText('-20% auf alles')).toBeTruthy(); // banner title
 			expect(getByText('Shop')).toBeTruthy(); // banner CTA
 			expect(getByText('Premium Card')).toBeTruthy(); // card title
 			expect(getByText('Jetzt beantragen')).toBeTruthy(); // card CTA

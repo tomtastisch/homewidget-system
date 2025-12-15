@@ -30,7 +30,7 @@ class ProvidersAggregator:
                 LOG.info("provider_ok", extra={"provider": p.name, "count": len(items)})
                 all_items.extend(items)
             except Exception as exc:  # noqa: BLE001
-                LOG.warning("provider_failed", extra={"provider": getattr(p, "name", "unknown"), "error": str(exc)})
+                LOG.warning("provider_failed", extra={"provider": p.name, "error": str(exc)})
 
         # Deduplizieren nach ID (letzter gewinnt)
         by_id: dict[int, WidgetContractV1] = {}

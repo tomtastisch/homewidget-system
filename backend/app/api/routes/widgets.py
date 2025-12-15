@@ -11,6 +11,7 @@ from ...fixtures.v1 import get_detail
 from ...models.widget import Widget
 from ...schemas.v1.widget_contracts import WidgetDetailV1
 from ...schemas.widget import WidgetCreate, WidgetRead
+from ...services import demo_feed_real_source as real_src
 
 router = APIRouter(prefix="/api/widgets", tags=["widgets"])
 LOG = get_logger("api.widgets")
@@ -60,8 +61,27 @@ def get_widget_detail_v1(
         widget_id: int,
         _user=Depends(get_current_user),
 ):
-    """Liefert den Detail‑Container für ein Widget im v1‑Contract (statisch über Fixtures)."""
+    """Liefert den Detail‑Container für ein Widget im v1‑Contract.
+
+    Policy:
+    - Wenn Fixture-Detail existiert: direkt zurückgeben (deterministisch verfügbar)
+    - Sonst: Real-Detail über Resolver laden; wenn vorhanden -> zurückgeben
+    - Sonst: 404
+    """
+    # 1) Fixtures bevorzugen (damit Demo deterministisch funktioniert)
     detail = get_detail(widget_id)
-    if not detail:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
-    return detail
+    if detail:
+        return detail
+
+    # 2) Real-Detail versuchen
+    try:
+        real_detail = real_src.load_real_demo_widget_detail_v1(widget_id)
+    except Exception as exc:  # noqa: BLE001
+        LOG.warning("detail_v1_real_exception", extra={"widget_id": widget_id, "error": str(exc)})
+        real_detail = None
+
+    if real_detail:
+        return real_detail
+
+    # 3) Nichts gefunden
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")

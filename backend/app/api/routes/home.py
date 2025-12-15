@@ -11,6 +11,7 @@ from ...core.logging_config import get_logger
 from ...fixtures.v1 import get_feed_page
 from ...schemas.v1.widget_contracts import FeedPageV1
 from ...schemas.widget import WidgetRead
+from ...services import demo_feed_real_source as real_src
 from ...services.home_feed_service import HomeFeedService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
 
@@ -64,5 +65,17 @@ def get_feed_v1(
         LOG.warning("feed_v1_rate_limited")
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests")
 
+    # Real‑Quelle versuchen, bei Empty/Fehler -> deterministischer Fixture‑Fallback
+    try:
+        real_page = real_src.load_real_demo_feed_v1(cursor=cursor, limit=limit)
+        if real_page and real_page.items:
+            LOG.info("feed_v1_real_delivered", extra={"count": len(real_page.items)})
+            return real_page
+        LOG.info("feed_v1_real_empty_fallback_to_fixtures")
+    except Exception as exc:  # noqa: BLE001
+        LOG.warning("feed_v1_real_exception_fallback", extra={"error": str(exc)})
+
     # Deterministische Fixtures liefern
-    return get_feed_page(cursor=cursor, limit=limit)
+    page = get_feed_page(cursor=cursor, limit=limit)
+    LOG.info("feed_v1_fixture_delivered", extra={"count": len(page.items)})
+    return page

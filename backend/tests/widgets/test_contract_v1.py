@@ -24,7 +24,7 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
     assert login_resp.status_code == 200
     access = login_resp.json()["access_token"]
 
-    # Act: Erste Seite limit=2 (Fixtures)
+    # Act: Erste Seite limit=2 (Aggregator-basierter Feed)
     page1 = client.get(
         "/api/home/feed_v1",
         params={"limit": 2, "cursor": 0},
@@ -36,9 +36,10 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
     assert len(data1["items"]) == 2
     assert data1["next_cursor"] == 2
 
-    # Reihenfolge ist deterministisch: 1003, 1002, 1001
+    # Reihenfolge ist deterministisch nach (priority desc, created_at desc, id desc)
     ids_page1 = [it["id"] for it in data1["items"]]
-    assert ids_page1 == [1003, 1002]
+    # Demo-Provider liefern deterministisch: 2002, 2001 auf Seite 1
+    assert ids_page1 == [2002, 2001]
 
     # Act: Zweite Seite (cursor=2)
     page2 = client.get(
@@ -48,13 +49,13 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
     )
     assert page2.status_code == 200, page2.text
     data2 = page2.json()
-    assert len(data2["items"]) == 1
+    assert len(data2["items"]) >= 1
     assert data2["next_cursor"] is None
 
-    # Vollständige ID-Menge
+    # Vollständige ID-Menge aus Demo-Providern (4 Elemente)
     ids_page2 = [it["id"] for it in data2["items"]]
     all_ids = ids_page1 + ids_page2
-    assert all_ids == [1003, 1002, 1001]
+    assert all_ids == [2002, 2001, 2102, 2101]
 
     # Determinismus: wiederholter Aufruf liefert gleiche Reihenfolge
     repeat = client.get(
@@ -63,7 +64,7 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
         headers=auth_utils.auth_headers(access),
     )
     assert repeat.status_code == 200
-    assert [it["id"] for it in repeat.json()["items"]] == [1003, 1002, 1001]
+    assert [it["id"] for it in repeat.json()["items"]] == [2002, 2001, 2102]
 
 
 def test_demo_widget_detail_v1_structure_unauth(client: TestClient) -> None:

@@ -129,7 +129,7 @@ def test_ttl_excludes_expired(db_session: Session) -> None:
         res_before = service.get_user_widgets(user, now=frozen())
         assert {w.name for w in res_before} == {"Fresh", "Unlimited"}
 
-    # Zeit genau zum Ablauf (== abgelaufen -> nicht mehr enthalten)
+    # Zeit genau zum Ablauf (created_at + ttl == now => bereits abgelaufen, nicht mehr enthalten)
     with freeze_time(t.future(seconds=3600)) as frozen:
         res_after = service.get_user_widgets(user, now=frozen())
         assert {w.name for w in res_after} == {"Unlimited"}

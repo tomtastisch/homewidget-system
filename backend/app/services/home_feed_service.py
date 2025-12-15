@@ -27,8 +27,7 @@ class HomeFeedService:
     def __init__(self, session: Session):
         self.session = session
 
-    def get_user_widgets(self, user: User, *, now: datetime | None = None, context: str | None = None) -> Sequence[
-        Widget]:
+    def get_user_widgets(self, user: User, *, now: datetime | None = None, context: str | None = None) -> Sequence[Widget]:
         """
         Liefert Widgets für einen Benutzer gemäß Selektion/Sortierung.
 

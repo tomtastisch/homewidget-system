@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 import pytest
 from freezegun import freeze_time
@@ -9,11 +9,7 @@ from sqlmodel import Session
 from app.models.user import User, UserRole
 from app.models.widget import Widget
 from app.services.home_feed_service import HomeFeedService
-
-
-def _ts(y: int, m: int, d: int, h: int = 0, mi: int = 0, s: int = 0) -> datetime:
-    return datetime(y, m, d, h, mi, s, tzinfo=UTC)
-
+from tests.utils.time import TimeUtil
 
 pytestmark = pytest.mark.unit
 
@@ -25,19 +21,21 @@ def test_enabled_false_is_excluded(db_session: Session) -> None:
     db_session.commit()
     db_session.refresh(user)
 
+    assert user.id is not None
+    t = TimeUtil()
     w1 = Widget(
-        owner_id=user.id,  # type: ignore[arg-type]
+        owner_id=user.id,
         name="A",
         enabled=True,
         priority=1,
-        created_at=_ts(2025, 1, 1),
+        created_at=t.now(),
     )
     w2 = Widget(
-        owner_id=user.id,  # type: ignore[arg-type]
+        owner_id=user.id,
         name="B",
         enabled=False,
         priority=10,
-        created_at=_ts(2025, 1, 2),
+        created_at=t.future(days=1),
     )
     db_session.add(w1)
     db_session.add(w2)
@@ -59,25 +57,27 @@ def test_visibility_rules_match_role(db_session: Session) -> None:
     db_session.commit()
     db_session.refresh(user)
 
+    assert user.id is not None
+    t = TimeUtil()
     w_all = Widget(
-        owner_id=user.id,  # type: ignore[arg-type]
+        owner_id=user.id,
         name="All",
         visibility_rules=[],  # sichtbar für alle
-        created_at=_ts(2025, 1, 1),
+        created_at=t.now(),
         priority=1,
     )
     w_premium = Widget(
-        owner_id=user.id,  # type: ignore[arg-type]
+        owner_id=user.id,
         name="PremOnly",
         visibility_rules=["premium"],
-        created_at=_ts(2025, 1, 2),
+        created_at=t.future(days=1),
         priority=2,
     )
     w_common = Widget(
-        owner_id=user.id,  # type: ignore[arg-type]
+        owner_id=user.id,
         name="CommonOnly",
         visibility_rules=["common"],
-        created_at=_ts(2025, 1, 3),
+        created_at=t.future(days=2),
         priority=3,
     )
     db_session.add(w_all)
@@ -102,19 +102,20 @@ def test_ttl_excludes_expired(db_session: Session) -> None:
     db_session.commit()
     db_session.refresh(user)
 
-    base = _ts(2025, 1, 1, 0, 0, 0)
+    assert user.id is not None
+    t = TimeUtil()
     w_fresh = Widget(
-        owner_id=user.id,  # type: ignore[arg-type]
+        owner_id=user.id,
         name="Fresh",
         freshness_ttl=3600,  # 1h
-        created_at=base,
+        created_at=t.now(),
         priority=1,
     )
     w_unlimited = Widget(
-        owner_id=user.id,  # type: ignore[arg-type]
+        owner_id=user.id,
         name="Unlimited",
         freshness_ttl=0,  # kein Ablauf
-        created_at=base - timedelta(days=5),
+        created_at=t.past(days=5),
         priority=1,
     )
     db_session.add(w_fresh)
@@ -123,13 +124,13 @@ def test_ttl_excludes_expired(db_session: Session) -> None:
 
     service = HomeFeedService(db_session)
 
-    # Zeit genau vor Ablauf
-    with freeze_time(_ts(2025, 1, 1, 0, 59, 59)) as frozen:
+    # Zeit genau vor Ablauf (3599s nach created_at)
+    with freeze_time(t.future(seconds=3599)) as frozen:
         res_before = service.get_user_widgets(user, now=frozen())
         assert {w.name for w in res_before} == {"Fresh", "Unlimited"}
 
     # Zeit genau zum Ablauf (== abgelaufen -> nicht mehr enthalten)
-    with freeze_time(_ts(2025, 1, 1, 1, 0, 0)) as frozen:
+    with freeze_time(t.future(seconds=3600)) as frozen:
         res_after = service.get_user_widgets(user, now=frozen())
         assert {w.name for w in res_after} == {"Unlimited"}
 
@@ -141,11 +142,14 @@ def test_sorting_priority_created_id(db_session: Session) -> None:
     db_session.commit()
     db_session.refresh(user)
 
+    assert user.id is not None
+    t = TimeUtil()
+    base = t.now()
     # Drei Widgets mit unterschiedlicher priority/created_at und gleichen Sichtbarkeiten
-    w1 = Widget(owner_id=user.id, name="W1", priority=10, created_at=_ts(2024, 1, 1))  # type: ignore[arg-type]
-    w2 = Widget(owner_id=user.id, name="W2", priority=20, created_at=_ts(2024, 1, 2))  # type: ignore[arg-type]
+    w1 = Widget(owner_id=user.id, name="W1", priority=10, created_at=base)
+    w2 = Widget(owner_id=user.id, name="W2", priority=20, created_at=base + timedelta(days=1))
     # W3 gleiche priority wie W2 aber älteres created_at -> nach W2
-    w3 = Widget(owner_id=user.id, name="W3", priority=20, created_at=_ts(2024, 1, 1, 12))  # type: ignore[arg-type]
+    w3 = Widget(owner_id=user.id, name="W3", priority=20, created_at=base + timedelta(hours=12))
 
     db_session.add(w1)
     db_session.add(w2)
@@ -153,11 +157,11 @@ def test_sorting_priority_created_id(db_session: Session) -> None:
     db_session.commit()
 
     # Erzeuge ID‑Tiebreaker: w4/w5 gleiche priority und created_at, ID entscheidet desc
-    same_created = _ts(2024, 1, 3, 8)
-    w4 = Widget(owner_id=user.id, name="W4", priority=5, created_at=same_created)  # type: ignore[arg-type]
+    same_created = base + timedelta(days=2, hours=8)
+    w4 = Widget(owner_id=user.id, name="W4", priority=5, created_at=same_created)
     db_session.add(w4)
     db_session.commit()
-    w5 = Widget(owner_id=user.id, name="W5", priority=5, created_at=same_created)  # type: ignore[arg-type]
+    w5 = Widget(owner_id=user.id, name="W5", priority=5, created_at=same_created)
     db_session.add(w5)
     db_session.commit()
 
@@ -180,18 +184,17 @@ def test_combined_filters_and_sorting_is_deterministic(db_session: Session) -> N
     db_session.refresh(user)
 
     # Sichtbar für premium, nicht sichtbar für common; ein disabled; ein abgelaufenes
-    base = _ts(2025, 2, 1, 9)
+    assert user.id is not None
+    t = TimeUtil()
+    base = t.now()
     ws = [
         Widget(owner_id=user.id, name="ok1", priority=1, visibility_rules=["premium"], created_at=base),
-        # type: ignore[arg-type]
         Widget(owner_id=user.id, name="ok2", priority=3, visibility_rules=[], created_at=base + timedelta(minutes=1)),
-        # type: ignore[arg-type]
         Widget(owner_id=user.id, name="no_common", priority=5, visibility_rules=["common"],
-               created_at=base + timedelta(minutes=2)),  # type: ignore[arg-type]
+               created_at=base + timedelta(minutes=2)),
         Widget(owner_id=user.id, name="disabled", enabled=False, priority=100, visibility_rules=["premium"],
-               created_at=base + timedelta(minutes=3)),  # type: ignore[arg-type]
+               created_at=base + timedelta(minutes=3)),
         Widget(owner_id=user.id, name="expired", freshness_ttl=60, created_at=base - timedelta(hours=1)),
-        # type: ignore[arg-type]
     ]
     for w in ws:
         db_session.add(w)

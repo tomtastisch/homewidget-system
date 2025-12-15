@@ -113,6 +113,27 @@ def test_auth_detail_v1_requires_ownership_and_no_fixtures(client: TestClient) -
     assert resp_real_none.status_code == 404
 
 
+def test_demo_detail_v1_does_not_expose_real_widgets(client: TestClient) -> None:
+    """
+    Stelle sicher, dass per POST erstellte Widgets NICHT über den unauth Demo-Detail-Endpunkt
+    abrufbar sind (Fixture-Isolation). Nur die reservierten Fixture-IDs sind dort erlaubt,
+    ansonsten ggf. eine separate "Real"-Quelle – aber keine DB‑Widgets.
+    """
+    # Arrange: User registrieren und ein reales Widget erzeugen
+    login_resp = auth_utils.register_and_login(client, "isolation@example.com", "Secret1234!")
+    assert login_resp.status_code == 200
+    access = login_resp.json()["access_token"]
+
+    created = _create_widget(client, access, name="Not For Demo")
+    widget_id = created["id"]
+
+    # Act: Unauth Demo-Detail mit dieser (realen) ID aufrufen
+    resp = client.get(f"/api/home/demo/widgets/{widget_id}/detail_v1")
+
+    # Assert: 404 – keine Vermischung mit dynamischen Daten
+    assert resp.status_code == 404, resp.text
+
+
 def test_auth_detail_v1_owned_widget_can_return_real_when_available(client: TestClient, monkeypatch) -> None:
     # Arrange: User + Widget
     login_resp = auth_utils.register_and_login(client, "ownreal@example.com", "Secret1234!")

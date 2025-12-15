@@ -12,7 +12,7 @@ Automatisierte E2E-Tests für das Frontend (Expo-Web) gegen das Backend (FastAPI
 
 ```bash
 cd /Users/tomwerner/IdeaProjects/homewidget-system
-bash tools/dev/start_local.sh
+bash tools/dev/orchestration/start.sh
 
 # In anderem Terminal:
 cd tests/e2e/browseri/playwright

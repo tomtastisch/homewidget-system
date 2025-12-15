@@ -9,7 +9,7 @@ Willkommen zur Dokumentation des **Homewidget Systems**, ein PoC für ein Home-W
 **Du brauchst nur einen Command:**
 
 ```bash
-bash tools/dev/start_local.sh
+bash tools/dev/orchestration/start.sh
 ```
 
 Danach:
@@ -27,7 +27,7 @@ Danach:
 ### 🏗️ **Architektur & Konzepte**
 
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** – Systemarchitektur, Schichten, Datenfluss
-- **[CONCEPTS.md](core/CONCEPTS.md)** – Kernkonzepte (Auth, Widgets, Freemium, Cache)
+- **[CONCEPTS.md](CONCEPTS.md)** – Kernkonzepte (Auth, Widgets, Freemium, Cache)
 
 ### 👨‍💻 **Für Entwickler**
 

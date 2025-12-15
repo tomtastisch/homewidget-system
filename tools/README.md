@@ -33,12 +33,13 @@ tools/
     │
     ├── orchestration/                 # Orchestrierungs- und Start-Scripts
     │   ├── README.md                  # Orchestrierungs-Dokumentation
-    │   ├── start.sh                   # Robuster System-Start
+    │   ├── start.sh                   # Robuster System-Start (einziger Start-Einstieg)
     │   ├── run_steps.sh               # Lokaler Pipeline-Runner
-    │   └── lib/
-    │       ├── logging.sh             # Logging-Helper
-    │       ├── checks.sh              # Voraussetzungs-Checks
-    │       └── services.sh            # Service-Management
+    │
+    ├── lib/                           # Shell-Helper-Libraries (geteilt)
+    │   ├── logging.sh                 # Logging-Helper
+    │   ├── checks.sh                  # Voraussetzungs-Checks
+    │   └── services.sh                # Service-Management
     │
     ├── reports/                       # Report-Generierung
     │   ├── README.md                  # Reports-Dokumentation
@@ -46,9 +47,8 @@ tools/
     │   ├── quarantine_report.sh       # Quarantäne-Bericht
     │   └── ui_release_todo_mapping.sh # Release-Planning
     │
-    └── [Quick-Start-Scripts]          # Einfache Start-Scripts
-        ├── start_local.sh             # Quick-Start (Backend + Frontend)
-        ├── start_robust.sh            # Robuster Start (mit Fehlerbehandlung)
+    └── [Quick-Start-Scripts]
+        ├── orchestration/start.sh     # Backend + Frontend starten (einziger Start-Einstieg)
         ├── run_backend.sh             # Nur Backend starten
         ├── run_mobile.sh              # Nur Frontend starten
         ├── setup_dev_env.sh           # Entwicklungsumgebung aufsetzen
@@ -79,8 +79,6 @@ tools/
 | **pipeline/ci_steps.sh**       | Alle CI-Schritte definiert    | `bash ci_steps.sh step_backend_setup_env`       |
 | **orchestration/start.sh**     | Robuster System-Start         | `bash tools/dev/orchestration/start.sh`         |
 | **orchestration/run_steps.sh** | Lokaler Pipeline-Runner       | `bash tools/dev/orchestration/run_steps.sh all` |
-| **dev/start_local.sh**         | Quick-Start                   | `bash tools/dev/start_local.sh`                 |
-| **dev/start_robust.sh**        | Start mit Fehlerbehandlung    | `bash tools/dev/start_robust.sh`                |
 | **dev/run_backend.sh**         | Nur Backend                   | `bash tools/dev/run_backend.sh`                 |
 | **dev/run_mobile.sh**          | Nur Frontend                  | `bash tools/dev/run_mobile.sh`                  |
 | **dev/setup_dev_env.sh**       | Environment aufsetzen         | `bash tools/dev/setup_dev_env.sh`               |
@@ -105,8 +103,6 @@ tools/
 bash tools/dev/setup_dev_env.sh
 
 # Start
-bash tools/dev/start_local.sh
-# oder
 bash tools/dev/orchestration/start.sh
 
 # Tests
@@ -167,8 +163,9 @@ bash ../pipeline/ci_steps.sh pipeline_backend
 - [x] `tools/scripts/` existiert mit CLI-Dispatcher
 - [x] `tools/dev/pipeline/` enthält nur ci_lib.sh + ci_steps.sh
 - [x] `tools/dev/orchestration/` enthält start.sh + run_steps.sh
+- [x] `tools/dev/lib/` enthält logging.sh, checks.sh, services.sh
 - [x] `tools/dev/reports/` existiert mit Report-Scripts
-- [x] Alte Dateien gelöscht (helpers.py, pipeline_py_helpers.py)
+- [x] Alte Dateien gelöscht (helpers.py, pipeline_py_helpers.py, start_local.sh, start_robust.sh, dev/start.sh)
 - [x] Alle Ordner haben README.md
 - [x] PMCD_MODULE aktualisiert auf `tools.scripts.e2e_orchestration`
 

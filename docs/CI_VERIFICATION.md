@@ -85,9 +85,9 @@ backend_quality → step_backend_quality              ✅
 **Geprüft auf alte Verweise:**
 
 ```
-❌ start_local.sh          – NICHT VORHANDEN in ci.yml
-❌ start_robust.sh         – NICHT VORHANDEN in ci.yml
-❌ docs/dev/              – NICHT VORHANDEN in ci.yml
+❌ start_local.sh          – entfernt, kein CI-Bezug
+❌ start_robust.sh         – entfernt, kein CI-Bezug
+✅ orchestration/start.sh  – nur lokal relevant, kein CI-Bezug
 ```
 
 **Status:** Keine verwaisten Referenzen ✅

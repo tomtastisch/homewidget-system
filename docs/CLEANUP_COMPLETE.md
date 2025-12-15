@@ -50,20 +50,13 @@ docs/e2e/
 
 ```
 tools/dev/
-├── start.sh               # ✅ EINZIGER Script (optimiert)
-│   ├── Sauber strukturiert (240 Zeilen, gut lesbar)
-│   ├── Prüft Voraussetzungen VOR Start
-│   ├── Health-Checks nach Start
-│   ├── Sauberes Cleanup (Ctrl+C)
-│   ├── Klare Fehlermeldungen
-│   └── Logs in /tmp/homewidget-*.log
-│
-└── .archive/              # Archiv für alte Scripte
-    ├── start_robust.sh    # (Logik in start.sh integriert)
-    └── start_local.sh     # (Logik in start.sh integriert)
+├── orchestration/
+│   ├── start.sh           # ✅ EINZIGER Start-Script (robust)
+│   └── run_steps.sh       # Lokaler Pipeline-Runner
+└── lib/                   # Gemeinsame Shell-Libraries (logging.sh, checks.sh, services.sh)
 ```
 
-**Features des neuen Scripts:**
+**Features des Start-Scripts:**
 
 - ✅ Prüft Python 3, npm, venv, node_modules
 - ✅ Prüft Port-Verfügbarkeit BEVOR Start
@@ -82,20 +75,14 @@ tools/dev/
 ### Nur noch EINE Start-Zeile
 
 ```bash
-# Statt:
-# bash tools/dev/start_robust.sh      (komplexe Version)
-# bash tools/dev/start_local.sh       (schnelle Version)
-# oder falsche Reihenfolge ausprobieren
-
-# Jetzt: Einzig richtig
-bash tools/dev/start.sh
+# Statt verschiedener Varianten jetzt:
+bash tools/dev/orchestration/start.sh
 ```
 
 ### Mit Custom Ports?
 
 ```bash
-# Nur noch:
-BACKEND_PORT=8001 FRONTEND_PORT=19007 bash tools/dev/start.sh
+BACKEND_PORT=8001 FRONTEND_PORT=19007 bash tools/dev/orchestration/start.sh
 ```
 
 ### Troubleshooting?
@@ -143,7 +130,7 @@ Falls du wieder ähnliche Meldungen kriegst:
 
 **Wichtig kommunizieren:**
 
-- Neuer Start-Script: `bash tools/dev/start.sh` (nicht mehr `start_robust` oder `start_local`)
+- Neuer Start-Script: `bash tools/dev/orchestration/start.sh` (nicht mehr `start_robust` oder `start_local`)
 - E2E-Docs: Nur noch `E2E-GUIDE.md` (Tests schreiben) und `E2E-MANAGEMENT.md` (Quarantäne)
 - Alte Scripts in `.archive/` für historische Nachverfolgung
 

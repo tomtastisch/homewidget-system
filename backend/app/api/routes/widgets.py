@@ -7,8 +7,9 @@ from sqlmodel import Session, select
 from ...api.deps import get_current_user
 from ...core.database import get_session
 from ...core.logging_config import get_logger
+from ...fixtures.v1 import get_detail
 from ...models.widget import Widget
-from ...schemas.v1.widget_contracts import ContentBlockV1, ContentSpecV1, WidgetDetailV1
+from ...schemas.v1.widget_contracts import WidgetDetailV1
 from ...schemas.widget import WidgetCreate, WidgetRead
 
 router = APIRouter(prefix="/api/widgets", tags=["widgets"])
@@ -57,43 +58,10 @@ def delete_widget(
 @router.get("/{widget_id}/detail_v1", response_model=WidgetDetailV1)
 def get_widget_detail_v1(
         widget_id: int,
-        session: Session = Depends(get_session),
-        user=Depends(get_current_user),
+        _user=Depends(get_current_user),
 ):
-    """Liefert den Detail‑Container für ein Widget im v1‑Contract (read‑only)."""
-    widget = session.get(Widget, widget_id)
-    if not widget or widget.owner_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BackendWidget not found")
-
-    container = {
-        "title": widget.title or widget.name,
-        "description": widget.description or "",
-        "image_url": widget.image_url or None,
-    }
-
-    # ContentSpec: einfache blocks‑Struktur, basierend auf vorhandenen Feldern
-    blocks: list[ContentBlockV1] = []
-    # Primärer Banner/Text‑Block
-    blocks.append(
-        ContentBlockV1(
-            type="banner",
-            props={
-                "title": widget.title or widget.name,
-                "text": widget.description or widget.name,
-                "cta_label": widget.cta_label or None,
-                "cta_target": widget.cta_target or None,
-            },
-        )
-    )
-
-    # Optional: zusätzliche Daten aus payload aufnehmen
-    if isinstance(getattr(widget, "payload", None), dict) and widget.payload:
-        blocks.append(
-            ContentBlockV1(
-                type="payload",
-                props=widget.payload,
-            )
-        )
-
-    content_spec = ContentSpecV1(blocks=blocks)
-    return WidgetDetailV1(id=widget.id, container=container, content_spec=content_spec)
+    """Liefert den Detail‑Container für ein Widget im v1‑Contract (statisch über Fixtures)."""
+    detail = get_detail(widget_id)
+    if not detail:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
+    return detail

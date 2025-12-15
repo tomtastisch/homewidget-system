@@ -2,15 +2,14 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import text
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from ...api.deps import get_current_user
 from ...core.config import settings
 from ...core.database import get_session
 from ...core.logging_config import get_logger
-from ...models.widget import Widget
-from ...schemas.v1.widget_contracts import FeedPageV1, WidgetContractV1
+from ...fixtures.v1 import get_feed_page
+from ...schemas.v1.widget_contracts import FeedPageV1
 from ...schemas.widget import WidgetRead
 from ...services.home_feed_service import HomeFeedService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
@@ -51,7 +50,6 @@ def get_feed_v1(
         request: Request,
         cursor: int = 0,
         limit: int = 20,
-        session: Session = Depends(get_session),
         user=Depends(get_current_user),
 ):
     """
@@ -66,41 +64,5 @@ def get_feed_v1(
         LOG.warning("feed_v1_rate_limited")
         raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many requests")
 
-    # Grenzen absichern
-    if limit < 1:
-        limit = 1
-    if limit > 100:
-        limit = 100
-    if cursor < 0:
-        cursor = 0
-
-    stmt = (
-        select(Widget)
-        .where(Widget.owner_id == user.id)
-        .order_by(
-            text("priority DESC"),
-            text("created_at DESC"),
-            text("id DESC"),
-        )
-        .offset(cursor)
-        .limit(limit + 1)
-    )
-    rows = session.exec(stmt).all()
-
-    has_more = len(rows) > limit
-    items = rows[:limit]
-    next_cursor = cursor + limit if has_more else None
-
-    mapped: list[WidgetContractV1] = [
-        WidgetContractV1.model_validate(
-            {
-                "id": w.id,
-                "name": w.name,
-                "priority": w.priority,
-                "created_at": w.created_at,
-            }
-        )
-        for w in items
-    ]
-
-    return FeedPageV1(items=mapped, next_cursor=next_cursor)
+    # Deterministische Fixtures liefern
+    return get_feed_page(cursor=cursor, limit=limit)

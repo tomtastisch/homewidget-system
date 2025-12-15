@@ -34,4 +34,7 @@ def test_feed_v1_aggregator_fail_open_one_provider_raises(client: TestClient, mo
 
     # Assert: trotzdem nicht leer (MobilePlans liefert)
     ids = [it["id"] for it in data["items"]]
-    assert ids and set(ids).issubset({2001, 2002})
+    assert set(ids) == {2001, 2002}, (
+        "Die gelieferten IDs stimmen nicht exakt mit den erwarteten {2001, 2002} überein: "
+        f"Gefunden: {ids}"
+    )

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -104,6 +106,6 @@ def test_demo_detail_v1_real_for_out_of_range_or_404(client: TestClient, monkeyp
 from tests.utils.time import TimeUtil
 
 
-def items_ts(days: int):
+def items_ts(days: int) -> datetime:
     t = TimeUtil()
     return t.future(days=days)

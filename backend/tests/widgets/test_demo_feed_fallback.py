@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -134,6 +136,6 @@ def test_detail_v1_fixture_case_is_valid(client: TestClient, monkeypatch) -> Non
 from tests.utils.time import TimeUtil
 
 
-def items_ts(days: int):
+def items_ts(days: int) -> datetime:
     t = TimeUtil()
     return t.future(days=days)

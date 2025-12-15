@@ -16,20 +16,20 @@ Dann öffne: **http://localhost:19006**
 
 ## 📚 Dokumentation
 
-| Dokument                                             | Für                        | Zeit   |
-|------------------------------------------------------|----------------------------|--------|
-| **[docs/quickstart.md](docs/quickstart.md)** ⭐       | Anfänger                   | 2 Min  |
-| **[docs/README.md](docs/README.md)**                 | Vollständiger Guide        | 30 Min |
-| **[docs/dev/cheatsheet.sh](docs/dev/cheatsheet.sh)** | Commands nachschlagen      | 1 Min  |
-| **[docs/dev/](docs/dev/)**                           | Entwicklung & Richtlinien  | varies |
-| **[docs/e2e/](docs/e2e/)**                           | E2E Testing mit Playwright | varies |
-| **[docs/backend/](docs/backend/)**                   | Backend-spezifisch         | varies |
+| Dokument                                                             | Für                        | Zeit   |
+|----------------------------------------------------------------------|----------------------------|--------|
+| **[docs/QUICKSTART.md](docs/QUICKSTART.md)** ⭐                       | Anfänger                   | 2 Min  |
+| **[docs/README.md](docs/README.md)**                                 | Vollständiger Guide        | 30 Min |
+| **[docs/development/CHEATSHEET.sh](docs/development/CHEATSHEET.sh)** | Commands nachschlagen      | 1 Min  |
+| **[docs/development/README.md](docs/development/README.md)**         | Entwicklung & Richtlinien  | varies |
+| **[docs/e2e/README.md](docs/e2e/README.md)**                         | E2E Testing mit Playwright | varies |
+| **[backend/README.md](backend/README.md)**                           | Backend-spezifisch         | varies |
 
 ## 🎯 Nächste Schritte
 
-1. **👉 Starte mit:** `bash tools/dev/start_robust.sh`
+1. **👉 Starte mit:** `bash tools/dev/orchestration/start.sh`
 2. Öffne Browser: http://localhost:19006
-3. Erkunde die App oder lese [docs/quickstart.md](docs/quickstart.md) für Details
+3. Erkunde die App oder lese [docs/QUICKSTART.md](docs/QUICKSTART.md) für Details
 
 ## 🔗 Wichtige Links
 
@@ -39,5 +39,5 @@ Dann öffne: **http://localhost:19006**
 
 ## 💡 Bei Fragen
 
-→ Siehe **[docs/README.md](docs/README.md#-troubleshooting)** Troubleshooting Sektion
+→ Siehe **[docs/development/TROUBLESHOOTING.md](docs/development/TROUBLESHOOTING.md)** für häufige Probleme
 

@@ -6,7 +6,7 @@
 # ==============================================================================
 
 # Alles in einem: Backend + Frontend starten
-bash tools/dev/start_local.sh
+bash tools/dev/orchestration/start.sh
 
 # Dann im Browser öffnen:
 # http://localhost:19006
@@ -17,7 +17,7 @@ bash tools/dev/start_local.sh
 
 # Playwright E2E Tests (schnelle Variante)
 # shellcheck disable=SC2164
-cd tests/e2e/browseri/playwright
+cd tests/e2e/browseri/playwright || exit 1
 npx playwright test --project=standard
 
 # Playwright E2E Tests mit UI (visuell debuggen) ⭐ BEST
@@ -27,21 +27,15 @@ npx playwright test --ui
 npx playwright test --project=standard --headed
 
 # Backend Unit Tests
-cd backend
+cd backend || exit 1
 pytest
 
 # ==============================================================================
 # 🔧 PORTS FREIGEBEN (wenn belegt)
 # ==============================================================================
 
-# Port 8000 freigeben (Backend)
-lsof -tiTCP:8000 | xargs kill -9 2>/dev/null || true
-
-# Port 19006 freigeben (Frontend)
-lsof -tiTCP:19006 | xargs kill -9 2>/dev/null || true
-
-# Alle Python-Prozesse beenden
-killall python3 2>/dev/null || true
+# Alles sicher stoppen (Backend & Frontend) und Ports freigeben
+bash tools/dev/orchestration/finalize_all.sh
 
 # ==============================================================================
 # 📊 STATUS PRÜFEN
@@ -65,13 +59,13 @@ lsof -i :19006
 bash tools/dev/setup_dev_env.sh
 
 # Backend venv neu initialisieren
-cd backend
+cd backend || exit 1
 python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
 # Frontend Dependencies neu installieren
-cd mobile
+cd mobile || exit 1
 rm -rf node_modules package-lock.json
 npm install
 
@@ -80,12 +74,12 @@ npm install
 # ==============================================================================
 
 # Backend allein
-cd backend
+cd backend || exit 1
 source .venv/bin/activate
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 # Frontend allein
-cd mobile
+cd mobile || exit 1
 npm run web  # oder: npm run web -- --port 19006
 
 # ==============================================================================
@@ -93,12 +87,12 @@ npm run web  # oder: npm run web -- --port 19006
 # ==============================================================================
 
 # Backend-Logs mit stderr
-cd backend
+cd backend || exit 1
 source .venv/bin/activate
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --log-level debug
 
 # Tests im UI-Debugger
-cd tests/e2e/browseri/playwright
+cd tests/e2e/browseri/playwright || exit 1
 npx playwright test --ui
 
 # Tests mit Trace-Recording
@@ -113,11 +107,9 @@ npx playwright test specs/auth.basic.spec.ts --grep "AUTH-01" --headed --debug
 # ==============================================================================
 
 # Kompletter Fresh Start
-killall python3 2>/dev/null || true
-lsof -tiTCP:8000 | xargs kill -9 2>/dev/null || true
-lsof -tiTCP:19006 | xargs kill -9 2>/dev/null || true
+bash tools/dev/orchestration/finalize_all.sh || true
 bash tools/dev/setup_dev_env.sh
-bash tools/dev/start_local.sh
+bash tools/dev/orchestration/start.sh
 
 # ==============================================================================
 # 📚 WICHTIGE DATEIEN

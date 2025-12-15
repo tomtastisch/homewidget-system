@@ -24,6 +24,26 @@ BACKEND_PORT=8001 FRONTEND_PORT=19007 bash tools/dev/orchestration/start.sh
 - Sauberes Cleanup bei Beendigung
 - Detaillierte Logging-Ausgaben
 
+### `finalize_all.sh`
+
+Beendet zuverlässig alle laufenden Projekt‑Dev‑Server (Backend/uvicorn, Frontend/Expo), unabhängig von Ports oder
+Mehrfachinstanzen.
+
+```bash
+# Standard: sanftes Beenden (SIGTERM), danach ggf. SIGKILL
+bash tools/dev/orchestration/finalize_all.sh
+
+# Optionen
+bash tools/dev/orchestration/finalize_all.sh --dry-run       # nur anzeigen
+bash tools/dev/orchestration/finalize_all.sh --timeout=15    # Wartezeit in Sekunden
+```
+
+**Eigenschaften:**
+
+- Erkennt Prozesse über offene TCP‑Listener und prüft, ob Projektdateien geöffnet sind (sicher gegen Fremdprozesse)
+- Nutzt ggf. PID‑Files (`/tmp/backend.pid`, `/tmp/frontend.pid`)
+- Idempotent (mehrfach ausführbar)
+
 ### `run_steps.sh`
 
 Lokaler Pipeline-Runner für die Ausführung von CI-Schritten ohne GitHub Actions.
@@ -76,12 +96,13 @@ USE_DOCKER_MOBILE=0          # Set to 1 für Container-Ausführung
 ```
 tools/dev/orchestration/
 ├── README.md               # Dieses Dokument
-├── start.sh               # Robuster System-Start
-├── run_steps.sh           # CI-Pipeline-Runner
-└── lib/                   # Shell-Libraries
-    ├── logging.sh         # Logging-Funktionen
-    ├── checks.sh          # Voraussetzungs-Checks
-    └── services.sh        # Service-Management
+├── start.sh                # Robuster System-Start
+└── run_steps.sh            # CI-Pipeline-Runner
+
+tools/dev/lib/              # Shell-Libraries (geteilt)
+├── logging.sh              # Logging-Funktionen
+├── checks.sh               # Voraussetzungs-Checks
+└── services.sh             # Service-Management
 ```
 
 ## Debugging

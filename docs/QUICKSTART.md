@@ -3,7 +3,7 @@
 ## Die einzige Command, die du brauchst:
 
 ```bash
-bash tools/dev/start.sh
+bash tools/dev/orchestration/start.sh
 ```
 
 Fertig! Das startet:
@@ -11,6 +11,12 @@ Fertig! Das startet:
 - ✅ Backend (Port 8000) mit Health-Checks
 - ✅ Frontend (Port 19006) mit Auto-Reload
 - ✅ Logs in `/tmp/homewidget-*.log`
+
+### Beenden
+
+```bash
+bash tools/dev/orchestration/finalize_all.sh
+```
 
 ## Dann:
 
@@ -28,8 +34,8 @@ npx playwright test --ui        # ⭐ Visueller Debugger!
 ## Ports blockiert?
 
 ```bash
-lsof -tiTCP:8000 | xargs kill -9 2>/dev/null || true
-lsof -tiTCP:19006 | xargs kill -9 2>/dev/null || true
+# Sicher beenden & Ports freigeben
+bash tools/dev/orchestration/finalize_all.sh
 ```
 
 ## Mehr Infos:

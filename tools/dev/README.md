@@ -13,17 +13,17 @@ tools/dev/
 │   └── ci_steps.sh             # Pipeline-Schritte-Definition
 ├── orchestration/              # Orchestrierungs- und Start-Scripts
 │   ├── README.md
-│   ├── start.sh                # Robuster System-Start
+│   ├── start.sh                # Robuster System-Start (einziger Start-Einstieg)
 │   ├── run_steps.sh            # Lokaler Pipeline-Runner
-│   └── lib/                    # Shell-Helper-Libs
+│
+├── lib/                        # Shell-Helper-Libs (geteilt)
 ├── reports/                    # Report-Generierung
 │   ├── README.md
 │   ├── todo_report.sh          # TODO-Bericht generieren
 │   ├── quarantine_report.sh    # Quarantäne-Bericht generieren
 │   └── ui_release_todo_mapping.sh
 └── [Quick-Start-Scripts]
-    ├── start_local.sh          # Quick-Start (Backend + Frontend)
-    ├── start_robust.sh         # Robuster Start (mit Fehlererkennung)
+    ├── orchestration/start.sh  # Backend + Frontend starten (einziger Start-Einstieg)
     ├── run_backend.sh          # Backend allein starten
     ├── run_mobile.sh           # Mobile/Frontend allein starten
     ├── setup_dev_env.sh        # Entwicklungsumgebung aufsetzen
@@ -46,22 +46,24 @@ bash tools/dev/setup_dev_env.sh
 
 ### 2. System starten
 
-#### Quick-Start (einfach)
+#### Start (einfach & robust in einem)
 
 ```bash
-bash tools/dev/start_local.sh
-```
-
-#### Robust-Start (mit Fehlererkennung)
-
-```bash
-bash tools/dev/start_robust.sh
+bash tools/dev/orchestration/start.sh
 ```
 
 **Startet:**
 
 - Backend auf `http://127.0.0.1:8000`
 - Frontend auf `http://localhost:19006`
+
+#### Beenden (alles stoppen)
+
+```bash
+bash tools/dev/orchestration/finalize_all.sh
+```
+
+Optionen: `--dry-run`, `--timeout=15`
 
 ### 3. Tests lokal ausführen
 
@@ -101,7 +103,7 @@ bash tools/dev/orchestration/run_steps.sh tests
 
 - **`start.sh`** – Robuster System-Start
 - **`run_steps.sh`** – Lokaler Pipeline-Runner
-- **`lib/`** – Shell-Helper-Libraries
+- **`lib/`** – befindet sich in `tools/dev/lib` und wird per `source "$(dirname "$0")/../lib/*.sh"` geladen.
 
 **Mehr:** Siehe [orchestration/README.md](orchestration/README.md)
 
@@ -117,10 +119,9 @@ bash tools/dev/orchestration/run_steps.sh tests
 
 ### Quick-Start-Scripts (direkt in `tools/dev/`)
 
-**Einfache Start-Scripts für lokale Entwicklung.**
+**Schnelle Skripte für lokale Entwicklung.**
 
-- **`start_local.sh`** – Einfacher Start
-- **`start_robust.sh`** – Start mit Fehlerbehandlung
+- **`orchestration/start.sh`** – Backend + Frontend starten (einziger Start-Einstieg)
 - **`run_backend.sh`** – Nur Backend
 - **`run_mobile.sh`** – Nur Frontend
 - **`setup_dev_env.sh`** – Environment aufsetzen
@@ -128,7 +129,7 @@ bash tools/dev/orchestration/run_steps.sh tests
 
 ## Umgebungsvariablen
 
-### Für `start.sh` / `start_local.sh` / `start_robust.sh`
+### Für `orchestration/start.sh`
 
 ```bash
 BACKEND_HOST=127.0.0.1      # Default
@@ -155,7 +156,7 @@ MOBILE_IMAGE=myimage:tag
 bash tools/dev/setup_dev_env.sh
 
 # 2. System starten
-bash tools/dev/start_local.sh
+bash tools/dev/orchestration/start.sh
 
 # 3. Code ändern und testen
 # Terminal 1: Code-Editor
@@ -192,6 +193,9 @@ tail -f /tmp/frontend.log
 # Oder direkt in separaten Terminals
 bash tools/dev/run_backend.sh
 bash tools/dev/run_mobile.sh
+
+# Alles stoppen (Ports freigeben)
+bash tools/dev/orchestration/finalize_all.sh
 ```
 
 ## Integration mit anderen Tools
@@ -199,11 +203,11 @@ bash tools/dev/run_mobile.sh
 - **Python-Tools**: `tools/core/`, `tools/workflows/`, `tools/scripts/`
     - Werden via PMCD (`pmcd_run`) aus Shell-Skripten aufgerufen
 - **GitHub Actions**: `.github/workflows/` nutzt `pipeline/ci_steps.sh`
-- **Dokumentation**: `docs/dev/` mit detaillierten Guides
+- **Dokumentation**: `docs/development/` mit detaillierten Guides
 
 ## Weitere Ressourcen
 
-- **[tools-structure.md](../../docs/dev/tools-structure.md)** – Python-Tools Struktur
+- **[docs/development/README.md](../../docs/development/README.md)** – Überblick zu Entwicklungs-Dokumenten
 - **[pipeline/README.md](pipeline/README.md)** – CI/CD-Pipeline Details
 - **[orchestration/README.md](orchestration/README.md)** – Start-Scripts Details
 - **[reports/README.md](reports/README.md)** – Report-Scripts Details

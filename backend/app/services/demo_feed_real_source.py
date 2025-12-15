@@ -8,16 +8,25 @@ from __future__ import annotations
 
 from typing import Optional
 
+from ..homewidget.providers.aggregator import ProvidersAggregator
+from ..homewidget.providers.furniture_provider import FurnitureProvider
+from ..homewidget.providers.mobile_plans_provider import MobilePlansProvider
 from ..schemas.v1.widget_contracts import FeedPageV1, WidgetDetailV1
 
 
 def load_real_demo_feed_v1(cursor: int = 0, limit: int = 20) -> FeedPageV1:
     """
-    Liefert echte Demo‑Widgets (v1 Contract) mit Cursor/Limit.
+    Liefert echte Demo‑Widgets (v1 Contract) mit Cursor/Limit über den Aggregator.
 
-    Default: keine Items (leere Seite). In Tests kann diese Funktion gepatcht werden.
+    Fail‑open: Fehler einzelner Provider werden geloggt und führen nicht zu 500.
     """
-    return FeedPageV1(items=[], next_cursor=None)
+    aggregator = ProvidersAggregator(
+        providers=[
+            MobilePlansProvider(),
+            FurnitureProvider(),
+        ]
+    )
+    return aggregator.load_page(cursor=cursor, limit=limit)
 
 
 def load_real_demo_widget_detail_v1(widget_id: int) -> Optional[WidgetDetailV1]:

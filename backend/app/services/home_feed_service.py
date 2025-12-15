@@ -68,7 +68,7 @@ class HomeFeedService:
                     expires_at = w.created_at + timedelta(seconds=int(ttl_sec))
                     if expires_at <= ref_now:
                         return False
-                except Exception:
+                except (TypeError, ValueError, OverflowError):
                     # Bei unerwarteten Datumswerten defensiv: Widget ausschließen
                     return False
 

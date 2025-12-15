@@ -130,10 +130,10 @@ def test_detail_v1_fixture_case_is_valid(client: TestClient, monkeypatch) -> Non
     assert isinstance(content.get("blocks"), list) and len(content["blocks"]) >= 1
 
 
-# Hilfsfunktion: einfache deterministische Zeitstempel-bestellung per int
-from datetime import datetime, timezone, timedelta
+# Hilfsfunktion: dynamische Zeitstempel relativ zu jetzt
+from tests.utils.time import TimeUtil
 
 
-def items_ts(days: int) -> datetime:
-    base = datetime(2024, 1, 10, 8, 0, 0, tzinfo=timezone.utc)
-    return base + timedelta(days=days)
+def items_ts(days: int):
+    t = TimeUtil()
+    return t.future(days=days)

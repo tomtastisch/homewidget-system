@@ -100,10 +100,10 @@ def test_demo_detail_v1_real_for_out_of_range_or_404(client: TestClient, monkeyp
     assert resp_404.status_code == 404
 
 
-# Hilfsfunktion: deterministische Zeitstempel
-from datetime import datetime, timezone, timedelta
+# Hilfsfunktion: dynamische Zeitstempel relativ zu jetzt
+from tests.utils.time import TimeUtil
 
 
-def items_ts(days: int) -> datetime:
-    base = datetime(2024, 1, 10, 8, 0, 0, tzinfo=timezone.utc)
-    return base + timedelta(days=days)
+def items_ts(days: int):
+    t = TimeUtil()
+    return t.future(days=days)

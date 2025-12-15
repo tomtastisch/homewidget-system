@@ -11,6 +11,7 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 
 from .api.routes import auth as auth_routes
 from .api.routes import home as home_routes
+from .api.routes import home_demo as home_demo_routes
 from .api.routes import widgets as widget_routes
 from .core.config import settings
 from .core.database import init_db
@@ -59,9 +60,9 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=settings.CORS_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "OPTIONS"],
         allow_headers=["*"],
     )
 
@@ -71,6 +72,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_routes.router)
     app.include_router(widget_routes.router)
     app.include_router(home_routes.router)
+    app.include_router(home_demo_routes.router)
 
     @app.get("/health")
     def health() -> dict[str, str]:

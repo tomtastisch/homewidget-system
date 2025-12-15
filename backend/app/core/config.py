@@ -28,6 +28,17 @@ class Settings:
     FEED_RATE_LIMIT: str    = os.getenv("FEED_RATE_LIMIT", "60/60")
     REFRESH_RATE_LIMIT: str = os.getenv("REFRESH_RATE_LIMIT", "10/600")
 
+    # CORS
+    # Kommagetrennte Ursprünge, z. B. "http://localhost:19006,http://localhost:3000"
+    _CORS_ORIGINS_RAW: str = os.getenv("CORS_ORIGINS", "*")
+
+    @property
+    def CORS_ORIGINS(self) -> list[str]:
+        raw = self._CORS_ORIGINS_RAW.strip()
+        if raw == "*" or raw == "":
+            return ["*"]
+        return [o.strip() for o in raw.split(",") if o.strip()]
+
     @property
     def access_token_expire(self) -> timedelta:
         return timedelta(minutes=self.ACCESS_TOKEN_EXPIRE_MINUTES)

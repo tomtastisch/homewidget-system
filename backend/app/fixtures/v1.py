@@ -16,6 +16,15 @@ from ..schemas.v1.widget_contracts import (
     WidgetDetailV1,
 )
 
+# Reservierte ID‑Range für Demo‑Fixtures (kollisionsfrei zu Real‑IDs halten)
+FIXTURE_ID_MIN = 1001
+FIXTURE_ID_MAX = 1999
+
+
+def is_fixture_id(widget_id: int) -> bool:
+    """Prüft, ob eine ID in der reservierten Fixture-Range liegt."""
+    return FIXTURE_ID_MIN <= int(widget_id) <= FIXTURE_ID_MAX
+
 # Feste Erstellungszeitpunkte (UTC)
 _T0 = datetime(2024, 1, 1, 8, 0, 0, tzinfo=timezone.utc)
 _T1 = datetime(2024, 1, 2, 8, 0, 0, tzinfo=timezone.utc)

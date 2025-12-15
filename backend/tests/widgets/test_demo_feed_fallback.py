@@ -114,10 +114,9 @@ def test_detail_v1_fixture_case_is_valid(client: TestClient, monkeypatch) -> Non
         raising=True,
     )
 
-    # Act: Fixture‑Detail anfragen (1003)
+    # Act: Fixture‑Detail anfragen (1003) über die unauth Demo‑Route
     resp = client.get(
-        "/api/widgets/1003/detail_v1",
-        headers=auth_utils.auth_headers(token),
+        "/api/home/demo/widgets/1003/detail_v1",
     )
     assert resp.status_code == 200, resp.text
     data = resp.json()

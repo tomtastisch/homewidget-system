@@ -66,18 +66,14 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
     assert [it["id"] for it in repeat.json()["items"]] == [1003, 1002, 1001]
 
 
-def test_widget_detail_v1_structure(client: TestClient) -> None:
-    # Arrange: User
-    login_resp = auth_utils.register_and_login(client, "v1detail@example.com", "Secret1234!")
-    assert login_resp.status_code == 200
-    access = login_resp.json()["access_token"]
-
-    # Act: Fixture-IDs prüfen
+def test_demo_widget_detail_v1_structure_unauth(client: TestClient) -> None:
+    """
+    Die öffentlichen Demo-Details liegen auf der unauth Route und liefern für
+    die Fixture-IDs valide v1-Payloads.
+    """
+    # Act: Fixture-IDs prüfen (unauth)
     for wid in (1002, 1003, 1001):
-        resp = client.get(
-            f"/api/widgets/{wid}/detail_v1",
-            headers=auth_utils.auth_headers(access),
-        )
+        resp = client.get(f"/api/home/demo/widgets/{wid}/detail_v1")
         assert resp.status_code == 200, resp.text
         data = resp.json()
 
@@ -89,9 +85,62 @@ def test_widget_detail_v1_structure(client: TestClient) -> None:
         assert isinstance(data["content_spec"].get("blocks"), list)
         assert len(data["content_spec"]["blocks"]) >= 1
 
-    # Unbekannte ID -> 404
-    resp_404 = client.get(
-        "/api/widgets/9999/detail_v1",
-        headers=auth_utils.auth_headers(access),
-    )
+    # Unbekannte ID (außerhalb Fixture-Range) -> 404
+    resp_404 = client.get("/api/home/demo/widgets/9999/detail_v1")
     assert resp_404.status_code == 404
+
+
+def test_auth_detail_v1_requires_ownership_and_no_fixtures(client: TestClient) -> None:
+    # Arrange: User registrieren und einloggen
+    login_resp = auth_utils.register_and_login(client, "ownercheck@example.com", "Secret1234!")
+    assert login_resp.status_code == 200
+    access = login_resp.json()["access_token"]
+
+    # Ein eigenes Widget anlegen
+    created = _create_widget(client, access, name="My Widget")
+    widget_id = created["id"]
+
+    # Auth-Detail für Fixture-ID (nicht owned) -> 404
+    resp_fixture_on_auth = client.get(
+        "/api/widgets/1003/detail_v1", headers=auth_utils.auth_headers(access)
+    )
+    assert resp_fixture_on_auth.status_code == 404
+
+    # Auth-Detail für eigenes Widget: Real-Quelle liefert per Default None -> 404
+    resp_real_none = client.get(
+        f"/api/widgets/{widget_id}/detail_v1", headers=auth_utils.auth_headers(access)
+    )
+    assert resp_real_none.status_code == 404
+
+
+def test_auth_detail_v1_owned_widget_can_return_real_when_available(client: TestClient, monkeypatch) -> None:
+    # Arrange: User + Widget
+    login_resp = auth_utils.register_and_login(client, "ownreal@example.com", "Secret1234!")
+    assert login_resp.status_code == 200
+    access = login_resp.json()["access_token"]
+    created = _create_widget(client, access, name="Real Backed")
+    widget_id = created["id"]
+
+    # Patch Real-Quelle für genau diese ID
+    from app.schemas.v1.widget_contracts import WidgetDetailV1, ContentSpecV1, ContentBlockV1
+
+    def fake_real_detail(wid: int) -> WidgetDetailV1 | None:  # type: ignore[override]
+        if wid != widget_id:
+            return None
+        return WidgetDetailV1(
+            id=wid,
+            container={"title": "Owned", "description": "ok", "image_url": None},
+            content_spec=ContentSpecV1(blocks=[ContentBlockV1(type="text", props={"text": "hello"})]),
+        )
+
+    monkeypatch.setattr(
+        "app.services.demo_feed_real_source.load_real_demo_widget_detail_v1",
+        fake_real_detail,
+        raising=True,
+    )
+
+    # Act
+    resp = client.get(f"/api/widgets/{widget_id}/detail_v1", headers=auth_utils.auth_headers(access))
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+    assert data["id"] == widget_id

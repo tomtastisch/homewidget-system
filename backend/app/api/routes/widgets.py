@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 from ...api.deps import get_current_user
 from ...core.database import get_session
 from ...core.logging_config import get_logger
-from ...fixtures.v1 import get_detail
+from ...fixtures.v1 import is_fixture_id
 from ...models.widget import Widget
 from ...schemas.v1.widget_contracts import WidgetDetailV1
 from ...schemas.widget import WidgetCreate, WidgetRead
@@ -59,19 +59,26 @@ def delete_widget(
 @router.get("/{widget_id}/detail_v1", response_model=WidgetDetailV1)
 def get_widget_detail_v1(
         widget_id: int,
-        _user=Depends(get_current_user),
+        session: Session = Depends(get_session),
+        user=Depends(get_current_user),
 ):
-    """Liefert den Detail‑Container für ein Widget im v1‑Contract.
+    """Liefert den Detail‑Container für ein Widget im v1‑Contract (auth, owner‑only).
 
-    Policy:
-    - Wenn Fixture-Detail existiert: direkt zurückgeben (deterministisch verfügbar)
-    - Sonst: Real-Detail über Resolver laden; wenn vorhanden -> zurückgeben
-    - Sonst: 404
+    Zugriffskontrolle:
+    - Es werden ausschließlich Widgets des angemeldeten Benutzers bedient (owner_id == user.id).
+    - Es gibt KEIN Fixture‑Fallback auf diesem auth‑Endpunkt.
+    - Details werden (falls verfügbar) aus der Real‑Quelle geliefert.
     """
-    # 1) Fixtures bevorzugen (damit Demo deterministisch funktioniert)
-    detail = get_detail(widget_id)
-    if detail:
-        return detail
+    # 0) Ownership prüfen
+    db_widget = session.get(Widget, widget_id)
+    if not db_widget or db_widget.owner_id != user.id:
+        LOG.info("detail_v1_not_found", extra={"widget_id": widget_id, "reason": "not_owned_or_missing"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
+
+    # 1) Für Fixture‑IDs kein Zugriff über auth‑Route (nur Demo‑Route ist öffentlich)
+    if is_fixture_id(widget_id):
+        LOG.info("detail_v1_not_found", extra={"widget_id": widget_id, "reason": "fixture_id_on_auth_route"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
 
     # 2) Real-Detail versuchen
     try:
@@ -80,8 +87,15 @@ def get_widget_detail_v1(
         LOG.warning("detail_v1_real_exception", extra={"widget_id": widget_id, "error": str(exc)})
         real_detail = None
 
-    if real_detail:
-        return real_detail
+    if real_detail is None:
+        LOG.info("detail_v1_not_found", extra={"widget_id": widget_id, "reason": "real_none"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
 
-    # 3) Nichts gefunden
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
+    try:
+        parsed = WidgetDetailV1.model_validate(real_detail)
+    except Exception as exc:  # noqa: BLE001
+        LOG.warning("detail_v1_real_invalid", extra={"widget_id": widget_id, "error": str(exc)})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
+
+    LOG.info("detail_v1_real_delivered", extra={"widget_id": widget_id})
+    return parsed

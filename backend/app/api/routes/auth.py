@@ -13,7 +13,6 @@ from ...core.database import get_session
 from ...core.logging_config import get_logger
 from ...core.security import decode_jwt
 from ...core.types.token import ACCESS
-from ...models.user import User
 from ...schemas.auth import RefreshRequest, SignupRequest, TokenPair, UserRead
 from ...services.auth_service import AuthService
 from ...services.rate_limit import InMemoryRateLimiter, parse_rule
@@ -26,14 +25,16 @@ login_rule = parse_rule(settings.LOGIN_RATE_LIMIT)
 refresh_rule = parse_rule(settings.REFRESH_RATE_LIMIT)
 
 
-def _perform_signup(payload: SignupRequest, session: Session) -> User:
+def _perform_signup(payload: SignupRequest, session: Session) -> UserRead:
     """
     Gemeinsame Signup-Logik für /signup und /register Endpunkte.
     """
     service = AuthService(session)
     user = service.signup(str(payload.email), payload.password)
     LOG.info("user_signed_up", extra={"user_id": user.id})
-    return user
+    # Robust: Validierung/Serialisierung durch das Pydantic-Modell selbst
+    # Nutzt from_attributes=True (siehe UserRead.model_config), damit ORMs unterstützt werden
+    return UserRead.model_validate(user, from_attributes=True)
 
 
 @router.post("/signup", response_model=UserRead)

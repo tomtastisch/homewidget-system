@@ -7,9 +7,11 @@ from sqlmodel import Session, select
 from ...api.deps import get_current_user
 from ...core.database import get_session
 from ...core.logging_config import get_logger
+from ...fixtures.v1 import is_fixture_id
 from ...models.widget import Widget
-from ...schemas.v1.widget_contracts import ContentBlockV1, ContentSpecV1, WidgetDetailV1
+from ...schemas.v1.widget_contracts import WidgetDetailV1
 from ...schemas.widget import WidgetCreate, WidgetRead
+from ...services import demo_feed_real_source as real_src
 
 router = APIRouter(prefix="/api/widgets", tags=["widgets"])
 LOG = get_logger("api.widgets")
@@ -60,40 +62,40 @@ def get_widget_detail_v1(
         session: Session = Depends(get_session),
         user=Depends(get_current_user),
 ):
-    """Liefert den Detail‑Container für ein Widget im v1‑Contract (read‑only)."""
-    widget = session.get(Widget, widget_id)
-    if not widget or widget.owner_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="BackendWidget not found")
+    """Liefert den Detail‑Container für ein Widget im v1‑Contract (auth, owner‑only).
 
-    container = {
-        "title": widget.title or widget.name,
-        "description": widget.description or "",
-        "image_url": widget.image_url or None,
-    }
+    Zugriffskontrolle:
+    - Es werden ausschließlich Widgets des angemeldeten Benutzers bedient (owner_id == user.id).
+    - Es gibt KEIN Fixture‑Fallback auf diesem auth‑Endpunkt.
+    - Details werden (falls verfügbar) aus der Real‑Quelle geliefert.
+    """
+    # 0) Ownership prüfen
+    db_widget = session.get(Widget, widget_id)
+    if not db_widget or db_widget.owner_id != user.id:
+        LOG.info("detail_v1_not_found", extra={"widget_id": widget_id, "reason": "not_owned_or_missing"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
 
-    # ContentSpec: einfache blocks‑Struktur, basierend auf vorhandenen Feldern
-    blocks: list[ContentBlockV1] = []
-    # Primärer Banner/Text‑Block
-    blocks.append(
-        ContentBlockV1(
-            type="banner",
-            props={
-                "title": widget.title or widget.name,
-                "text": widget.description or widget.name,
-                "cta_label": widget.cta_label or None,
-                "cta_target": widget.cta_target or None,
-            },
-        )
-    )
+    # 1) Für Fixture‑IDs kein Zugriff über auth‑Route (nur Demo‑Route ist öffentlich)
+    if is_fixture_id(widget_id):
+        LOG.info("detail_v1_not_found", extra={"widget_id": widget_id, "reason": "fixture_id_on_auth_route"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
 
-    # Optional: zusätzliche Daten aus payload aufnehmen
-    if isinstance(getattr(widget, "payload", None), dict) and widget.payload:
-        blocks.append(
-            ContentBlockV1(
-                type="payload",
-                props=widget.payload,
-            )
-        )
+    # 2) Real-Detail versuchen
+    try:
+        real_detail = real_src.load_real_demo_widget_detail_v1(widget_id)
+    except Exception as exc:  # noqa: BLE001
+        LOG.warning("detail_v1_real_exception", extra={"widget_id": widget_id, "error": str(exc)})
+        real_detail = None
 
-    content_spec = ContentSpecV1(blocks=blocks)
-    return WidgetDetailV1(id=widget.id, container=container, content_spec=content_spec)
+    if real_detail is None:
+        LOG.info("detail_v1_not_found", extra={"widget_id": widget_id, "reason": "real_none"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
+
+    try:
+        parsed = WidgetDetailV1.model_validate(real_detail)
+    except Exception as exc:  # noqa: BLE001
+        LOG.warning("detail_v1_real_invalid", extra={"widget_id": widget_id, "error": str(exc)})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget detail not found")
+
+    LOG.info("detail_v1_real_delivered", extra={"widget_id": widget_id})
+    return parsed

@@ -24,12 +24,7 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
     assert login_resp.status_code == 200
     access = login_resp.json()["access_token"]
 
-    # Drei Widgets erstellen (die IDs steigen monoton)
-    w1 = _create_widget(client, access, "W1")
-    w2 = _create_widget(client, access, "W2")
-    w3 = _create_widget(client, access, "W3")
-
-    # Act: Erste Seite limit=2
+    # Act: Erste Seite limit=2 (Fixtures)
     page1 = client.get(
         "/api/home/feed_v1",
         params={"limit": 2, "cursor": 0},
@@ -41,9 +36,9 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
     assert len(data1["items"]) == 2
     assert data1["next_cursor"] == 2
 
-    # Bei gleicher priority (Default 0) und created_at entscheidet id desc
+    # Reihenfolge ist deterministisch: 1003, 1002, 1001
     ids_page1 = [it["id"] for it in data1["items"]]
-    assert ids_page1 == sorted(ids_page1, reverse=True)
+    assert ids_page1 == [1003, 1002]
 
     # Act: Zweite Seite (cursor=2)
     page2 = client.get(
@@ -56,32 +51,117 @@ def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
     assert len(data2["items"]) == 1
     assert data2["next_cursor"] is None
 
-    # Die IDs über beide Seiten sind disjunkt und vollständig
+    # Vollständige ID-Menge
     ids_page2 = [it["id"] for it in data2["items"]]
-    all_ids = set(ids_page1 + ids_page2)
-    assert all_ids == {w1["id"], w2["id"], w3["id"]}
+    all_ids = ids_page1 + ids_page2
+    assert all_ids == [1003, 1002, 1001]
+
+    # Determinismus: wiederholter Aufruf liefert gleiche Reihenfolge
+    repeat = client.get(
+        "/api/home/feed_v1",
+        params={"limit": 3, "cursor": 0},
+        headers=auth_utils.auth_headers(access),
+    )
+    assert repeat.status_code == 200
+    assert [it["id"] for it in repeat.json()["items"]] == [1003, 1002, 1001]
 
 
-def test_widget_detail_v1_structure(client: TestClient) -> None:
-    # Arrange: User und Widget
-    login_resp = auth_utils.register_and_login(client, "v1detail@example.com", "Secret1234!")
+def test_demo_widget_detail_v1_structure_unauth(client: TestClient) -> None:
+    """
+    Die öffentlichen Demo-Details liegen auf der unauth Route und liefern für
+    die Fixture-IDs valide v1-Payloads.
+    """
+    # Act: Fixture-IDs prüfen (unauth)
+    for wid in (1002, 1003, 1001):
+        resp = client.get(f"/api/home/demo/widgets/{wid}/detail_v1")
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+
+        # Assert: Container + ContentSpec vorhanden
+        assert data["id"] == wid
+        assert "container" in data and isinstance(data["container"], dict)
+        assert "content_spec" in data and isinstance(data["content_spec"], dict)
+        assert data["content_spec"].get("kind") == "blocks"
+        assert isinstance(data["content_spec"].get("blocks"), list)
+        assert len(data["content_spec"]["blocks"]) >= 1
+
+    # Unbekannte ID (außerhalb Fixture-Range) -> 404
+    resp_404 = client.get("/api/home/demo/widgets/9999/detail_v1")
+    assert resp_404.status_code == 404
+
+
+def test_auth_detail_v1_requires_ownership_and_no_fixtures(client: TestClient) -> None:
+    # Arrange: User registrieren und einloggen
+    login_resp = auth_utils.register_and_login(client, "ownercheck@example.com", "Secret1234!")
     assert login_resp.status_code == 200
     access = login_resp.json()["access_token"]
 
-    w = _create_widget(client, access, name="DetailWidget", config_json='{"type":"banner"}')
+    # Ein eigenes Widget anlegen
+    created = _create_widget(client, access, name="My Widget")
+    widget_id = created["id"]
+
+    # Auth-Detail für Fixture-ID (nicht owned) -> 404
+    resp_fixture_on_auth = client.get(
+        "/api/widgets/1003/detail_v1", headers=auth_utils.auth_headers(access)
+    )
+    assert resp_fixture_on_auth.status_code == 404
+
+    # Auth-Detail für eigenes Widget: Real-Quelle liefert per Default None -> 404
+    resp_real_none = client.get(
+        f"/api/widgets/{widget_id}/detail_v1", headers=auth_utils.auth_headers(access)
+    )
+    assert resp_real_none.status_code == 404
+
+
+def test_demo_detail_v1_does_not_expose_real_widgets(client: TestClient) -> None:
+    """
+    Stelle sicher, dass per POST erstellte Widgets NICHT über den unauth Demo-Detail-Endpunkt
+    abrufbar sind (Fixture-Isolation). Nur die reservierten Fixture-IDs sind dort erlaubt,
+    ansonsten ggf. eine separate "Real"-Quelle – aber keine DB‑Widgets.
+    """
+    # Arrange: User registrieren und ein reales Widget erzeugen
+    login_resp = auth_utils.register_and_login(client, "isolation@example.com", "Secret1234!")
+    assert login_resp.status_code == 200
+    access = login_resp.json()["access_token"]
+
+    created = _create_widget(client, access, name="Not For Demo")
+    widget_id = created["id"]
+
+    # Act: Unauth Demo-Detail mit dieser (realen) ID aufrufen
+    resp = client.get(f"/api/home/demo/widgets/{widget_id}/detail_v1")
+
+    # Assert: 404 – keine Vermischung mit dynamischen Daten
+    assert resp.status_code == 404, resp.text
+
+
+def test_auth_detail_v1_owned_widget_can_return_real_when_available(client: TestClient, monkeypatch) -> None:
+    # Arrange: User + Widget
+    login_resp = auth_utils.register_and_login(client, "ownreal@example.com", "Secret1234!")
+    assert login_resp.status_code == 200
+    access = login_resp.json()["access_token"]
+    created = _create_widget(client, access, name="Real Backed")
+    widget_id = created["id"]
+
+    # Patch Real-Quelle für genau diese ID
+    from app.schemas.v1.widget_contracts import WidgetDetailV1, ContentSpecV1, ContentBlockV1
+
+    def fake_real_detail(wid: int) -> WidgetDetailV1 | None:  # type: ignore[override]
+        if wid != widget_id:
+            return None
+        return WidgetDetailV1(
+            id=wid,
+            container={"title": "Owned", "description": "ok", "image_url": None},
+            content_spec=ContentSpecV1(blocks=[ContentBlockV1(type="text", props={"text": "hello"})]),
+        )
+
+    monkeypatch.setattr(
+        "app.services.demo_feed_real_source.load_real_demo_widget_detail_v1",
+        fake_real_detail,
+        raising=True,
+    )
 
     # Act
-    resp = client.get(
-        f"/api/widgets/{w['id']}/detail_v1",
-        headers=auth_utils.auth_headers(access),
-    )
+    resp = client.get(f"/api/widgets/{widget_id}/detail_v1", headers=auth_utils.auth_headers(access))
     assert resp.status_code == 200, resp.text
     data = resp.json()
-
-    # Assert: Container + ContentSpec vorhanden
-    assert data["id"] == w["id"]
-    assert "container" in data and isinstance(data["container"], dict)
-    assert "content_spec" in data and isinstance(data["content_spec"], dict)
-    assert data["content_spec"].get("kind") == "blocks"
-    assert isinstance(data["content_spec"].get("blocks"), list)
-    assert len(data["content_spec"]["blocks"]) >= 1
+    assert data["id"] == widget_id

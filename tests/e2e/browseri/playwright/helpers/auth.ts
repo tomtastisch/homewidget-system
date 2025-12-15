@@ -1,5 +1,6 @@
-import {expect, Page, APIRequestContext} from '@playwright/test';
+import {APIRequestContext, expect, Page} from '@playwright/test';
 import {getApiBaseUrl, newApiRequestContext} from './api';
+import {DEFAULT_PASSWORD, uniqueEmail} from './testdata';
 
 /**
  * Auth-Helfer für Playwright E2E-Tests mit Expo-Web-Frontend.
@@ -171,8 +172,8 @@ export async function createUserWithRole(
 	emailPrefix?: string
 ): Promise<{email: string; password: string; access_token: string}> {
 	const baseUrl = getApiBaseUrl();
-	const email = `${emailPrefix || role}+${Date.now()}@example.com`;
-	const password = 'Secret1234!';
+	const email = uniqueEmail(emailPrefix || role);
+	const password = DEFAULT_PASSWORD;
 	
 	// Register user
 	const registerRes = await api.post(`${baseUrl}/api/auth/register`, {

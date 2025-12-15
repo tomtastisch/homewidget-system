@@ -74,7 +74,8 @@ def run_e2e_contracts() -> int:
                 "app.main:app",
                 "--host", host,
                 "--port", str(port),
-                "--log-level", "warning",
+                # Info-Loglevel, damit Startup-/Diagnose-Logs sichtbar sind
+                "--log-level", "info",
             ],
             cwd=str(paths.backend),
             env=env,

@@ -27,12 +27,12 @@ export default function AccountScreen(_: Props) {
 		
 		setUpgrading(true);
 		try {
-			// Rufe Backend-Endpoint auf um zu Premium zu upgraden
-			const upgradedUser = await authUpgradeToPremium();
+			// Rufe Backend-Endpoint auf, um zu Premium zu upgraden
+			await authUpgradeToPremium();
 			
 			showSuccess('🎉 Willkommen zu Premium! Geniße 20% Rabatt!');
 			
-			// Lade Profil neu um neue Rolle zu sehen
+			// Lade Profil neu, um neue Rolle zu sehen
 			await loadMe();
 			
 			Alert.alert(
@@ -42,6 +42,7 @@ export default function AccountScreen(_: Props) {
 			);
 		} catch (error: any) {
 			showError(error?.message || 'Upgrade fehlgeschlagen');
+			
 		} finally {
 			setUpgrading(false);
 		}
@@ -68,9 +69,9 @@ export default function AccountScreen(_: Props) {
 					
 					{/* Premium Upgrade Card - nur für Common User sichtbar */}
 					{isCommon() && !isPremium() && (
-						<View style={[styles.card, styles.premiumCard]}>
-							<Text style={styles.premiumTitle}>✨ Premium Upgrade</Text>
-							<Text style={styles.premiumDescription}>
+						<View style={[styles.card, styles.premiumCard]} testID="account.premium.card">
+							<Text style={styles.premiumTitle} testID="account.premium.title">✨ Premium Upgrade</Text>
+							<Text style={styles.premiumDescription} testID="account.premium.description">
 								Upgrade zu Premium und erhalte 20% Rabatt auf alle Produkte!
 							</Text>
 							<Button

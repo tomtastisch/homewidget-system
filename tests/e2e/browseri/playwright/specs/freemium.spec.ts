@@ -1,5 +1,6 @@
 import {expect, type Page, test} from '@playwright/test';
 import {createUserWithRole, newApiRequestContext} from '../helpers/api';
+import {DEFAULT_PASSWORD, uniqueEmail} from '../helpers/testdata';
 
 const DEMO_BANNER_TITLE = /-20\s% auf alles/i;
 
@@ -44,8 +45,8 @@ test.describe('@minimal Freemium System', () => {
 	});
 	
 	test('@minimal FREEMIUM-02: Registrierung → Common-Rolle mit Premium-Button', async ({page}) => {
-		const email = `freemium-common-${Date.now()}@test.com`;
-		const password = 'TestPass123!';
+		const email = uniqueEmail('freemium-common');
+		const password = DEFAULT_PASSWORD;
 		
 		// Von Home zur Login-Screen
 		await gotoLogin(page);
@@ -77,27 +78,25 @@ test.describe('@minimal Freemium System', () => {
 		await expect(page.getByText('isDemo: false')).toBeVisible();
 		
 		// Premium Upgrade Card + Button nur für Common sichtbar
-		await expect(page.getByText('✨ Premium Upgrade')
-			.first())
-			.toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('account.premium.title').first()).toBeVisible({timeout: 10_000});
 		
 		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'})).toBeVisible();
 	});
 	
 	test('@minimal FREEMIUM-03: Premium-Button nur für Common-User sichtbar', async ({page}) => {
 		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'common', `freemium-button-${Date.now()}@test.com`);
+		const user = await createUserWithRole(api, 'common', uniqueEmail('freemium-button'));
 		
 		await login(page, user.email, user.password);
 		await openAccount(page);
 		
 		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'})).toBeVisible({timeout: 10_000});
-		await expect(page.getByText('Upgrade zu Premium und erhalte 20% Rabatt')).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('account.premium.description')).toBeVisible({timeout: 10_000});
 	});
 	
 	test('@minimal FREEMIUM-04: Premium-Button führt echtes Upgrade durch', async ({page}) => {
 		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'common', `freemium-dialog-${Date.now()}@test.com`);
+		const user = await createUserWithRole(api, 'common', uniqueEmail('freemium-dialog'));
 		
 		await login(page, user.email, user.password);
 		await openAccount(page);
@@ -118,7 +117,7 @@ test.describe('@minimal Freemium System', () => {
 	
 	test('@minimal FREEMIUM-05: Premium-User sehen keinen Upgrade-Button', async ({page}) => {
 		const api = await newApiRequestContext();
-		const user = await createUserWithRole(api, 'premium', `freemium-premium-${Date.now()}@test.com`);
+		const user = await createUserWithRole(api, 'premium', uniqueEmail('freemium-premium'));
 		
 		await login(page, user.email, user.password);
 		await openAccount(page);
@@ -126,7 +125,7 @@ test.describe('@minimal Freemium System', () => {
 		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'}))
 			.not.toBeVisible({timeout: 5_000});
 		
-		await expect(page.getByText('✨ Premium Upgrade'))
+		await expect(page.getByTestId('account.premium.card'))
 			.not.toBeVisible({timeout: 5_000});
 		
 		const roleDisplay = page.getByTestId('account.role');

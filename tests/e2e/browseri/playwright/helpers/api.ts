@@ -1,4 +1,5 @@
 import {APIRequestContext, Page, request} from '@playwright/test';
+import {DEFAULT_PASSWORD} from './testdata';
 
 /**
  * Gibt die Backend-API-Basis-URL für E2E-Tests zurück.
@@ -37,7 +38,7 @@ export async function createUserWithRole(
 	role: 'demo' | 'common' | 'premium',
 	baseEmail: string
 ): Promise<{ email: string; password: string; role: 'common' | 'premium' | 'demo' }> {
-	const password = 'DemoPass123!';
+	const password = DEFAULT_PASSWORD;
 	
 	// Registrieren (Backend vergibt initial i. d. R. 'common')
 	const registerRes = await api.post('/api/auth/register', {

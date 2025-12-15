@@ -1,0 +1,87 @@
+from __future__ import annotations
+
+import pytest
+from fastapi.testclient import TestClient
+
+from tests.utils import auth as auth_utils
+
+pytestmark = pytest.mark.integration
+
+
+def _create_widget(client: TestClient, token: str, name: str, config_json: str = "{}") -> dict:
+    resp = client.post(
+        "/api/widgets/",
+        headers=auth_utils.auth_headers(token),
+        json={"name": name, "config_json": config_json},
+    )
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+def test_feed_v1_pagination_and_ordering(client: TestClient) -> None:
+    # Arrange: User registrieren und einloggen
+    login_resp = auth_utils.register_and_login(client, "v1feed@example.com", "Secret1234!")
+    assert login_resp.status_code == 200
+    access = login_resp.json()["access_token"]
+
+    # Drei Widgets erstellen (die IDs steigen monoton)
+    w1 = _create_widget(client, access, "W1")
+    w2 = _create_widget(client, access, "W2")
+    w3 = _create_widget(client, access, "W3")
+
+    # Act: Erste Seite limit=2
+    page1 = client.get(
+        "/api/home/feed_v1",
+        params={"limit": 2, "cursor": 0},
+        headers=auth_utils.auth_headers(access),
+    )
+    assert page1.status_code == 200, page1.text
+    data1 = page1.json()
+    assert "items" in data1 and isinstance(data1["items"], list)
+    assert len(data1["items"]) == 2
+    assert data1["next_cursor"] == 2
+
+    # Bei gleicher priority (Default 0) und created_at entscheidet id desc
+    ids_page1 = [it["id"] for it in data1["items"]]
+    assert ids_page1 == sorted(ids_page1, reverse=True)
+
+    # Act: Zweite Seite (cursor=2)
+    page2 = client.get(
+        "/api/home/feed_v1",
+        params={"limit": 2, "cursor": 2},
+        headers=auth_utils.auth_headers(access),
+    )
+    assert page2.status_code == 200, page2.text
+    data2 = page2.json()
+    assert len(data2["items"]) == 1
+    assert data2["next_cursor"] is None
+
+    # Die IDs über beide Seiten sind disjunkt und vollständig
+    ids_page2 = [it["id"] for it in data2["items"]]
+    all_ids = set(ids_page1 + ids_page2)
+    assert all_ids == {w1["id"], w2["id"], w3["id"]}
+
+
+def test_widget_detail_v1_structure(client: TestClient) -> None:
+    # Arrange: User und Widget
+    login_resp = auth_utils.register_and_login(client, "v1detail@example.com", "Secret1234!")
+    assert login_resp.status_code == 200
+    access = login_resp.json()["access_token"]
+
+    w = _create_widget(client, access, name="DetailWidget", config_json='{"type":"banner"}')
+
+    # Act
+    resp = client.get(
+        f"/api/widgets/{w['id']}/detail_v1",
+        headers=auth_utils.auth_headers(access),
+    )
+    assert resp.status_code == 200, resp.text
+    data = resp.json()
+
+    # Assert: Container + ContentSpec vorhanden
+    assert data["id"] == w["id"]
+    assert "container" in data and isinstance(data["container"], dict)
+    assert "content_spec" in data and isinstance(data["content_spec"], dict)
+    assert data["content_spec"].get("kind") == "blocks"
+    assert isinstance(data["content_spec"].get("blocks"), list)
+    assert len(data["content_spec"]["blocks"]) >= 1

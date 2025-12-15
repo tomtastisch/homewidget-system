@@ -15,12 +15,13 @@ def test_feed_v1_aggregator_fail_open_one_provider_raises(client: TestClient, mo
     token = login_resp.json()["access_token"]
 
     # Ein Provider wirft absichtlich
-    def raising(_self):  # type: ignore[no-untyped-def]
+    def mock_failing_load_items(*args, **kwargs) -> None:
+        """Mock-Funktion, die absichtlich eine Exception wirft, um das Fail-Open-Verhalten zu testen."""
         raise RuntimeError("provider boom")
 
     monkeypatch.setattr(
         "app.homewidget.providers.furniture_provider.FurnitureProvider.load_items",
-        raising,
+        mock_failing_load_items,
         raising=True,
     )
 

@@ -88,7 +88,7 @@ class EnvConfig:
         Priority:
           1. E2E_DATABASE_URL (wenn gesetzt)
           2. DATABASE_URL (wenn gesetzt)
-          3. {root}/test_e2e.db (default)
+          3. /tmp/homewidget-e2e.db (default; schreibbar in CI)
         """
         e2e_db = os.environ.get("E2E_DATABASE_URL", "").strip()
         if e2e_db:
@@ -98,8 +98,8 @@ class EnvConfig:
         if db_url:
             return db_url
 
-        db_path = paths.root / "test_e2e.db"
-        return f"sqlite:///{db_path}"
+        # Standard auf /tmp legen, um Readonly-Probleme mit Repo-Dateien zu vermeiden
+        return "sqlite:////tmp/homewidget-e2e.db"
 
     @staticmethod
     def prepare_e2e_env(paths: ProjectPaths, host: str, port: int) -> dict[str, str]:
@@ -122,7 +122,8 @@ class EnvConfig:
         env["E2E_PORT"] = str(port)
         env["E2E_API_BASE_URL"] = f"http://{host}:{port}"
 
-        env.setdefault("ENV", "test_e2e")
+        # Einheitlicher Test-Modus
+        env.setdefault("ENV", "test")
 
         db_url = EnvConfig.get_database_url(paths)
         env["DATABASE_URL"] = db_url

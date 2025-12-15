@@ -1,707 +1,200 @@
-.....................................................................FFF [ 96%]
-...                                                                      [100%]
-=================================== FAILURES ===================================
-__________________________ test_login_homefeed_logout __________________________
-    @pytest.mark.contract
-    def test_login_homefeed_logout() -> None:
-        with httpx.Client(base_url=BASE_URL, timeout=10.0) as client:
-            # Login (OAuth2PasswordRequestForm: username, password)
-            login_resp = client.post(
-                "/api/auth/login",
-                data={"username": "demo@example.com", "password": "demo1234"},
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-            )
->           _assert_ok(login_resp, "login")
-tests/e2e/contracts/test_login_widgets_logout.py:36:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-resp = <Response [500 Internal Server Error]>, ctx = 'login'
-    def _assert_ok(resp: httpx.Response, ctx: str = "") -> None:
-        if resp.status_code >= 400:
->           raise AssertionError(
-                f"{ctx} expected <400 status, got {resp.status_code}: {resp.text[:500]}"
-            )
-E           AssertionError: login expected <400 status, got 500: Internal Server Error
-tests/e2e/contracts/test_login_widgets_logout.py:22: AssertionError
----------------------------- Captured stdout setup -----------------------------
-2025-12-15 16:04:06.589 INFO     backend.app.infrastructure.db [rid=- uid=-] Initializing database schema
-2025-12-15 16:04:06.589 INFO     backend.app.infrastructure.db [rid=- uid=-] Database schema ready
-2025-12-15 16:04:06.589 INFO     backend.app.lifecycle [rid=- uid=-] cleanup_loop_started
-2025-12-15 16:04:06.590 INFO     backend.app.services.maintenance [rid=- uid=-] purged_refresh_tokens
------------------------------ Captured stdout call -----------------------------
-2025-12-15 16:04:06.642 INFO     backend.app.api.middleware [rid=aab11cb8-6fdb-46ec-9f9b-e51cfb852aa6 uid=-] response
------------------------------ Captured stderr call -----------------------------
-ERROR:    Exception in ASGI application
-Traceback (most recent call last):
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlite3.OperationalError: no such column: users.role
-The above exception was the direct cause of the following exception:
-Traceback (most recent call last):
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 409, in run_asgi
-    result = await app(  # type: ignore[func-returns-value]
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        self.scope, self.receive, self.send
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
-    return await self.app(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/applications.py", line 1139, in __call__
-    await super().__call__(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    with recv_stream, send_stream, collapse_excgroups():
-                                   ~~~~~~~~~~~~~~~~~~^^
-  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
-    self.gen.throw(value)
-    ~~~~~~~~~~~~~~^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    response = await self.dispatch_func(request, call_next)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/middleware/logging_middleware.py", line 37, in dispatch
-    response = await call_next(request)
-               ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    raise app_exc from app_exc.__cause__ or app_exc.__context__
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    await self.app(scope, receive_or_disconnect, send_no_error)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/cors.py", line 85, in __call__
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    await route.handle(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 120, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 106, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 430, in app
-    raw_response = await run_endpoint_function(
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<3 lines>...
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 318, in run_endpoint_function
-    return await run_in_threadpool(dependant.call, **values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
-    return await anyio.to_thread.run_sync(func)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/to_thread.py", line 61, in run_sync
-    return await get_async_backend().run_sync_in_worker_thread(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 2525, in run_sync_in_worker_thread
-    return await future
-           ^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 986, in run
-    result = context.run(func, *args)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/api/routes/auth.py", line 73, in login
-    user = service.authenticate(form_data.username, form_data.password)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/services/auth_service.py", line 79, in authenticate
-    user = self.session.exec(select(User).where(User.email == normalized_email)).first()
-           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlmodel/orm/session.py", line 83, in exec
-    results = super().execute(
-        statement,
-    ...<4 lines>...
-        _add_event=_add_event,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
-    return self._execute_internal(
-           ~~~~~~~~~~~~~~~~~~~~~~^
-        statement,
-        ^^^^^^^^^^
-    ...<4 lines>...
-        _add_event=_add_event,
-        ^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
-    result: Result[Any] = compile_state_cls.orm_execute_statement(
-                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self,
-        ^^^^^
-    ...<4 lines>...
-        conn,
-        ^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
-    result = conn.execute(
-        statement, params or {}, execution_options=execution_options
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-        self,
-        distilled_parameters,
-        execution_options or NO_OPTIONS,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self, distilled_params, execution_options
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-        dialect,
-    ...<8 lines>...
-        cache_hit=cache_hit,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~^
-        dialect, context, statement, parameters
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        e, str_statement, effective_parameters, cursor, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: users.role
-[SQL: SELECT users.id, users.email, users.password_hash, users.role, users.is_active, users.created_at, users.updated_at
-FROM users
-WHERE users.email = ?]
-[parameters: ('demo@example.com',)]
-(Background on this error at: https://sqlalche.me/e/20/e3q8)
-_________________________ test_register_login_homefeed _________________________
-    @pytest.mark.contract
-    def test_register_login_homefeed() -> None:
-        """Testet vollständigen Flow: Registrierung -> Login -> Home-Feed."""
-        with httpx.Client(base_url=BASE_URL, timeout=10.0) as client:
-            # Register mit eindeutiger E-Mail
-            import uuid
-            test_email = f"test_{uuid.uuid4().hex[:8]}@example.com"
-            test_password = "TestPassword123!"
-
-            register_resp = client.post(
-                "/api/auth/register",
-                json={"email": test_email, "password": test_password},
-            )
->           _assert_ok(register_resp, "register")
-tests/e2e/contracts/test_register_flow.py:32:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-resp = <Response [500 Internal Server Error]>, ctx = 'register'
-    def _assert_ok(resp: httpx.Response, ctx: str = "") -> None:
-        if resp.status_code >= 400:
->           raise AssertionError(
-                f"{ctx} expected <400 status, got {resp.status_code}: {resp.text[:500]}"
-            )
-E           AssertionError: register expected <400 status, got 500: Internal Server Error
-tests/e2e/contracts/test_register_flow.py:14: AssertionError
------------------------------ Captured stdout call -----------------------------
-2025-12-15 16:04:06.716 INFO     backend.app.api.middleware [rid=0b61c94f-78e0-4134-a396-e7d40a2cd319 uid=-] response
------------------------------ Captured stderr call -----------------------------
-ERROR:    Exception in ASGI application
-Traceback (most recent call last):
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlite3.OperationalError: no such column: users.role
-The above exception was the direct cause of the following exception:
-Traceback (most recent call last):
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 409, in run_asgi
-    result = await app(  # type: ignore[func-returns-value]
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        self.scope, self.receive, self.send
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
-    return await self.app(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/applications.py", line 1139, in __call__
-    await super().__call__(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    with recv_stream, send_stream, collapse_excgroups():
-                                   ~~~~~~~~~~~~~~~~~~^^
-  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
-    self.gen.throw(value)
-    ~~~~~~~~~~~~~~^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    response = await self.dispatch_func(request, call_next)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/middleware/logging_middleware.py", line 37, in dispatch
-    response = await call_next(request)
-               ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    raise app_exc from app_exc.__cause__ or app_exc.__context__
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    await self.app(scope, receive_or_disconnect, send_no_error)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/cors.py", line 85, in __call__
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    await route.handle(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 120, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 106, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 430, in app
-    raw_response = await run_endpoint_function(
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<3 lines>...
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 318, in run_endpoint_function
-    return await run_in_threadpool(dependant.call, **values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
-    return await anyio.to_thread.run_sync(func)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/to_thread.py", line 61, in run_sync
-    return await get_async_backend().run_sync_in_worker_thread(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 2525, in run_sync_in_worker_thread
-    return await future
-           ^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 986, in run
-    result = context.run(func, *args)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/api/routes/auth.py", line 48, in register
-    return _perform_signup(payload, session)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/api/routes/auth.py", line 34, in _perform_signup
-    user = service.signup(str(payload.email), payload.password)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/services/auth_service.py", line 62, in signup
-    existing = self.session.exec(select(User).where(User.email == normalized_email)).first()
-               ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlmodel/orm/session.py", line 83, in exec
-    results = super().execute(
-        statement,
-    ...<4 lines>...
-        _add_event=_add_event,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
-    return self._execute_internal(
-           ~~~~~~~~~~~~~~~~~~~~~~^
-        statement,
-        ^^^^^^^^^^
-    ...<4 lines>...
-        _add_event=_add_event,
-        ^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
-    result: Result[Any] = compile_state_cls.orm_execute_statement(
-                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self,
-        ^^^^^
-    ...<4 lines>...
-        conn,
-        ^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
-    result = conn.execute(
-        statement, params or {}, execution_options=execution_options
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-        self,
-        distilled_parameters,
-        execution_options or NO_OPTIONS,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self, distilled_params, execution_options
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-        dialect,
-    ...<8 lines>...
-        cache_hit=cache_hit,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~^
-        dialect, context, statement, parameters
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        e, str_statement, effective_parameters, cursor, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: users.role
-[SQL: SELECT users.id, users.email, users.password_hash, users.role, users.is_active, users.created_at, users.updated_at
-FROM users
-WHERE users.email = ?]
-[parameters: ('test_08cf4b6d@example.com',)]
-(Background on this error at: https://sqlalche.me/e/20/e3q8)
-__________________ test_register_duplicate_email_returns_409 ___________________
-    @pytest.mark.contract
-    def test_register_duplicate_email_returns_409() -> None:
-        """Testet, dass doppelte E-Mail-Registrierung mit 409 abgelehnt wird."""
-        with httpx.Client(base_url=BASE_URL, timeout=10.0) as client:
-            # Registriere mit bekannter E-Mail
-            register_resp = client.post(
-                "/api/auth/register",
-                json={"email": "demo@example.com", "password": "TestPassword123!"},
-            )
->           assert register_resp.status_code == 409, f"expected 409, got {register_resp.status_code}"
-E           AssertionError: expected 409, got 500
-E           assert 500 == 409
-E            +  where 500 = <Response [500 Internal Server Error]>.status_code
-tests/e2e/contracts/test_register_flow.py:83: AssertionError
------------------------------ Captured stdout call -----------------------------
-2025-12-15 16:04:06.743 INFO     backend.app.api.middleware [rid=fee324a6-2abf-4876-910b-a43c3a14b0be uid=-] response
------------------------------ Captured stderr call -----------------------------
-ERROR:    Exception in ASGI application
-Traceback (most recent call last):
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlite3.OperationalError: no such column: users.role
-The above exception was the direct cause of the following exception:
-Traceback (most recent call last):
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/uvicorn/protocols/http/httptools_impl.py", line 409, in run_asgi
-    result = await app(  # type: ignore[func-returns-value]
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        self.scope, self.receive, self.send
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
-    return await self.app(scope, receive, send)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/applications.py", line 1139, in __call__
-    await super().__call__(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/applications.py", line 107, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 186, in __call__
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/errors.py", line 164, in __call__
-    await self.app(scope, receive, _send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 191, in __call__
-    with recv_stream, send_stream, collapse_excgroups():
-                                   ~~~~~~~~~~~~~~~~~~^^
-  File "/Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/contextlib.py", line 162, in __exit__
-    self.gen.throw(value)
-    ~~~~~~~~~~~~~~^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 193, in __call__
-    response = await self.dispatch_func(request, call_next)
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/middleware/logging_middleware.py", line 37, in dispatch
-    response = await call_next(request)
-               ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 168, in call_next
-    raise app_exc from app_exc.__cause__ or app_exc.__context__
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/base.py", line 144, in coro
-    await self.app(scope, receive_or_disconnect, send_no_error)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/cors.py", line 85, in __call__
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
-    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 716, in __call__
-    await self.middleware_stack(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 736, in app
-    await route.handle(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/routing.py", line 290, in handle
-    await self.app(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 120, in app
-    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-    raise exc
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
-    await app(scope, receive, sender)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 106, in app
-    response = await f(request)
-               ^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 430, in app
-    raw_response = await run_endpoint_function(
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<3 lines>...
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/fastapi/routing.py", line 318, in run_endpoint_function
-    return await run_in_threadpool(dependant.call, **values)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
-    return await anyio.to_thread.run_sync(func)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/to_thread.py", line 61, in run_sync
-    return await get_async_backend().run_sync_in_worker_thread(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 2525, in run_sync_in_worker_thread
-    return await future
-           ^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/anyio/_backends/_asyncio.py", line 986, in run
-    result = context.run(func, *args)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/api/routes/auth.py", line 48, in register
-    return _perform_signup(payload, session)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/api/routes/auth.py", line 34, in _perform_signup
-    user = service.signup(str(payload.email), payload.password)
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/app/services/auth_service.py", line 62, in signup
-    existing = self.session.exec(select(User).where(User.email == normalized_email)).first()
-               ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlmodel/orm/session.py", line 83, in exec
-    results = super().execute(
-        statement,
-    ...<4 lines>...
-        _add_event=_add_event,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
-    return self._execute_internal(
-           ~~~~~~~~~~~~~~~~~~~~~~^
-        statement,
-        ^^^^^^^^^^
-    ...<4 lines>...
-        _add_event=_add_event,
-        ^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
-    result: Result[Any] = compile_state_cls.orm_execute_statement(
-                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self,
-        ^^^^^
-    ...<4 lines>...
-        conn,
-        ^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
-    result = conn.execute(
-        statement, params or {}, execution_options=execution_options
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-        self,
-        distilled_parameters,
-        execution_options or NO_OPTIONS,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        self, distilled_params, execution_options
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-        dialect,
-    ...<8 lines>...
-        cache_hit=cache_hit,
-    )
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ~~~~~~~~~~~~~~~~~~~~~~~~~^
-        dialect, context, statement, parameters
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-        e, str_statement, effective_parameters, cursor, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-    ~~~~~~~~~~~~~~~~~~~~~~~^
-        cursor, str_statement, effective_parameters, context
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "/Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: users.role
-[SQL: SELECT users.id, users.email, users.password_hash, users.role, users.is_active, users.created_at, users.updated_at
-FROM users
-WHERE users.email = ?]
-[parameters: ('demo@example.com',)]
-(Background on this error at: https://sqlalche.me/e/20/e3q8)
-=============================== warnings summary ===============================
-backend/tests/auth/sec/test_auth.py:19
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/sec/test_auth.py:19: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/auth/sec/test_security.py:13
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/sec/test_security.py:13: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.unit
-backend/tests/auth/sec/test_token_blacklist.py:16
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/sec/test_token_blacklist.py:16: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/auth/sec/test_token_properties.py:20
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/sec/test_token_properties.py:20: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/auth/sec/test_tokens.py:20
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/sec/test_tokens.py:20: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.unit
-backend/tests/auth/sec/test_tokens.py:120
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/sec/test_tokens.py:120: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    @pytest.mark.integration
-backend/tests/auth/test_login.py:23
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/test_login.py:23: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/auth/test_parallel_refresh.py:17
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/test_parallel_refresh.py:17: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/auth/test_register.py:22
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/auth/test_register.py:22: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/core/test_health.py:10
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/core/test_health.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/db/test_db_init.py:14
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/db/test_db_init.py:14: PytestUnknownMarkWarning: Unknown pytest.mark.unit - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.unit
-backend/tests/db/test_persistence.py:19
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/db/test_persistence.py:19: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/general/test_timezone.py:13
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/general/test_timezone.py:13: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/widgets/test_contract_v1.py:8
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/widgets/test_contract_v1.py:8: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/widgets/test_demo_feed_fallback.py:9
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/widgets/test_demo_feed_fallback.py:9: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/widgets/test_demo_routes_v1.py:15
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/widgets/test_demo_routes_v1.py:15: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/widgets/test_home_feed.py:8
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/widgets/test_home_feed.py:8: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-backend/tests/widgets/test_widgets_security.py:14
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/tests/widgets/test_widgets_security.py:14: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
-    pytestmark = pytest.mark.integration
-tests/e2e/contracts/test_login_widgets_logout.py::test_login_homefeed_logout
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
-    warnings.warn(  # deprecated in 14.0 - 2024-11-09
-tests/e2e/contracts/test_login_widgets_logout.py::test_login_homefeed_logout
-  /Users/tomwerner/IdeaProjects/homewidget-system/backend/.venv/lib/python3.13/site-packages/uvicorn/protocols/websockets/websockets_impl.py:17: DeprecationWarning: websockets.server.WebSocketServerProtocol is deprecated
-    from websockets.server import WebSocketServerProtocol
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-=========================== short test summary info ============================
-FAILED tests/e2e/contracts/test_login_widgets_logout.py::test_login_homefeed_logout - AssertionError: login expected <400 status, got 500: Internal Server Error
-FAILED tests/e2e/contracts/test_register_flow.py::test_register_login_homefeed - AssertionError: register expected <400 status, got 500: Internal Server Error
-FAILED tests/e2e/contracts/test_register_flow.py::test_register_duplicate_email_returns_409 - AssertionError: expected 409, got 500
-3 failed, 72 passed, 20 warnings in 8.06s
+    Usage:
+        npx playwright show-trace test-results/roles--standard-Roles-stan-842db-olle-wird-korrekt-angezeigt-standard/trace.zip
+    ────────────────────────────────────────────────────────────────────────────
+  19) [standard] › specs/widgets.basic.spec.ts:15:6 › @minimal Widget Basic › @minimal WIDGET-01: Eigene Widgets anzeigen nach Login
+    TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+    Call log:
+      - waiting for getByTestId('login.email') to be hidden
+        25 × locator resolved to visible <input rows="1" dir="auto" type="email" autocorrect="on" autocomplete="on" spellcheck="true" placeholder="E‑Mail" autocapitalize="none" data-testid="login.email" virtualkeyboardpolicy="auto" value="w1+1765822440212@example.com" class="css-textinput-11aywtz r-placeholderTextColor-6taxm2 r-borderColor-ry2h4h r-borderRadius-1xfd6ze r-borderWidth-rs99b7 r-marginBottom-6gpygo r-padding-xyw6el"/>
+       at ../helpers/auth.ts:59
+      57 |
+      58 |      // Warte auf erfolgreichen Login (Login-Formular verschwindet)
+    > 59 |      await page.getByTestId(testIds.loginEmail).waitFor({state: 'hidden', timeout: 10_000});
+         |                                                 ^
+      60 |
+      61 |      // Zusätzliche Verifikation: Nutzer ist wirklich eingeloggt
+      62 |      // 1) Der Login-Link auf dem Homescreen sollte nicht mehr sichtbar sein
+        at loginAs (/Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/helpers/auth.ts:59:45)
+        at /Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/specs/widgets.basic.spec.ts:22:2
+    attachment #1: screenshot (image/png) ──────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-74270-Widgets-anzeigen-nach-Login-standard/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #2: video (video/webm) ──────────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-74270-Widgets-anzeigen-nach-Login-standard/video.webm
+    ────────────────────────────────────────────────────────────────────────────
+    Error Context: test-results/widgets.basic--minimal-Wid-74270-Widgets-anzeigen-nach-Login-standard/error-context.md
+    attachment #4: trace (application/zip) ─────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-74270-Widgets-anzeigen-nach-Login-standard/trace.zip
+    Usage:
+        npx playwright show-trace test-results/widgets.basic--minimal-Wid-74270-Widgets-anzeigen-nach-Login-standard/trace.zip
+    ────────────────────────────────────────────────────────────────────────────
+  20) [standard] › specs/widgets.basic.spec.ts:38:6 › @minimal Widget Basic › @minimal WIDGET-02: Widget erstellen und im Feed sehen
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8100
+    Call log:
+      - → POST http://127.0.0.1:8100/api/auth/register
+        - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36
+        - accept: */*
+        - accept-encoding: gzip,deflate,br
+        - content-type: application/json
+        - content-length: 65
+      40 |      const email = `w2+${Date.now()}@example.com`;
+      41 |      const password = 'Secret1234!';
+    > 42 |      await api.post('/api/auth/register', {data: {email, password}});
+         |                ^
+      43 |      const login = await (await api.post('/api/auth/login', {form: {username: email, password}})).json();
+      44 |
+      45 |      // Erstelle Widget über API (UI hat aktuell keine Widget-Erstellung)
+        at /Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/specs/widgets.basic.spec.ts:42:12
+    attachment #1: screenshot (image/png) ──────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-c00d4-erstellen-und-im-Feed-sehen-standard/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #2: video (video/webm) ──────────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-c00d4-erstellen-und-im-Feed-sehen-standard/video.webm
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #3: trace (application/zip) ─────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-c00d4-erstellen-und-im-Feed-sehen-standard/trace.zip
+    Usage:
+        npx playwright show-trace test-results/widgets.basic--minimal-Wid-c00d4-erstellen-und-im-Feed-sehen-standard/trace.zip
+    ────────────────────────────────────────────────────────────────────────────
+  21) [standard] › specs/widgets.basic.spec.ts:59:6 › @minimal Widget Basic › @minimal WIDGET-03: Eigenes Widget löschen
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8100
+    Call log:
+      - → POST http://127.0.0.1:8100/api/auth/register
+        - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36
+        - accept: */*
+        - accept-encoding: gzip,deflate,br
+        - content-type: application/json
+        - content-length: 65
+      61 |      const email = `w3+${Date.now()}@example.com`;
+      62 |      const password = 'Secret1234!';
+    > 63 |      await api.post('/api/auth/register', {data: {email, password}});
+         |                ^
+      64 |      const login = await (await api.post('/api/auth/login', {form: {username: email, password}})).json();
+      65 |
+      66 |      // Erstelle und lösche Widget über API
+        at /Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/specs/widgets.basic.spec.ts:63:12
+    attachment #1: screenshot (image/png) ──────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-26ae8-T-03-Eigenes-Widget-löschen-standard/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #2: video (video/webm) ──────────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-26ae8-T-03-Eigenes-Widget-löschen-standard/video.webm
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #3: trace (application/zip) ─────────────────────────────────────
+    test-results/widgets.basic--minimal-Wid-26ae8-T-03-Eigenes-Widget-löschen-standard/trace.zip
+    Usage:
+        npx playwright show-trace test-results/widgets.basic--minimal-Wid-26ae8-T-03-Eigenes-Widget-löschen-standard/trace.zip
+    ────────────────────────────────────────────────────────────────────────────
+  22) [standard] › specs/widgets.resilience.spec.ts:12:5 › @standard WIDGET-05: Backend-Fehler bei Widget-Erstellung liefert 500
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8100
+    Call log:
+      - → POST http://127.0.0.1:8100/api/auth/register
+        - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36
+        - accept: */*
+        - accept-encoding: gzip,deflate,br
+        - content-type: application/json
+        - content-length: 85
+       at ../helpers/auth.ts:178
+      176 |
+      177 |     // Register user
+    > 178 |     const registerRes = await api.post(`${baseUrl}/api/auth/register`, {
+          |                                   ^
+      179 |             data: {email, password, role},
+      180 |     });
+      181 |
+        at createUserWithRole (/Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/helpers/auth.ts:178:32)
+        at loginAsRole (/Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/helpers/auth.ts:208:21)
+        at /Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/specs/widgets.resilience.spec.ts:14:15
+    attachment #1: screenshot (image/png) ──────────────────────────────────────
+    test-results/widgets.resilience--standa-09850-dget-Erstellung-liefert-500-standard/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #2: video (video/webm) ──────────────────────────────────────────
+    test-results/widgets.resilience--standa-09850-dget-Erstellung-liefert-500-standard/video.webm
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #3: trace (application/zip) ─────────────────────────────────────
+    test-results/widgets.resilience--standa-09850-dget-Erstellung-liefert-500-standard/trace.zip
+    Usage:
+        npx playwright show-trace test-results/widgets.resilience--standa-09850-dget-Erstellung-liefert-500-standard/trace.zip
+    ────────────────────────────────────────────────────────────────────────────
+  23) [standard] › specs/widgets.security.spec.ts:14:6 › @minimal Widget Security › @minimal WIDGET-04: Fremdes Widget löschen → 404
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8100
+    Call log:
+      - → POST http://127.0.0.1:8100/api/auth/register
+        - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36
+        - accept: */*
+        - accept-encoding: gzip,deflate,br
+        - content-type: application/json
+        - content-length: 68
+      18 |      const emailA = `owner+${Date.now()}@example.com`;
+      19 |      const pwd = 'Secret1234!';
+    > 20 |      await api.post('/api/auth/register', {data: {email: emailA, password: pwd}});
+         |                ^
+      21 |      const loginA = await (await api.post('/api/auth/login', {form: {username: emailA, password: pwd}})).json();
+      22 |      const w = await createWidget(api, 'Owned by A', '{}', loginA.access_token);
+      23 |
+        at /Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/specs/widgets.security.spec.ts:20:12
+    attachment #1: screenshot (image/png) ──────────────────────────────────────
+    test-results/widgets.security--minimal--65720-remdes-Widget-löschen-→-404-standard/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #2: video (video/webm) ──────────────────────────────────────────
+    test-results/widgets.security--minimal--65720-remdes-Widget-löschen-→-404-standard/video.webm
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #3: trace (application/zip) ─────────────────────────────────────
+    test-results/widgets.security--minimal--65720-remdes-Widget-löschen-→-404-standard/trace.zip
+    Usage:
+        npx playwright show-trace test-results/widgets.security--minimal--65720-remdes-Widget-löschen-→-404-standard/trace.zip
+    ────────────────────────────────────────────────────────────────────────────
+  24) [standard] › specs/widgets.security.spec.ts:44:6 › @minimal Widget Security › @minimal WIDGET-06: XSS in Widget-Name wird escaped in UI
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8100
+    Call log:
+      - → POST http://127.0.0.1:8100/api/auth/register
+        - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36
+        - accept: */*
+        - accept-encoding: gzip,deflate,br
+        - content-type: application/json
+        - content-length: 66
+      46 |              const email = `xss+${Date.now()}@example.com`;
+      47 |              const pwd = 'Secret1234!';
+    > 48 |              await api.post('/api/auth/register', {data: {email, password: pwd}});
+         |                        ^
+      49 |              const login = await (await api.post('/api/auth/login', {form: {username: email, password: pwd}})).json();
+      50 |
+      51 |              // Erstelle Widget mit XSS-Payload im Namen
+        at /Users/tomwerner/IdeaProjects/homewidget-system/tests/e2e/browseri/playwright/specs/widgets.security.spec.ts:48:13
+    attachment #1: screenshot (image/png) ──────────────────────────────────────
+    test-results/widgets.security--minimal--62e17-get-Name-wird-escaped-in-UI-standard/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #2: video (video/webm) ──────────────────────────────────────────
+    test-results/widgets.security--minimal--62e17-get-Name-wird-escaped-in-UI-standard/video.webm
+    ────────────────────────────────────────────────────────────────────────────
+    attachment #3: trace (application/zip) ─────────────────────────────────────
+    test-results/widgets.security--minimal--62e17-get-Name-wird-escaped-in-UI-standard/trace.zip
+    Usage:
+        npx playwright show-trace test-results/widgets.security--minimal--62e17-get-Name-wird-escaped-in-UI-standard/trace.zip
+    ────────────────────────────────────────────────────────────────────────────
+  24 failed
+    [standard] › specs/auth.basic.spec.ts:14:6 › @minimal Auth Basic › @minimal AUTH-01: Login mit gültigen Daten über UI
+    [standard] › specs/auth.basic.spec.ts:33:6 › @minimal Auth Basic › @minimal AUTH-02: Logout über UI
+    [standard] › specs/auth.basic.spec.ts:57:6 › @minimal Auth Basic › @minimal AUTH-03: Login mit falschen Credentials zeigt Fehler
+    [standard] › specs/auth.resilience.spec.ts:72:6 › @standard Auth Resilience › @standard AUTH-06: Abgelaufener Refresh-Token führt zu Re-Login
+    [standard] › specs/auth.resilience.spec.ts:96:6 › @standard Auth Resilience › @standard AUTH-07: Manipuliertes JWT führt zu 401
+    [standard] › specs/feed.spec.ts:14:6 › @standard Feed › @standard FEED-01: Home-Feed zeigt eigene Widgets
+    [standard] › specs/feed.spec.ts:118:6 › @standard Feed › @standard FEED-03: Feed-Rate-Limit zeigt Fehlermeldung
+    [standard] › specs/feed.spec.ts:156:6 › @standard Feed › @standard FEED-04: XSS in Feed-Inhalten wird escaped
+    [standard] › specs/feed.spec.ts:215:6 › @standard Feed › @standard FEED-05: Leerer Feed zeigt passende Nachricht
+    [standard] › specs/freemium.spec.ts:46:6 › @minimal Freemium System › @minimal FREEMIUM-02: Registrierung → Common-Rolle mit Premium-Button
+    [standard] › specs/freemium.spec.ts:87:6 › @minimal Freemium System › @minimal FREEMIUM-03: Premium-Button nur für Common-User sichtbar
+    [standard] › specs/freemium.spec.ts:98:6 › @minimal Freemium System › @minimal FREEMIUM-04: Premium-Button führt echtes Upgrade durch
+    [standard] › specs/freemium.spec.ts:119:6 › @minimal Freemium System › @minimal FREEMIUM-05: Premium-User sehen keinen Upgrade-Button
+    [standard] › specs/infra.resilience.spec.ts:13:6 › @standard Infrastructure Resilience › @standard INFRA-03: Backend nicht erreichbar zeigt Fehler
+    [standard] › specs/infra.resilience.spec.ts:46:6 › @standard Infrastructure Resilience › @standard INFRA-04: CORS-Header sind korrekt gesetzt
+    [standard] › specs/roles.spec.ts:13:6 › @standard Roles › @standard ROLE-01: Demo-Rolle wird korrekt angezeigt
+    [standard] › specs/roles.spec.ts:30:6 › @standard Roles › @standard ROLE-01: Common-Rolle wird korrekt angezeigt
+    [standard] › specs/roles.spec.ts:43:6 › @standard Roles › @standard ROLE-01: Premium-Rolle wird korrekt angezeigt
+    [standard] › specs/widgets.basic.spec.ts:15:6 › @minimal Widget Basic › @minimal WIDGET-01: Eigene Widgets anzeigen nach Login
+    [standard] › specs/widgets.basic.spec.ts:38:6 › @minimal Widget Basic › @minimal WIDGET-02: Widget erstellen und im Feed sehen
+    [standard] › specs/widgets.basic.spec.ts:59:6 › @minimal Widget Basic › @minimal WIDGET-03: Eigenes Widget löschen
+    [standard] › specs/widgets.resilience.spec.ts:12:5 › @standard WIDGET-05: Backend-Fehler bei Widget-Erstellung liefert 500
+    [standard] › specs/widgets.security.spec.ts:14:6 › @minimal Widget Security › @minimal WIDGET-04: Fremdes Widget löschen → 404
+    [standard] › specs/widgets.security.spec.ts:44:6 › @minimal Widget Security › @minimal WIDGET-06: XSS in Widget-Name wird escaped in UI
+  2 skipped
+  6 passed (27.8s)

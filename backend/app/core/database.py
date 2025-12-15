@@ -44,6 +44,9 @@ def _create_engine_with_fallback(url: str):
                     )
                     return create_engine(fallback, echo=False)
 
+        # Für SQLite stabilere Defaults setzen
+        if url.startswith("sqlite://"):
+            return create_engine(url, echo=False, connect_args={"check_same_thread": False})
         return create_engine(url, echo=False)
     except Exception as exc:  # defensive: als letztes Mittel auf /tmp wechseln
         if settings.ENV != "prod":
@@ -65,10 +68,33 @@ def init_db() -> None:
     """
     Initialisiert das Datenbankschema durch Anlegen aller Tabellen.
     """
+    global engine  # Wir ersetzen die Engine ggf. bei Fallback in Nicht‑Prod
     LOG.info(
         "Initializing database schema",
         extra={"env": settings.ENV, "db_url": settings.DATABASE_URL},
     )
+    # In Nicht‑Prod Umgebungen: Schreibprobe für SQLite; bei Fehler auf /tmp ausweichen
+    try:
+        if settings.ENV != "prod" and (
+                settings.DATABASE_URL.startswith("sqlite:///") or settings.DATABASE_URL.startswith("sqlite:////")):
+            try:
+                with engine.begin() as conn:  # type: ignore[attr-defined]
+                    # Mini-Schreibprobe
+                    conn.exec_driver_sql("PRAGMA user_version=1")
+                    conn.exec_driver_sql("PRAGMA user_version")
+            except Exception as exc:  # noqa: BLE001
+                fallback = "sqlite:////tmp/homewidget-e2e.db"
+                LOG.warning(
+                    "db_sqlite_write_probe_failed_fallback_tmp",
+                    extra={"original": settings.DATABASE_URL, "fallback": fallback},
+                    exc_info=exc,
+                )
+                # Engine neu erstellen und global ersetzen
+                engine = _create_engine_with_fallback(fallback)
+    except Exception:
+        # Schreibprobe ist rein diagnostisch; Fehler hier sollen init nicht verhindern
+        LOG.warning("db_sqlite_write_probe_exception", extra={"db_url": settings.DATABASE_URL})
+
     # Modelle importieren, damit sie in den SQLModel-Metadaten registriert sind
     # (verhindert fehlende Tabellen/Spalten, wenn init_db() früh im Lifespan läuft)
     try:  # lokale Importe, um zyklische Abhängigkeiten zu vermeiden

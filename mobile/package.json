@@ -10,8 +10,10 @@
         "ios": "expo run:ios",
         "web": "expo start --web --port 19006",
         "build": "npx expo export --platform web --output-dir web-build",
-        "lint": "eslint .",
+        "lint": "eslint . --cache",
         "test": "jest",
+        "test:ci": "jest --ci",
+        "test:local": "jest --runInBand --detectOpenHandles",
         "e2e": "detox test --config ./detox.config.js",
         "e2e:ios": "detox test -c ios.sim.debug",
         "e2e:android": "detox test -c android.emu.debug",
@@ -22,6 +24,11 @@
         "@expo/metro-runtime": "~6.1.2",
         "@react-navigation/native": "^7.1.25",
         "@react-navigation/native-stack": "^7.8.6",
+        "@react-native-async-storage/async-storage": "^2.1.1",
+        "@react-native-community/netinfo": "^11.4.1",
+        "@tanstack/query-async-storage-persister": "^5.62.8",
+        "@tanstack/react-query": "^5.62.8",
+        "@tanstack/react-query-persist-client": "^5.62.8",
         "expo": "~54.0.29",
         "expo-asset": "~12.0.11",
         "expo-dev-client": "~6.0.20",
@@ -32,12 +39,13 @@
         "react-native": "0.81.5",
         "react-native-safe-area-context": "5.6.2",
         "react-native-screens": "~4.16.0",
-        "react-native-web": "~0.21.2"
+        "react-native-web": "~0.21.2",
+        "zod": "^3.23.8"
     },
     "devDependencies": {
         "@babel/core": "^7.28.5",
         "@eslint/js": "^9.39.1",
-        "@playwright/test": "^1.57.0",
+        "@playwright/test": "1.57.0",
         "@testing-library/react-native": "^12.6.0",
         "@types/jest": "29.5.14",
         "@types/node": "^25.0.0",
@@ -55,6 +63,7 @@
     },
     "jest": {
         "preset": "jest-expo",
+        "cacheDirectory": "<rootDir>/.cache/jest",
         "setupFilesAfterEnv": [
             "@testing-library/react-native/extend-expect"
         ],

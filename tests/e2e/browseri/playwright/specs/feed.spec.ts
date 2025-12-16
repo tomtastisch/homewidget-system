@@ -224,8 +224,8 @@ test.describe('@standard Feed', () => {
 		const widgets = await listWidgets(api, user.access_token);
 		expect(widgets.length).toBe(0);
 		
-		// UI-Validierung: Empty-State wird angezeigt (testID: feed.empty)
-		await expect(page.getByTestId('feed.empty')).toBeVisible();
+		// UI-Validierung: Empty-State wird angezeigt (testID: home.empty)
+		await expect(page.getByTestId('home.empty')).toBeVisible();
 		await expect(page.getByText(/Keine Widgets/i)).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/feed-05-empty.png'});

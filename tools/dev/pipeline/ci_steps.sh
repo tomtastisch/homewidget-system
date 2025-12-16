@@ -316,8 +316,11 @@ step_mobile_jest_tests() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Tests' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "npm test (mobile), falls definiert" \
-        "if jq -e '.scripts.test' package.json > /dev/null 2>&1; then npm test -- --ci --runInBand; else echo 'Kein test-Skript definiert – Tests übersprungen.'; fi"
+    # Bevorzugt ein leichtgewichtiges CI-Testskript, falls vorhanden; fallback auf 'npm test -- --ci'.
+    run_mobile_cmd "npm run test:ci (mobile), falls definiert" \
+        "if jq -e '.scripts[\"test:ci\"]' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' npm run test:ci; \
+         elif jq -e '.scripts.test' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' npm test -- --ci; \
+         else echo 'Kein test- oder test:ci-Skript definiert – Tests übersprungen.'; fi"
 }
 
 ## @brief Mobile Build ausführen, falls ein build-Skript existiert.

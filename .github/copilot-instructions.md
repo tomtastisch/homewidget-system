@@ -1,51 +1,115 @@
-# Richtlinien für umzuset­zenden Code (Tomtastisch)
+# Richtlinien für umzusetzenden Code (Tomtastisch)
 
-Für alle von mir erwarteten Implementierungen gelten folgende Vorgaben:
+Ziel: Produktiv nutzbarer, wartbarer Code mit stabilen Schnittstellen, klarer Schichtentrennung und konsistenter
+In-Code-Dokumentation.
 
-- Produktiv nutzbarer, klar strukturierter Code, kein Demo-/Script-Stil; realistische, dynamische Berechnungen statt Magic Numbers oder `+1`/`−1`-Inkremente.
+## Architektur und Design
+
+- Produktiv nutzbarer, klar strukturierter Code; kein Demo-/Script-Stil.
 - Klare Trennung von:
-    - Kernlogik / Domäne,
-    - I/O und UI/Framework,
+  - Kernlogik/Domäne,
+  - I/O sowie UI/Framework,
     - Konfiguration und Infrastruktur.
-- Kleine, fokussierte Klassen/Funktionen; Komposition vor Vererbung; keine „God Objects“ und keine Methoden mit zu vielen Zuständigkeiten.
-- Orientierung an der bestehenden Architektur und Modulen; öffentliche APIs möglichst stabil halten, neue Features intern integrieren statt zusätzliche `if`/`else`-Pflege beim Aufrufer zu erzwingen.
-- Konfigurierbares Verhalten (Headless, Scaling, Destinations, Pfade, Parameter) über Funktions-/Konstruktorparameter, Config-Objekte oder Environment-Variablen; fachliche Parameter nicht hartkodiert.
-- Konsequente Nutzung von Typannotationen (inkl. `from __future__ import annotations`) mit präzisen Typen aus `typing`; keine unnötigen `Any`-Typen oder untypisierte Sammelparameter.
+- Kleine, fokussierte Funktionen/Klassen; Komposition vor Vererbung; keine „God Objects“ und keine Methoden mit zu
+  vielen Zuständigkeiten.
+- Orientierung an bestehender Architektur/Modulen; öffentliche APIs stabil halten.
+- Neue Features bevorzugt intern integrieren; keine zusätzlichen `if`/`else`-Pflegeketten beim Aufrufer erzwingen.
+
+## Konfiguration und Infrastruktur
+
+- Konfigurierbares Verhalten (z. B. Headless, Scaling, Ziele, Pfade, Parameter) über Funktions-/Konstruktorparameter,
+  Config-Objekte oder Environment-Variablen.
+- Fachliche Parameter nicht hartkodieren; keine Magic Numbers (insbesondere keine `+1`/`−1`-Inkremente ohne fachliche
+  Begründung).
+
+## Typen und Fehlerbehandlung
+
+- Präzise Typen verwenden; keine untypisierten Sammelparameter.
+- Verallgemeinerungen bei Typen und Fehlern vermeiden (sprachübergreifend): keine generischen Top-Typen oder
+  Sammel-Exceptions (z. B. `Any`/`object`/`unknown`/`Error`/`Exception`) als Standard in Kernlogik oder öffentlichen
+  APIs.
+- Stattdessen: präzise Typen, domänenspezifische Fehlerklassen oder Result-Typen; bewusstes Fehler-Mapping an
+  Boundary-Schichten (I/O, Framework).
+- Fehlerbehandlung mit spezifischen Exception-Typen und klaren Fehlermeldungen; kein pauschales `except Exception` ohne
+  triftigen Grund.
+- Kein `sys.exit()` in Kernlogik.
+
+## Code-Style und Benennung
+
+- Sprechende, konsistente Namen.
+- Möglichst geringe Komplexität pro Funktion; Redundanz vermeiden.
+
+### Python-spezifisch (falls Python-Code betroffen)
+
 - PEP-8-konformer Stil:
     - `snake_case` für Funktionen/Variablen,
     - CapWords für Klassen,
     - 4 Leerzeichen Einrückung, keine Tabs.
-- Sprechende, konsistente Namen; möglichst geringe Komplexität pro Funktion, Vermeidung von Redundanz.
-- Öffentliche Module/Klassen/Funktionen mit präzisen, deutschen Docstrings (Zweck, Parameter, Rückgabewerte, Besonderheiten); Modul-Übersichten zentral im jeweiligen `__init__.py` statt redundanter Wiederholungen in allen Dateien.
-- Kommentare nur für nicht offensichtliche Aspekte (z. B. Numerik, Physik/Geometrie, Zustandsmaschinen, Threading/Concurrency, komplexe Algorithmen); keine Codebeispiele, kein Pseudocode und keine How-To-Anleitungen in Kommentaren.
-- Sprache:
-    - Kommentare, Docstrings, In-Code-Dokumentation und erläuternde Textausgaben sind grundsätzlich auf Deutsch zu verfassen.
-    - Antworten und technische Erläuterungen, die im Rahmen dieses Projekts von KI-Systemen generiert werden, haben ebenfalls in deutscher Sprache zu erfolgen.
-    - Ausnahmen sind nur zulässig, wenn externe Spezifikationen, APIs oder Protokolle explizit englische Bezeichnungen oder Meldungen vorgeben (z. B. standardisierte Fehlermeldungen, Protokoll-Namen, RFC-konforme Konstanten).
-- Fehlerbehandlung mit spezifischen Exceptions (`ValueError`, `TypeError`, `RuntimeError`, …) und klaren Fehlermeldungen; kein pauschales `except Exception` ohne triftigen Grund, kein `sys.exit()` in Kernlogik.
-- Logging über das `logging`-Modul statt `print()`; Fokus auf relevante Ereignisse (Fehler/Warnungen, wichtige Statuswechsel, gezielte Debug-Information).
-- Nebenläufigkeit (`threading`, `concurrent.futures`, `asyncio`) nur gezielt einsetzen; gemeinsam genutzter Zustand wird synchronisiert oder über immutable Strukturen / Message-Passing gehandhabt; keine stillen Race-Conditions.
-- Vermeidung von Endlosschleifen, Stagnation und „Hängern“ durch klare Abbruchkriterien (Konvergenz, Toleranzen, Zustandsüberwachung), nicht nur durch reine Timer-Notabschaltungen.
-- Physikalisch/algorithmisch plausible Simulationen mit korrekten Einheiten, sauberer Winkel- und Vektorgeometrie; klare Kriterien für Zustände wie Landung/Crash.
-- Headless- und GUI-Modus teilen sich dieselbe API; Unterschiede werden über Konfiguration/Parameter/Environment gesteuert, nicht über unterschiedliche Aufrufmuster.
-- Testbare Struktur:
-    - Kernlogik frameworkfrei halten,
-    - Unit-Tests und Black-Box-Tests ohne spezielle Hacks möglich machen,
-    - `pytest`-kompatible Tests (Dateinamen `test_*.py`, `assert`-basierte Checks), deterministisch und schnell.
-- Sicherheitsvorgaben:
-    - Keine Secrets (Passwörter, Tokens, API-Keys, personenbezogene Daten) im Code,
-    - Eingaben validieren, bevor sie in Kernlogik, DB oder OS-Operationen fließen,
-    - Keine sensiblen Daten im Logging,
-    - Für Auth/Krypto/Netzwerk nur etablierte Standard- oder geprüfte Bibliotheken, keine Eigenbau-Kryptographie.
-- Externe Abhängigkeiten minimal und bewusst wählen:
-    - Standardbibliothek bevorzugen,
-    - zusätzliche Libraries nur bei klarem technischen Mehrwert,
-    - kein „Library-Zoo“ für triviale Hilfsfunktionen.
-- Kein toter Code, keine ungenutzten Parameter, keine leeren Platzhalter; TODO-Kommentare nur als konkrete, umsetzbare Aufgaben.
+- Konsequente Nutzung von Typannotationen (inkl. `from __future__ import annotations`) mit präzisen Typen aus `typing`.
 
-Innerhalb dieser Grenzen sind verschiedene Stile (funktional vs. objektorientiert, alternative Algorithmen) ausdrücklich erlaubt, solange:
+## In-Code-Dokumentation (Deutsch)
+
+- Kommentare, Docstrings/JSDoc und sonstige In-Code-Dokumentation sind grundsätzlich auf Deutsch zu verfassen.
+- Ausnahmen nur, wenn externe Spezifikationen/APIs/Protokolle explizit englische Bezeichnungen oder standardisierte
+  Meldungen vorgeben (z. B. RFC-konforme Konstanten, HTTP-Header, standardisierte Fehlermeldungen).
+- Öffentliche Module/Klassen/Funktionen mit präzisen, deutschen Docstrings/JSDoc (Zweck, Parameter, Rückgabewerte,
+  Besonderheiten).
+- Bei inhaltlichen Änderungen (Verhalten, Signaturen, Randfälle) sind zugehörige In-Code-Beschreibungen auf Aktualität
+  zu prüfen und an das neue Verhalten anzupassen; veraltete oder widersprüchliche Texte entfernen.
+- Stil: kompakt, explizit, code-nah; keine direkte Ansprache (`du`, `wir`), keine Unsicherheitsmarker (`wahrscheinlich`,
+  `vermutlich`), keine Floskeln als Einleitung (z. B. „Hinweis“, „Info“).
+- Kommentare nur für nicht offensichtliche Aspekte (z. B. Numerik, Geometrie, Zustandsmaschinen, Threading/Concurrency,
+  komplexe Algorithmen); keine Codebeispiele, kein Pseudocode, keine How-To-Anleitungen.
+
+## Logging
+
+- Logging über Standard-Logging des jeweiligen Stacks; kein `print()` in Produktivcode.
+- Fokus auf relevante Ereignisse: Fehler/Warnungen, wichtige Statuswechsel, gezielte Debug-Information.
+
+## Nebenläufigkeit und Robustheit
+
+- Nebenläufigkeit (`threading`, `concurrent.futures`, `asyncio` oder Äquivalente) nur gezielt einsetzen.
+- Gemeinsam genutzter Zustand wird synchronisiert oder über immutable Strukturen/Message-Passing gehandhabt; keine
+  stillen Race-Conditions.
+- Vermeidung von Endlosschleifen, Stagnation und „Hängern“ durch klare Abbruchkriterien (Konvergenz, Toleranzen,
+  Zustandsüberwachung), nicht nur durch Timer-Notabschaltungen.
+
+## Algorithmik und Simulation (falls zutreffend)
+
+- Physikalisch/algorithmisch plausibles Verhalten mit korrekten Einheiten sowie sauberer Winkel-/Vektorgeometrie.
+- Klare Kriterien für Zustände wie „Landung/Crash“ oder äquivalente domänenspezifische Zustandswechsel.
+
+## Tests und Qualität
+
+- Testbare Struktur: Kernlogik frameworkfrei halten; Unit-Tests und Black-Box-Tests ohne spezielle Hacks ermöglichen.
+- Tests deterministisch und schnell; bestehende Tests müssen bestehen.
+
+### Python-spezifisch (falls Python-Tests betroffen)
+
+- `pytest`-kompatible Tests (Dateinamen `test_*.py`, `assert`-basierte Checks).
+
+## Sicherheit und Abhängigkeiten
+
+- Keine Secrets (Passwörter, Tokens, API-Keys, personenbezogene Daten) im Code.
+- Eingaben validieren, bevor sie in Kernlogik, DB oder OS-Operationen fließen.
+- Keine sensiblen Daten im Logging.
+- Für Auth/Krypto/Netzwerk nur etablierte, geprüfte Bibliotheken; keine Eigenbau-Kryptographie.
+- Externe Abhängigkeiten minimal und bewusst wählen:
+  - Standardbibliothek/Standard-Frameworkmittel bevorzugen,
+  - zusätzliche Libraries nur bei klarem technischem Mehrwert,
+    - kein „Library-Zoo“ für triviale Hilfsfunktionen.
+
+## Projekt-Dokumentation außerhalb des Codes
+
+- Keine neuen Markdown-Dokumentationsdateien während der Umsetzung anlegen; Projekt-/Architektur-Dokumentation außerhalb
+  des Codes (Markdown) erst nach Finalisierung erstellen bzw. konsolidieren.
+
+## Erlaubte Variationen
+
+Innerhalb dieser Grenzen sind verschiedene Stile (funktional vs. objektorientiert, alternative Algorithmen) erlaubt,
+solange:
 
 - Lesbarkeit und Wartbarkeit verbessert werden,
-- fachliches Verhalten plausibel bleibt,
+- fachliches Verhalten korrekt und plausibel bleibt,
 - Tests bestehen und
 - bestehende öffentliche APIs nicht ohne Not gebrochen werden.

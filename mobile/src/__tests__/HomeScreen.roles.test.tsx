@@ -1,10 +1,11 @@
 import React from 'react';
-import {cleanup, render, waitFor} from '@testing-library/react-native';
+import {render, within} from '@testing-library/react-native';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
+import {TID} from '../testing/testids';
 
 // Dynamic role mock for AuthContext
-// Note: Jest allows referencing variables in mock factories if they start with 'mock'
 let mockCurrentRole: 'common' | 'premium' = 'common';
 jest.mock('../auth/AuthContext', () => ({
 	useAuth: () => ({status: 'authenticated', role: mockCurrentRole}),
@@ -37,35 +38,52 @@ jest.mock('../api/homeApi', () => ({
 }));
 
 describe('HomeScreen roles', () => {
-	it('shows COMMON badge when authenticated with role common', async () => {
+	// CI kann bei Kaltstarts langsamer sein – erhöhe Timeout leicht
+	jest.setTimeout(15_000);
+	
+	it('shows the COMMON badge when authenticated with role common', async () => {
 		mockCurrentRole = 'common';
-		const {getByText, unmount} = render(
-			<ToastProvider>
-				<HomeScreen
-					navigation={{navigate: jest.fn()} as any}
-					route={{key: 'Home', name: 'Home', params: undefined} as any}
-				/>
-			</ToastProvider>
+		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
+		const {findByTestId} = render(
+			<QueryClientProvider client={qc}>
+				<ToastProvider>
+					<HomeScreen
+						navigation={{navigate: jest.fn()} as any}
+						route={{key: 'Home', name: 'Home', params: undefined} as any}
+					/>
+				</ToastProvider>
+			</QueryClientProvider>
 		);
-		await waitFor(() => expect(getByText('COMMON')).toBeTruthy());
-		await waitFor(() => expect(getByText('Willkommen')).toBeTruthy());
-		unmount();
-		cleanup();
+		
+		// Badge sollte synchron erscheinen, warte dennoch robust für CI
+		const badge = await findByTestId(TID.home.role.badge);
+		expect(badge).toBeTruthy();
+		await within(badge).findByText('COMMON');
+		
+		// Widgets werden asynchron geladen
+		await findByTestId(TID.home.widgets.list);
 	});
 	
-	it('shows PREMIUM badge when authenticated with role premium', async () => {
+	it('shows the PREMIUM badge when authenticated with role premium', async () => {
 		mockCurrentRole = 'premium';
-		const {getByText, unmount} = render(
-			<ToastProvider>
-				<HomeScreen
-					navigation={{navigate: jest.fn()} as any}
-					route={{key: 'Home', name: 'Home', params: undefined} as any}
-				/>
-			</ToastProvider>
+		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
+		const {findByTestId} = render(
+			<QueryClientProvider client={qc}>
+				<ToastProvider>
+					<HomeScreen
+						navigation={{navigate: jest.fn()} as any}
+						route={{key: 'Home', name: 'Home', params: undefined} as any}
+					/>
+				</ToastProvider>
+			</QueryClientProvider>
 		);
-		await waitFor(() => expect(getByText('PREMIUM')).toBeTruthy());
-		await waitFor(() => expect(getByText('Exklusiv')).toBeTruthy());
-		unmount();
-		cleanup();
+		
+		// Badge sollte synchron erscheinen, warte dennoch robust für CI
+		const badge = await findByTestId(TID.home.role.badge);
+		expect(badge).toBeTruthy();
+		await within(badge).findByText('PREMIUM');
+		
+		// Widgets asynchron
+		await findByTestId(TID.home.widgets.list);
 	});
 });

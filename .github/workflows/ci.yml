@@ -91,6 +91,14 @@ jobs:
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh mobile_typescript_check
 
+            -   name: ♻️ Restore Jest/Babel Cache
+                uses: actions/cache@v4
+                with:
+                    path: |
+                        mobile/.cache/jest
+                        mobile/.cache/babel.json
+                    key: jest-babel-${{ runner.os }}-${{ hashFiles('mobile/package-lock.json') }}
+
             -   name: 🧪 Mobile Tests
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh mobile_jest_tests

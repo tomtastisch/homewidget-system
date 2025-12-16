@@ -171,6 +171,17 @@ step_e2e_expo_web_start() {
         return 1
     fi
     
+    # Timing-Konfiguration kopieren (Prerequisite für App-Start)
+    log_info "Kopiere Timing-Konfiguration..."
+    (
+        cd "${MOBILE_DIR}" || exit 1
+        ensure_npm || exit 1
+        node tools/copy_timing_public.mjs || {
+            log_error "Fehler beim Kopieren der Timing-Konfiguration"
+            exit 1
+        }
+    ) || return 1
+    
     log_info "Starte Expo-Web im E2E-Modus (Port 19006)..."
     (
         cd "${MOBILE_DIR}" || exit 1

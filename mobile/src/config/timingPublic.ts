@@ -4,14 +4,14 @@ import {DEFAULT_TIMING_PUBLIC} from './timingDefaults';
 import {logger} from '../logging/logger';
 
 // Hinweis: Es werden ausschließlich PUBLIC‑Timings geladen.
-// Quelle: ../../../config/timing.public.json
+// Quelle: Wird im Prebuild aus ../../config/timing.public.json nach ./_generated.timing.public.json kopiert
 // Profilwahl: via ENV `HW_PROFILE` (Fallback: "dev").
 // JSON statisch importieren (Build‑time) – kein Zugriff auf serverseitige Timings.
 // Der Pfad ist relativ vom mobilen Quellcode zum Monorepo‑Root.
 // resolveJsonModule ist in tsconfig aktiviert.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore – Typ wird per Zod validiert
-import RAW_TIMING from '../../../config/timing.public.json';
+import RAW_TIMING from './_generated.timing.public.json';
 
 /**
  * Loader für timing.public.json (nur PUBLIC‑Werte)

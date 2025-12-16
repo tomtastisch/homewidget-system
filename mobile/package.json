@@ -5,6 +5,7 @@
     "type": "module",
     "main": "expo-entry.js",
     "scripts": {
+        "prebuild": "node tools/copy_timing_public.mjs",
         "start": "expo start",
         "android": "expo run:android",
         "ios": "expo run:ios",

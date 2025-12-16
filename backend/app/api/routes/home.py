@@ -22,7 +22,15 @@ LOG = get_logger("api.home")
 _rate_limiter = InMemoryRateLimiter()
 _FEED_RULE_CACHE: RateRule | None = None
 _FEED_RULE_CACHE_TS: float | None = None
-_FEED_RULE_TTL_SECONDS = 5.0  # leichtes Caching zur Reduktion von Overhead
+# Warum genau 5 Sekunden TTL?
+# - Maximale Verzögerung für Konfig-/Timing-Änderungen bleibt gering (≤ 5s),
+#   d. h. Updates greifen quasi „sofort“ aus Sicht des Nutzers.
+# - Der Endpoint wird sehr häufig aufgerufen; ein kurzer TTL-Cache reduziert
+#   den Overhead (I/O/Parsing) von get_feed_rate_rule() signifikant, ohne die
+#   Gefahr veralteter Regeln spürbar zu erhöhen.
+# - Regel-/Konfig-Änderungen sind selten, daher ist 5s ein pragmatischer
+#   Kompromiss zwischen Aktualität und Effizienz.
+_FEED_RULE_TTL_SECONDS = 5.0
 
 
 def _current_feed_rule() -> RateRule:

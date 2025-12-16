@@ -12,6 +12,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from .config import settings
 from .logging_config import get_logger
 
+DB_SCHEMA_VERSION = 1  # Dokumentiert die aktuelle Schema-Version für SQLite PRAGMA user_version
 
 def _create_engine_with_fallback(url: str):
     """
@@ -82,7 +83,7 @@ def init_db() -> None:
                     # Mini-Schreibprobe
                     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
                     # language=SQL, dialect=SQLite
-                    conn.exec_driver_sql("PRAGMA user_version=1")
+                    conn.exec_driver_sql(f"PRAGMA user_version={DB_SCHEMA_VERSION}")
                     # noinspection SqlDialectInspection,SqlNoDataSourceInspection
                     # language=SQL, dialect=SQLite
                     conn.exec_driver_sql("PRAGMA user_version")

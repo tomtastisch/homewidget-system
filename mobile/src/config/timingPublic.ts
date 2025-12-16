@@ -25,6 +25,8 @@ import RAW_TIMING from './_generated.timing.public.json';
  *
  * Profilwahl:
  * - Via ENV `HW_PROFILE` (zur Build/Runtime je nach Plattform verfügbar). Fallback: "dev".
+ * - Hinweis: In React Native/Metro wird process.env typischerweise zur Buildzeit ersetzt.
+ *   Ein Profilwechsel zur Laufzeit erfordert daher in der Regel einen Rebuild der App.
  *
  * Validierung:
  * - Striktes Zod‑Schema (unknown keys → Fehler).
@@ -90,7 +92,7 @@ export type TimingPublic = z.infer<typeof TimingPublicSchema>;
 let cached: TimingPublic | null = null;
 
 function getHwProfile(): string {
-	// In Expo/Metro ist process.env zur Buildzeit verfügbar, Fallback auf "dev"
+	// In Expo/Metro wird process.env zur Buildzeit aufgelöst; Fallback auf "dev" bei fehlendem Wert
 	return (typeof process !== 'undefined' && process.env && process.env.HW_PROFILE) || 'dev';
 }
 

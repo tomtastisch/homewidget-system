@@ -1,6 +1,7 @@
 // Zentrale Grenzen (Clamp) für PUBLIC-Timings.
 // Diese Konstanten werden sowohl im Loader als auch in Test-Utilities verwendet,
 // um Duplikate und Abweichungen zu vermeiden.
+import {logger} from '../logging/logger';
 
 export const TIMING_LIMITS = {
 	requestTimeoutMs: {min: 2_000, max: 60_000},
@@ -18,7 +19,6 @@ export const TIMING_LIMITS = {
 } as const;
 
 export type TimingLimits = typeof TIMING_LIMITS;
-import {logger} from '../logging/logger';
 
 /**
  * Sicheres Clamp mit Eingabevalidierung und Schutz vor NaN/undefinierten Werten.

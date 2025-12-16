@@ -103,6 +103,10 @@ class ServerTimingsView(TypedDict):
 
 CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "timing.server.json"
 
+# Fallback-Werte als benannte Konstanten, um Magic Numbers zu vermeiden
+FALLBACK_RATE_LIMIT_COUNT = 1000
+FALLBACK_RATE_LIMIT_WINDOW_SECONDS = 60
+
 
 def _active_env() -> str:
     # Fällt auf dev zurück, wenn nichts gesetzt ist
@@ -276,4 +280,4 @@ def _parse_rate_rule_expr(expr: str) -> RateRuleView:
     except Exception as exc:  # pragma: no cover - defensive fallback
         logging.getLogger("config.timing").error("invalid_rate_limit_expr", extra={"expr": expr})
         # Sehr großzügiger Fallback in dev/test
-        return RateRuleView(count=1000, window_seconds=60)
+        return RateRuleView(count=FALLBACK_RATE_LIMIT_COUNT, window_seconds=FALLBACK_RATE_LIMIT_WINDOW_SECONDS)

@@ -1,6 +1,9 @@
 import {QueryClient} from '@tanstack/react-query';
 import {getTimingPublic} from '../config/timingPublic';
 
+// Hinweis: Wir verwenden @tanstack/react-query v5.x (siehe mobile/package.json).
+// Die Optionen 'staleTime' und 'gcTime' sind v5-APIs; Typenstand kann je nach Minor-Version variieren.
+
 let singleton: QueryClient | null = null;
 
 export function getQueryClient(): QueryClient {

@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test} from '@jest/globals';
+import {beforeEach, describe, expect, test, afterAll} from '@jest/globals';
 import {__resetQueryClientForTests, getQueryClient} from '../query/queryClient';
 import {__resetTimingPublicCacheForTests} from '../config/timingPublic';
 import {withHwProfile} from '../test/utils/env';
@@ -7,6 +7,10 @@ describe('QueryClient retry/backoff & timings', () => {
 	beforeEach(() => {
 		__resetQueryClientForTests();
 		__resetTimingPublicCacheForTests();
+	});
+	
+	afterAll(() => {
+		__resetQueryClientForTests();
 	});
 	
 	test('dev profile: exponential retryDelay with cap; correct stale/gc mapping', () => {

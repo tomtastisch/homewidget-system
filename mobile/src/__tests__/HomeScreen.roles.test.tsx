@@ -1,4 +1,5 @@
 import React from 'react';
+import {afterEach, describe, expect, it} from '@jest/globals';
 import {render, within} from '@testing-library/react-native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
@@ -38,14 +39,23 @@ jest.mock('../api/homeApi', () => ({
 }));
 
 describe('HomeScreen roles', () => {
+	let queryClient: QueryClient;
+	
 	// CI kann bei Kaltstarts langsamer sein – erhöhe Timeout leicht
 	jest.setTimeout(15_000);
 	
+	afterEach(() => {
+		if (queryClient) {
+			queryClient.clear();
+			queryClient.unmount?.();
+		}
+	});
+	
 	it('shows the COMMON badge when authenticated with role common', async () => {
 		mockCurrentRole = 'common';
-		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
+		queryClient = new QueryClient({defaultOptions: {queries: {retry: false, gcTime: 0}}});
 		const {findByTestId} = render(
-			<QueryClientProvider client={qc}>
+			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
 						navigation={{navigate: jest.fn()} as any}
@@ -66,9 +76,9 @@ describe('HomeScreen roles', () => {
 	
 	it('shows the PREMIUM badge when authenticated with role premium', async () => {
 		mockCurrentRole = 'premium';
-		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
+		queryClient = new QueryClient({defaultOptions: {queries: {retry: false, gcTime: 0}}});
 		const {findByTestId} = render(
-			<QueryClientProvider client={qc}>
+			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
 						navigation={{navigate: jest.fn()} as any}

@@ -47,7 +47,6 @@ export function getQueryClient(): QueryClient {
 export function __resetQueryClientForTests() {
 	if (singleton) {
 		singleton.clear();
-		singleton.removeQueries();
 		singleton.unmount();
 	}
 	singleton = null;

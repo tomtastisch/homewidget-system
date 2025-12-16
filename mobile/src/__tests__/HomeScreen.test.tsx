@@ -43,7 +43,6 @@ describe('HomeScreen', () => {
 	afterEach(() => {
 		if (queryClient) {
 			queryClient.clear();
-			queryClient.removeQueries();
 			queryClient.unmount();
 		}
 	});

@@ -20,12 +20,13 @@ fi
 
 usage() {
     cat <<USAGE
-Verwendung: tools/dev/orchestration/run_steps.sh [all|backend|mobile|tests]
+Verwendung: tools/dev/orchestration/run_steps.sh [all|backend|mobile|tests|mobile_jest_tests]
 
   all        Vollständige Pipeline (Backend + Mobile)
   backend    Nur Backend-Pipeline
   mobile     Nur Mobile-Pipeline
   tests      Nur Test-Pipeline
+  mobile_jest_tests  Nur die mobilen Jest-Tests (entspricht ci_steps.sh mobile_jest_tests)
 USAGE
 }
 
@@ -44,6 +45,9 @@ main() {
             ;;
         tests)
             bash "${CI_STEPS}" pipeline_tests
+            ;;
+        mobile_jest_tests)
+            bash "${CI_STEPS}" mobile_jest_tests
             ;;
         *)
             echo "[run-steps][ERROR] Unbekanntes Ziel: ${target}" >&2

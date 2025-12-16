@@ -41,6 +41,8 @@ export default defineConfig({
 	retries: process.env.CI ? 1 : 0,
 	fullyParallel: false,
 	reporter: [['list']],
+	// Warms up Expo-Web vor Teststart über globalSetup (siehe global-setup.ts)
+	globalSetup: './global-setup.ts',
 	use: {
 		// baseURL zeigt auf das Expo-Web-Frontend für UI-Interaktionen
 		baseURL: webBaseURL,

@@ -6,6 +6,8 @@
     "main": "expo-entry.js",
     "scripts": {
         "prebuild": "node tools/copy_timing_public.mjs",
+        "pretest": "node tools/copy_timing_public.mjs",
+        "pretest:ci": "node tools/copy_timing_public.mjs",
         "start": "expo start",
         "android": "expo run:android",
         "ios": "expo run:ios",
@@ -69,6 +71,7 @@
             "@testing-library/react-native/extend-expect",
             "<rootDir>/src/test/setup.ts"
         ],
+        "forceExit": true,
         "transformIgnorePatterns": [
             "node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|expo(nent)?|@expo(nent)?|@expo-google-fonts|react-native-svg|react-native-vector-icons|react-clone-referenced-element|@testing-library))"
         ]

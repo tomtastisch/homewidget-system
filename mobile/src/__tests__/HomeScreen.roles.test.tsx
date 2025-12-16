@@ -51,8 +51,10 @@ describe('HomeScreen roles', () => {
 				</ToastProvider>
 			</QueryClientProvider>
 		);
-		await waitFor(() => expect(getByText('COMMON')).toBeTruthy());
-		await waitFor(() => expect(getByText('Willkommen')).toBeTruthy());
+  // Badge hängt nicht von async Daten ab → sofort prüfen
+  expect(getByText('COMMON')).toBeTruthy();
+  // Widgets werden asynchron geladen
+  await waitFor(() => expect(getByText('Willkommen')).toBeTruthy());
 		unmount();
 		cleanup();
 	});
@@ -70,8 +72,10 @@ describe('HomeScreen roles', () => {
 				</ToastProvider>
 			</QueryClientProvider>
 		);
-		await waitFor(() => expect(getByText('PREMIUM')).toBeTruthy());
-		await waitFor(() => expect(getByText('Exklusiv')).toBeTruthy());
+  // Badge sollte sofort da sein
+  expect(getByText('PREMIUM')).toBeTruthy();
+  // Widgets asynchron
+  await waitFor(() => expect(getByText('Exklusiv')).toBeTruthy());
 		unmount();
 		cleanup();
 	});

@@ -10,8 +10,10 @@
         "ios": "expo run:ios",
         "web": "expo start --web --port 19006",
         "build": "npx expo export --platform web --output-dir web-build",
-        "lint": "eslint .",
-        "test": "jest --ci --runInBand --detectOpenHandles",
+        "lint": "eslint . --cache",
+        "test": "jest",
+        "test:ci": "jest --ci",
+        "test:local": "jest --runInBand --detectOpenHandles",
         "e2e": "detox test --config ./detox.config.js",
         "e2e:ios": "detox test -c ios.sim.debug",
         "e2e:android": "detox test -c android.emu.debug",
@@ -61,6 +63,7 @@
     },
     "jest": {
         "preset": "jest-expo",
+        "cacheDirectory": "<rootDir>/.cache/jest",
         "setupFilesAfterEnv": [
             "@testing-library/react-native/extend-expect"
         ],

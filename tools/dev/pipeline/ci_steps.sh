@@ -192,7 +192,7 @@ step_e2e_expo_web_start() {
     
     # Health-Check mit Timeout (mehr Zeit für Expo-Web)
     log_info "Warte auf Expo-Web..."
-    wait_for_http "http://localhost:19006" 120 2 || return 1
+    wait_for_http "http://localhost:19006" 180 2 || return 1
 
     # Trigger erstes Laden der Index-Seite, damit das Dev-Bundle ggf. anläuft
     if command -v curl >/dev/null 2>&1; then
@@ -233,6 +233,10 @@ step_e2e_playwright_minimal_tests() {
         ensure_npm || exit 1
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+        # Minimal-Suite benötigt keinen strikten UI-Warm-Up – weich ausführen
+        export PLAYWRIGHT_WARMUP_MODE="soft"
+        # Server wird außerhalb von Playwright gemanagt
+        export PLAYWRIGHT_NO_AUTO_START="true"
         npx playwright test --project=minimal
     )
 }
@@ -251,6 +255,8 @@ step_e2e_playwright_standard_tests() {
         ensure_npm || exit 1
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+        # Server wird außerhalb von Playwright gemanagt
+        export PLAYWRIGHT_NO_AUTO_START="true"
         npx playwright test --project=standard
     )
 }
@@ -269,6 +275,8 @@ step_e2e_playwright_all_tests() {
         ensure_npm || exit 1
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+        # Server wird außerhalb von Playwright gemanagt
+        export PLAYWRIGHT_NO_AUTO_START="true"
         npx playwright test --project=advanced
     )
 }

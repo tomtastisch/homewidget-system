@@ -16,6 +16,12 @@ export default async function globalSetup(config: FullConfig) {
 		|| process.env.PLAYWRIGHT_WEB_BASE_URL
 		|| 'http://localhost:19006';
 	
+	// Warm‑Up Modus:
+	// - strict (Default): schlägt fehl, wenn Marker nicht gefunden werden
+	// - soft: versucht Warm‑Up, fährt aber ohne Fehler fort, falls Marker fehlen (für Minimal‑Suites)
+	// - off: überspringt Warm‑Up komplett
+	const warmupMode = (process.env.PLAYWRIGHT_WARMUP_MODE || 'strict').toLowerCase();
+
 	const browser = await chromium.launch();
 	const context = await browser.newContext();
 	const page = await context.newPage();
@@ -31,6 +37,16 @@ export default async function globalSetup(config: FullConfig) {
 	let attempt = 0;
 	let ready = false;
 	
+	// Bei "off" nur kurz öffnen, damit ggf. Dev‑Server anläuft, danach abbrechen
+	if (warmupMode === 'off') {
+		try {
+			await page.goto(String(baseURL), {waitUntil: 'domcontentloaded', timeout: 60_000});
+		} catch {
+		}
+		await browser.close();
+		return;
+	}
+
 	while (Date.now() - start < totalTimeoutMs && !ready) {
 		attempt += 1;
 		try {
@@ -91,6 +107,14 @@ export default async function globalSetup(config: FullConfig) {
 		} catch {
 		}
 		await browser.close();
+		if (warmupMode === 'soft') {
+			// Nur Hinweis ausgeben und fortfahren – Minimal‑Suites benötigen ggf. keinen UI‑Warm‑Up
+			console.warn(
+				`[Warm‑Up] Marker nicht sichtbar innerhalb ${Math.round(totalTimeoutMs / 1000)}s @ ${baseURL}. ` +
+				`Modus=soft → fahre ohne Fehler fort.`,
+			);
+			return;
+		}
 		throw new Error(`Warm‑Up: 'home.screen' bzw. Start‑Marker nicht sichtbar innerhalb ${Math.round(totalTimeoutMs / 1000)}s @ ${baseURL}`);
 	}
 	

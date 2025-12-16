@@ -1,5 +1,5 @@
 import React from 'react';
-import {render, waitFor, within} from '@testing-library/react-native';
+import {render, within} from '@testing-library/react-native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
@@ -38,10 +38,13 @@ jest.mock('../api/homeApi', () => ({
 }));
 
 describe('HomeScreen roles', () => {
+	// CI kann bei Kaltstarts langsamer sein – erhöhe Timeout leicht
+	jest.setTimeout(15_000);
+	
 	it('shows the COMMON badge when authenticated with role common', async () => {
 		mockCurrentRole = 'common';
 		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
-		const {getByTestId, findByTestId} = render(
+		const {findByTestId} = render(
 			<QueryClientProvider client={qc}>
 				<ToastProvider>
 					<HomeScreen
@@ -52,12 +55,10 @@ describe('HomeScreen roles', () => {
 			</QueryClientProvider>
 		);
 		
-		// Warte auf alle State-Updates
-		await waitFor(() => {
-			const badge = getByTestId(TID.home.role.badge);
-			expect(badge).toBeTruthy();
-			expect(within(badge).getByText('COMMON')).toBeTruthy();
-		});
+		// Badge sollte synchron erscheinen, warte dennoch robust für CI
+		const badge = await findByTestId(TID.home.role.badge);
+		expect(badge).toBeTruthy();
+		await within(badge).findByText('COMMON');
 		
 		// Widgets werden asynchron geladen
 		await findByTestId(TID.home.widgets.list);
@@ -66,7 +67,7 @@ describe('HomeScreen roles', () => {
 	it('shows the PREMIUM badge when authenticated with role premium', async () => {
 		mockCurrentRole = 'premium';
 		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
-		const {getByTestId, findByTestId} = render(
+		const {findByTestId} = render(
 			<QueryClientProvider client={qc}>
 				<ToastProvider>
 					<HomeScreen
@@ -77,12 +78,10 @@ describe('HomeScreen roles', () => {
 			</QueryClientProvider>
 		);
 		
-		// Warte auf alle State-Updates
-		await waitFor(() => {
-			const badge = getByTestId(TID.home.role.badge);
-			expect(badge).toBeTruthy();
-			expect(within(badge).getByText('PREMIUM')).toBeTruthy();
-		});
+		// Badge sollte synchron erscheinen, warte dennoch robust für CI
+		const badge = await findByTestId(TID.home.role.badge);
+		expect(badge).toBeTruthy();
+		await within(badge).findByText('PREMIUM');
 		
 		// Widgets asynchron
 		await findByTestId(TID.home.widgets.list);

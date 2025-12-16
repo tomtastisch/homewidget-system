@@ -110,7 +110,7 @@ export default function HomeScreen({ navigation }: Props) {
 				}}/>
 			</View>
 			{!isAuthed && (
-				<View style={styles.demoBanner}>
+				<View style={styles.demoBanner} testID={TID.home.demoBanner}>
 					<Text style={styles.demoBannerText}>Demonstrations‑Ansicht – Inhalte sind Beispiele</Text>
 				</View>
 			)}

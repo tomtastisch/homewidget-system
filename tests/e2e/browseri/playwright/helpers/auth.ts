@@ -17,6 +17,7 @@ const routes = {
 
 const testIds = {
 	// Home-Screen (für unauthentifizierte Nutzer)
+	homeScreen: 'home.screen',
 	homeLoginLink: 'home.loginLink',
 	// Login-Screen
 	loginEmail: 'login.email',
@@ -41,7 +42,10 @@ export async function loginAs(page: Page, email: string, password: string): Prom
 	// Navigate to app root (Home-Screen, auch für unauthentifizierte Nutzer)
 	await page.goto('/');
 	
-	// Warte auf Home-Screen und klicke auf Login-Link
+	// Warte auf Home-Screen gerendert (stabiler Entry-Contract)
+	await page.getByTestId(testIds.homeScreen).waitFor({state: 'visible', timeout: 15_000});
+	
+	// Klicke auf Login-Link
 	const loginLink = page.getByTestId(testIds.homeLoginLink);
 	await loginLink.waitFor({state: 'visible', timeout: 15_000});
 	await loginLink.click();

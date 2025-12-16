@@ -43,7 +43,7 @@ export function QueryProvider({children}: PropsWithChildren) {
 		const cleanupNet = setupOnlineManager();
 		return () => {
 			cleanupFocus?.();
-			cleanupNet?.();
+			cleanupNet();
 		};
 	}, []);
 	

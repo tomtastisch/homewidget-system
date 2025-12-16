@@ -17,7 +17,7 @@ export type FeedPageV1 = z.infer<typeof FeedPageV1>;
 
 export const ContentBlockV1 = z.object({
 	type: z.string(),
-	props: z.record(z.any()).default({}),
+	props: z.record(z.string(), z.unknown()).default({}),
 });
 
 export const ContentSpecV1 = z.object({

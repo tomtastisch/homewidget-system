@@ -1,4 +1,4 @@
-import React, {useCallback, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo} from 'react';
 import {
 	ActivityIndicator,
 	Alert,
@@ -18,6 +18,7 @@ import {parseBackendWidget, type ParsedWidget} from '../types/widgets';
 import {WidgetBanner, WidgetCard} from '../components/widgets';
 import {useToast} from '../ui/ToastContext';
 import {useHomeFeed} from '../hooks/useHomeFeed';
+import {TID} from '../testing/testids';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -64,12 +65,20 @@ export default function HomeScreen({ navigation }: Props) {
 		if (!isAuthed) return null;
 		if (feedQuery.isError) {
 			const e: any = feedQuery.error as any;
-			const msg = e?.message || 'Fehler beim Laden des Feeds.';
-			showError(msg);
-			return msg;
+			return e?.message || 'Fehler beim Laden des Feeds.';
 		}
 		return null;
-	}, [isAuthed, feedQuery.isError, feedQuery.error, showError]);
+	}, [isAuthed, feedQuery.isError, feedQuery.error]);
+	
+	// Zeige den Fehler-Toast nur, wenn sich der Fehlerstatus ändert
+	useEffect(() => {
+		if (!isAuthed) return;
+		if (feedQuery.isError) {
+			const e: any = feedQuery.error as any;
+			const msg = e?.message || 'Fehler beim Laden des Feeds.';
+			showError(msg);
+		}
+	}, [isAuthed, feedQuery.isError, showError]);
 	
 	const parsed: ParsedWidget[] = useMemo(() => widgets.map(parseBackendWidget), [widgets]);
 	
@@ -84,12 +93,13 @@ export default function HomeScreen({ navigation }: Props) {
 	}, []);
 	
 	return (
-		<View style={styles.container}>
+		<View style={styles.container} testID={TID.home.screen}>
 			<View style={styles.header}>
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<Text style={styles.title}>Home‑Feed</Text>
+					<Text style={styles.title} testID={TID.home.header.title}>Home‑Feed</Text>
 					<View
-						style={[styles.badge, !isAuthed ? styles.badgeDemo : role === 'premium' ? styles.badgePremium : styles.badgeCommon]}>
+						style={[styles.badge, !isAuthed ? styles.badgeDemo : role === 'premium' ? styles.badgePremium : styles.badgeCommon]}
+						testID={TID.home.role.badge}>
 						<Text style={styles.badgeText}>{!isAuthed ? 'DEMO' : (role || 'user').toUpperCase()}</Text>
 					</View>
 				</View>
@@ -108,7 +118,7 @@ export default function HomeScreen({ navigation }: Props) {
 				{isAuthed ? (
 					<Button title="Account" onPress={() => navigation.navigate('Account')}/>
 				) : (
-					<TouchableOpacity onPress={() => navigation.navigate('Login')} testID="home.loginLink">
+					<TouchableOpacity onPress={() => navigation.navigate('Login')} testID={TID.home.loginLink}>
 						<Text style={styles.link}>Einloggen oder Registrieren</Text>
 					</TouchableOpacity>
 				)}
@@ -122,15 +132,16 @@ export default function HomeScreen({ navigation }: Props) {
 				</View>
 			)}
 			{loading && !error && (
-				<View style={styles.loadingContainer}>
+				<View style={styles.loadingContainer} testID={TID.home.loading}>
 					<ActivityIndicator size="large" color="#0066cc" testID="loading.spinner"/>
 					<Text style={styles.loadingText}>Laden...</Text>
 				</View>
 			)}
 			<FlatList
+				testID={TID.home.widgets.list}
 				data={parsed}
 				keyExtractor={(w) => String(w.id)}
-				refreshControl={<RefreshControl refreshing={loading} onRefresh={() => feedQuery.refetch()}/>}
+				refreshControl={<RefreshControl refreshing={loading} onRefresh={() => feedQuery.refetch()}/>} 
 				renderItem={({item}) => {
 					const cfg = item.config;
 					switch (cfg.type) {
@@ -158,7 +169,8 @@ export default function HomeScreen({ navigation }: Props) {
 							);
 					}
 				}}
-				ListEmptyComponent={!loading && !error ? <Text testID="feed.empty">Aktuell keine Widgets verfügbar.</Text> : null}
+				ListEmptyComponent={!loading && !error ?
+					<Text testID={TID.home.empty}>Aktuell keine Widgets verfügbar.</Text> : null}
 			/>
 		</View>
 	);

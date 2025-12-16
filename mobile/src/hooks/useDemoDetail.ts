@@ -1,4 +1,4 @@
-import {useQuery} from '@tanstack/react-query';
+import {keepPreviousData, useQuery} from '@tanstack/react-query';
 import {getDemoWidgetDetail} from '../api/demoFeedV1';
 import {getTimingPublic} from '../config/timingPublic';
 
@@ -11,7 +11,7 @@ export function useDemoDetail(id: number | null | undefined) {
 		queryFn: () => getDemoWidgetDetail(normalizedId as number),
 		enabled,
 		staleTime,
-		// Verhindert unnötigen UI-Jitter bei schnellen ID-Wechseln
-		keepPreviousData: true,
+		// Verhindert unnötigen UI-Jitter bei schnellen ID-Wechseln (v5: placeholderData statt keepPreviousData)
+		placeholderData: keepPreviousData,
 	});
 }

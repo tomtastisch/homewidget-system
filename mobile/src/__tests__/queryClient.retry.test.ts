@@ -12,7 +12,6 @@ describe('QueryClient retry/backoff & timings', () => {
 	test('dev profile: exponential retryDelay with cap; correct stale/gc mapping', () => {
 		return withHwProfile('dev', () => {
 			const qc = getQueryClient();
-			// @ts-expect-error: method is available at runtime
 			const defaults = qc.getDefaultOptions();
 			const q = defaults.queries!;
 			expect(q.staleTime).toBe(5_000);
@@ -29,7 +28,6 @@ describe('QueryClient retry/backoff & timings', () => {
 	test('e2e profile: retries disabled and delay returns 0', () => {
 		return withHwProfile('e2e', () => {
 			const qc = getQueryClient();
-			// @ts-expect-error: method is available at runtime
 			const defaults = qc.getDefaultOptions();
 			expect(defaults.queries!.retry).toBe(false);
 			expect(defaults.mutations!.retry).toBe(false);

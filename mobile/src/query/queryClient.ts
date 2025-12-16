@@ -43,7 +43,6 @@ export function getQueryClient(): QueryClient {
 // Nur für Tests: QueryClient‑Singleton zurücksetzen, um Profile zu wechseln
 export function __resetQueryClientForTests() {
 	if (singleton) {
-		// @ts-expect-error tanstack react-query clients expose clear in v5
 		singleton.clear?.();
 	}
 	singleton = null;

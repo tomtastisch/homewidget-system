@@ -5,7 +5,6 @@ describe('clamp validation', () => {
 	test('returns min when value is NaN/undefined', () => {
 		// @ts-expect-error intentional invalid
 		expect(clamp(undefined, 10, 20)).toBe(10);
-		// @ts-expect-error intentional invalid
 		expect(clamp(NaN as any, 5, 7)).toBe(5);
 	});
 	
@@ -15,9 +14,7 @@ describe('clamp validation', () => {
 	});
 	
 	test('repairs invalid bounds to sensible defaults', () => {
-		// @ts-expect-error intentional invalid
 		expect(clamp(5, NaN, 3)).toBe(3);
-		// @ts-expect-error intentional invalid
 		expect(clamp(5, 0, NaN)).toBe(5);
 	});
 });

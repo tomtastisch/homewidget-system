@@ -1,6 +1,6 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import RegisterScreen from './screens/RegisterScreen';
@@ -8,6 +8,7 @@ import AccountScreen from './screens/AccountScreen';
 import {AuthProvider, useAuth} from './auth/AuthContext';
 import {ToastProvider} from './ui/ToastContext';
 import {OfflineIndicator} from './ui/OfflineIndicator';
+import {QueryProvider} from './query/QueryProvider';
 
 export type RootStackParamList = {
 	// Unauth stack
@@ -44,10 +45,12 @@ function Router() {
 export default function App() {
 	return (
 		<ToastProvider>
-			<AuthProvider>
-				<OfflineIndicator />
-				<Router/>
-			</AuthProvider>
+			<QueryProvider>
+				<AuthProvider>
+					<OfflineIndicator/>
+					<Router/>
+				</AuthProvider>
+			</QueryProvider>
 		</ToastProvider>
 	);
 }

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {
 	ActivityIndicator,
 	Alert,
@@ -11,12 +11,13 @@ import {
 	View
 } from 'react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {type BackendWidget, getHomeWidgets} from '../api/homeApi';
+import {type BackendWidget} from '../api/homeApi';
 import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
 import {parseBackendWidget, type ParsedWidget} from '../types/widgets';
 import {WidgetBanner, WidgetCard} from '../components/widgets';
 import {useToast} from '../ui/ToastContext';
+import {useHomeFeed} from '../hooks/useHomeFeed';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -51,38 +52,24 @@ export default function HomeScreen({ navigation }: Props) {
 	const {status, role} = useAuth();
 	const {showError} = useToast();
 	const isAuthed = status === 'authenticated';
-	const [widgets, setWidgets] = useState<BackendWidget[]>([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 	
-	const load = useCallback(async () => {
-		// DEMO: kein Backend-Call (verhindert 401-Spam + „Session expired"-Toasts)
-		if (!isAuthed) {
-			setLoading(false);
-			setError(null);
-			setWidgets(DEMO_WIDGETS);
-			return;
-		}
-
-		setLoading(true);
-		setError(null);
-		try {
-			const data = await getHomeWidgets();
-			setWidgets(data);
-		} catch (e: any) {
+	const feedQuery = useHomeFeed({enabled: isAuthed});
+	
+	const widgets: BackendWidget[] = useMemo(() => {
+		return isAuthed ? (feedQuery.data || []) : DEMO_WIDGETS;
+	}, [isAuthed, feedQuery.data]);
+	
+	const loading = isAuthed ? feedQuery.isFetching : false;
+	const error: string | null = useMemo(() => {
+		if (!isAuthed) return null;
+		if (feedQuery.isError) {
+			const e: any = feedQuery.error as any;
 			const msg = e?.message || 'Fehler beim Laden des Feeds.';
-			setError(msg);
 			showError(msg);
-			setWidgets([]);
-		} finally {
-			setLoading(false);
+			return msg;
 		}
-	}, [isAuthed, showError]);
-	
-	useEffect(() => {
-		// Reload feed when auth status or role changes to reflect personalized content
-		load();
-	}, [isAuthed, role, load]);
+		return null;
+	}, [isAuthed, feedQuery.isError, feedQuery.error, showError]);
 	
 	const parsed: ParsedWidget[] = useMemo(() => widgets.map(parseBackendWidget), [widgets]);
 	
@@ -106,7 +93,11 @@ export default function HomeScreen({ navigation }: Props) {
 						<Text style={styles.badgeText}>{!isAuthed ? 'DEMO' : (role || 'user').toUpperCase()}</Text>
 					</View>
 				</View>
-				<Button title="Neu laden" onPress={load}/>
+				<Button title="Neu laden" onPress={() => {
+					if (isAuthed) {
+						feedQuery.refetch();
+					}
+				}}/>
 			</View>
 			{!isAuthed && (
 				<View style={styles.demoBanner}>
@@ -126,7 +117,7 @@ export default function HomeScreen({ navigation }: Props) {
 				<View style={styles.errorBox}>
 					<Text style={styles.errorText}>{error}</Text>
 					<View style={{marginTop: 8}}>
-						<Button title="Erneut versuchen" onPress={load}/>
+						<Button title="Erneut versuchen" onPress={() => feedQuery.refetch()}/>
 					</View>
 				</View>
 			)}
@@ -139,7 +130,7 @@ export default function HomeScreen({ navigation }: Props) {
 			<FlatList
 				data={parsed}
 				keyExtractor={(w) => String(w.id)}
-				refreshControl={<RefreshControl refreshing={loading} onRefresh={load}/>}
+				refreshControl={<RefreshControl refreshing={loading} onRefresh={() => feedQuery.refetch()}/>}
 				renderItem={({item}) => {
 					const cfg = item.config;
 					switch (cfg.type) {

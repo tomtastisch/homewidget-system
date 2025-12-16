@@ -9,9 +9,9 @@ import {logger} from '../logging/logger';
 // JSON statisch importieren (Build‑time) – kein Zugriff auf serverseitige Timings.
 // Der Pfad ist relativ vom mobilen Quellcode zum Monorepo‑Root.
 // resolveJsonModule ist in tsconfig aktiviert.
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore – Typ wird per Zod validiert
-import RAW_TIMING from './_generated.timing.public.json';
+// JSON über require laden – robust in Jest & Metro (RN). Typ wird per Zod validiert.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const RAW_TIMING = require('./_generated.timing.public.json');
 
 /**
  * Loader für timing.public.json (nur PUBLIC‑Werte)

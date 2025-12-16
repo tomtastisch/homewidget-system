@@ -1,4 +1,6 @@
 import {chromium, type FullConfig} from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * Globales Setup für Playwright: wärmt das Expo‑Web‑Bundle vor Teststart auf.
@@ -18,11 +20,79 @@ export default async function globalSetup(config: FullConfig) {
 	const context = await browser.newContext();
 	const page = await context.newPage();
 	
+	const warmupDir = path.resolve(__dirname, 'test-results', 'warmup');
 	try {
-		await page.goto(String(baseURL), {waitUntil: 'load', timeout: 120_000});
-		// Warten auf stabilen Screen‑Marker statt auf Netzwerklast (HMR/WebSockets laufen weiter)
-		await page.getByTestId('home.screen').waitFor({state: 'visible', timeout: 120_000});
-	} finally {
-		await browser.close();
+		fs.mkdirSync(warmupDir, {recursive: true});
+	} catch {
 	}
+	
+	const totalTimeoutMs = 180_000; // bis zu 3 Minuten nur für Warm‑Up (kein Test‑Timeout)
+	const start = Date.now();
+	let attempt = 0;
+	let ready = false;
+	
+	while (Date.now() - start < totalTimeoutMs && !ready) {
+		attempt += 1;
+		try {
+			// Schnellere erste Paints erlauben (DOM bereit genügt)
+			await page.goto(String(baseURL), {waitUntil: 'domcontentloaded', timeout: 60_000});
+			
+			// Stufe 1: Root vorhanden
+			const hasRoot = await page.locator('#root').first().isVisible().catch(() => false);
+			
+			// Stufe 2: Einer der stabilen Marker sichtbar (home.screen bevorzugt)
+			const homeScreen = page.getByTestId('home.screen');
+			const homeLogin = page.getByTestId('home.loginLink');
+			const demoBanner = page.getByTestId('home.demoBanner');
+			
+			// Kurze, wiederholte Poll‑Wartezeit je Versuch
+			const pollStart = Date.now();
+			while (Date.now() - pollStart < 20_000 && !ready) {
+				if (await homeScreen.isVisible().catch(() => false)) {
+					ready = true;
+					break;
+				}
+				if (await homeLogin.isVisible().catch(() => false)) {
+					ready = true;
+					break;
+				}
+				if (await demoBanner.isVisible().catch(() => false)) {
+					ready = true;
+					break;
+				}
+				await page.waitForTimeout(500);
+			}
+			
+			// Optional: grobe Fehlererkennung der Dev‑Seite (Overlay)
+			if (!ready && hasRoot) {
+				const errorOverlay = await page.getByText(/(Failed to compile|ReferenceError|TypeError|Unhandled Runtime Error)/i).first();
+				if (await errorOverlay.isVisible().catch(() => false)) {
+					// Einmal reloaden und weiter versuchen
+					await page.reload({waitUntil: 'domcontentloaded'});
+				}
+			}
+			
+			if (!ready) {
+				// kurze Backoff‑Pause (steigend bis max 8s)
+				await page.waitForTimeout(Math.min(1000 * attempt, 8000));
+			}
+		} catch (e) {
+			// Ignoriere Zwischenfehler und versuche erneut (Server evtl. noch nicht bereit)
+			await page.waitForTimeout(Math.min(1000 * attempt, 8000));
+		}
+	}
+	
+	if (!ready) {
+		// Diagnose: Screenshot + HTML ablegen
+		try {
+			await page.screenshot({path: path.join(warmupDir, `warmup-timeout.png`), fullPage: true});
+			const html = await page.content();
+			fs.writeFileSync(path.join(warmupDir, `warmup-timeout.html`), html, 'utf-8');
+		} catch {
+		}
+		await browser.close();
+		throw new Error(`Warm‑Up: 'home.screen' bzw. Start‑Marker nicht sichtbar innerhalb ${Math.round(totalTimeoutMs / 1000)}s @ ${baseURL}`);
+	}
+	
+	await browser.close();
 }

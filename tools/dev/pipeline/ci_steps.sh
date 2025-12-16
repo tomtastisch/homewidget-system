@@ -192,7 +192,14 @@ step_e2e_expo_web_start() {
     
     # Health-Check mit Timeout (mehr Zeit für Expo-Web)
     log_info "Warte auf Expo-Web..."
-    wait_for_http "http://localhost:19006" 60 2 || return 1
+    wait_for_http "http://localhost:19006" 120 2 || return 1
+
+    # Trigger erstes Laden der Index-Seite, damit das Dev-Bundle ggf. anläuft
+    if command -v curl >/dev/null 2>&1; then
+        log_info "Trigger initialen Seitenaufruf (Warm‑Up der Dev‑Bundle‑Kompilierung)..."
+        curl -sS --max-time 20 "http://localhost:19006" >/dev/null || true
+        sleep 2
+    fi
 }
 
 ## @brief Playwright-Dependencies installieren.

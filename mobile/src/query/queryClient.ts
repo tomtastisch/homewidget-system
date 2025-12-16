@@ -46,7 +46,9 @@ export function getQueryClient(): QueryClient {
 // Nur für Tests: QueryClient‑Singleton zurücksetzen, um Profile zu wechseln
 export function __resetQueryClientForTests() {
 	if (singleton) {
-		singleton.clear?.();
+		singleton.clear();
+		singleton.removeQueries();
+		singleton.unmount();
 	}
 	singleton = null;
 }

@@ -66,7 +66,8 @@
         "preset": "jest-expo",
         "cacheDirectory": "<rootDir>/.cache/jest",
         "setupFilesAfterEnv": [
-            "@testing-library/react-native/extend-expect"
+            "@testing-library/react-native/extend-expect",
+            "<rootDir>/src/test/setup.ts"
         ],
         "transformIgnorePatterns": [
             "node_modules/(?!((jest-)?react-native|@react-native(-community)?|@react-navigation|expo(nent)?|@expo(nent)?|@expo-google-fonts|react-native-svg|react-native-vector-icons|react-clone-referenced-element|@testing-library))"

@@ -38,12 +38,22 @@ jest.mock('../auth/AuthContext', () => ({
 }));
 
 describe('HomeScreen', () => {
+	let queryClient: QueryClient;
+	
+	afterEach(() => {
+		if (queryClient) {
+			queryClient.clear();
+			queryClient.removeQueries();
+			queryClient.unmount();
+		}
+	});
+	
 	it('renders widgets by type and shows demo banner when unauthenticated', async () => {
-		const qc = new QueryClient({
-			defaultOptions: {queries: {retry: false}},
+		queryClient = new QueryClient({
+			defaultOptions: {queries: {retry: false, gcTime: 0}},
 		});
 		const {getByText, queryByText} = render(
-			<QueryClientProvider client={qc}>
+			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
 						navigation={{navigate: jest.fn()} as any}

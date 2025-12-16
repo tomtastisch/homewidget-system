@@ -8,6 +8,7 @@ from sqlmodel import Session
 
 from app.services.token.blacklist import blacklist_access_token
 from ...api.deps import get_current_user, oauth2_scheme
+from ...config.timing_server_loader import get_login_rate_rule, get_refresh_rate_rule
 from ...core.config import settings
 from ...core.database import get_session
 from ...core.logging_config import get_logger
@@ -15,14 +16,16 @@ from ...core.security import decode_jwt
 from ...core.types.token import ACCESS
 from ...schemas.auth import RefreshRequest, SignupRequest, TokenPair, UserRead
 from ...services.auth_service import AuthService
-from ...services.rate_limit import InMemoryRateLimiter, parse_rule
+from ...services.rate_limit import InMemoryRateLimiter, RateRule
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 LOG = get_logger("api.auth")
 
 rate_limiter = InMemoryRateLimiter()
-login_rule = parse_rule(settings.LOGIN_RATE_LIMIT)
-refresh_rule = parse_rule(settings.REFRESH_RATE_LIMIT)
+_login_srv_rule = get_login_rate_rule()
+_refresh_srv_rule = get_refresh_rate_rule()
+login_rule = RateRule(count=_login_srv_rule.count, window_seconds=_login_srv_rule.window_seconds)
+refresh_rule = RateRule(count=_refresh_srv_rule.count, window_seconds=_refresh_srv_rule.window_seconds)
 
 
 def _perform_signup(payload: SignupRequest, session: Session) -> UserRead:

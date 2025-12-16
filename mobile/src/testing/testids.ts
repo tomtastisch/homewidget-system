@@ -16,6 +16,7 @@ export const TID = {
 			list: 'home.widgets.list',
 		},
 		loginLink: 'home.loginLink',
+		demoBanner: 'home.demoBanner',
 	},
 } as const;
 

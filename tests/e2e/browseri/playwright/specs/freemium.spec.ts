@@ -2,13 +2,14 @@ import {expect, type Page, test} from '@playwright/test';
 import {createUserWithRole, newApiRequestContext} from '../helpers/api';
 import {DEFAULT_PASSWORD, uniqueEmail} from '../helpers/testdata';
 
-const DEMO_BANNER_TITLE = /-20\s% auf alles/i;
+// Stabiler Marker für Demo-Startzustand statt fragiler Marketing-Copy
+const HOME_DEMO_BANNER_TID = 'home.demoBanner';
 
 async function gotoLogin(page: Page): Promise<void> {
 	await page.goto('/');
 	
-	// Demo-Widgets müssen sichtbar sein (zeigt: DEMO + Beispielwidgets)
-	await expect(page.getByText(DEMO_BANNER_TITLE)).toBeVisible({timeout: 10_000});
+	// Demo-Startzustand: stabiler Marker statt Marketing-Text
+	await expect(page.getByTestId(HOME_DEMO_BANNER_TID)).toBeVisible({timeout: 10_000});
 	
 	// In der aktuellen UI gibt es keinen "Registrieren"-Button auf Home,
 	// sondern nur den Link "Einloggen oder Registrieren".
@@ -37,7 +38,7 @@ test.describe('@minimal Freemium System', () => {
 	test('@minimal FREEMIUM-01: Demo-Rolle zeigt Demo-Widgets mit Rabatten', async ({page}) => {
 		await page.goto('/');
 		
-		await expect(page.getByText(DEMO_BANNER_TITLE)).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId(HOME_DEMO_BANNER_TID)).toBeVisible({timeout: 10_000});
 		await expect(page.getByText('Premium Card')).toBeVisible({timeout: 10_000});
 		
 		// Login-Link statt "Registrieren"-Button
@@ -135,7 +136,7 @@ test.describe('@minimal Freemium System', () => {
 	test('@minimal FREEMIUM-06: Demo-User sehen keinen Upgrade-Button', async ({page}) => {
 		await page.goto('/');
 		
-		await expect(page.getByText(DEMO_BANNER_TITLE)).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId(HOME_DEMO_BANNER_TID)).toBeVisible({timeout: 10_000});
 		
 		// Demo hat keinen Account/kein Upgrade
 		await expect(page.getByRole('button', {name: 'Zu Premium upgraden'})).not.toBeVisible({timeout: 2_000});

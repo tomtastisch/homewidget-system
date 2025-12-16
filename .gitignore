@@ -202,12 +202,16 @@ mobile/node_modules/
 # Expo web build artifacts (generated files)
 mobile/web-build/
 
+# Mobile: generierte Konfigurationsartefakte (nicht einchecken)
+mobile/src/config/_generated.timing.public.json
+
 # JetBrains/IDEA project files should not be versioned
 .idea/
 
 # Python caches and bytecode (explicit)
 **/__pycache__/
 *.pyc
+.eslintcache
 
 # Local development database
 homewidget.db
@@ -219,3 +223,4 @@ test_e2e.db
 **/test-results/
 **/.last-run.json
 **/playwright-report/
+/.output.txt

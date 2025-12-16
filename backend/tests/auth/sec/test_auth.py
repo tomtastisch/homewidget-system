@@ -6,8 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from app.core.config import settings
 from tests.utils import auth as auth_utils
+from tests.utils import timing as timing_utils
 
 """
 Integrationstests für die Auth-Endpunkte.
@@ -85,7 +85,7 @@ def test_refresh_with_expired_token_returns_401(client: TestClient) -> None:
     refresh_token = login_data["refresh_token"]
 
     # Zeit über das konfigurierte Refresh-Token-Ablaufdatum hinaus vorspulen
-    future = datetime.now(tz=UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS + 1)
+    future = datetime.now(tz=UTC) + timedelta(seconds=timing_utils.refresh_ttl_seconds() + 1)
     with freeze_time(future, tz_offset=0):
         response = client.post(
             "/api/auth/refresh",
@@ -132,7 +132,7 @@ def test_me_with_expired_access_token_returns_401(client: TestClient) -> None:
     login_data = auth_utils.register_and_login(client, "expired-access@example.com", "SecurePassword123!").json()
     access_token = login_data["access_token"]
 
-    future = datetime.now(tz=UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES + 1)
+    future = datetime.now(tz=UTC) + timedelta(seconds=timing_utils.access_ttl_seconds() + 1)
     with freeze_time(future, tz_offset=0):
         resp = auth_utils.get_me(client, access_token)
     assert resp.status_code == 401

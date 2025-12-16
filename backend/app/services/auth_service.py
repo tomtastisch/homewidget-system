@@ -7,7 +7,11 @@ from typing import Any, cast
 from fastapi import HTTPException, status
 from sqlmodel import Session, select
 
-from ..core.config import settings
+from .token.refresh_lock import get_refresh_lock_manager
+from ..config.timing_server_loader import (
+    get_access_token_ttl,
+    get_refresh_token_ttl,
+)
 from ..core.logging_config import get_logger
 from ..core.security import (
     create_jwt,
@@ -18,7 +22,6 @@ from ..core.security import (
 from ..core.types.token import ACCESS
 from ..models.user import User
 from ..models.widget import RefreshToken
-from .token.refresh_lock import get_refresh_lock_manager
 
 
 def ensure_utc_aware(dt: datetime) -> datetime:
@@ -97,9 +100,12 @@ class AuthService:
         Returns:
             Tuple aus (access_token, refresh_token, expires_in_seconds).
         """
-        access = create_jwt(user.email, settings.access_token_expire, token_type=ACCESS)
+        # Security‑Timings kommen autoritativ aus timing.server.json
+        access_ttl = get_access_token_ttl()
+        refresh_ttl = get_refresh_token_ttl()
+        access = create_jwt(user.email, access_ttl, token_type=ACCESS)
         refresh_token_plain = secrets.token_urlsafe(48)
-        expires_at = datetime.now(tz=UTC) + settings.refresh_token_expire
+        expires_at = datetime.now(tz=UTC) + refresh_ttl
         rt = RefreshToken(
             user_id=user.id,
             token_digest=compute_refresh_token_digest(refresh_token_plain),
@@ -111,7 +117,7 @@ class AuthService:
         return (
             access,
             refresh_token_plain,
-            int(settings.access_token_expire.total_seconds()),
+            int(access_ttl.total_seconds()),
         )
 
     def rotate_refresh(self, token: str) -> tuple[str, str, int, User]:
@@ -133,7 +139,7 @@ class AuthService:
         """
         token_digest = compute_refresh_token_digest(token)
         lock_manager = get_refresh_lock_manager()
-        # Lock für diesen spezifischen Token-Digest erwerben
+        # Lock für diesen spezifischen Token-Digest erwerben.
         # Dies verhindert parallele Refresh-Operationen für denselben Token
         with lock_manager.acquire(token_digest):
             now = datetime.now(tz=UTC)

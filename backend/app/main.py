@@ -36,6 +36,15 @@ def create_app() -> FastAPI:
     """
     setup_logging()
 
+    # Guardrail: Prod darf nur mit HW_PROFILE=prod starten (Fail‑fast)
+    if settings.ENV == "prod":
+        hw_profile = settings.HW_PROFILE
+        ci_flag = os.getenv("CI") in {"1", "true", "True"}
+        if not (hw_profile == "prod" or (hw_profile == "e2e" and ci_flag)):
+            raise RuntimeError(
+                "Guardrail violated: ENV=prod requires HW_PROFILE=prod (or HW_PROFILE=e2e with CI)."
+            )
+
     @asynccontextmanager
     async def lifespan(_: FastAPI):
         # DB & Cache initialisieren

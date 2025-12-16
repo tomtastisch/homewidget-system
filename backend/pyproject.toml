@@ -13,6 +13,7 @@ dependencies = [
   "fastapi-cache2>=0.2",
   "fastapi-limiter>=0.1",
   "pydantic[email]>=2.12.5",
+    "pydantic-settings>=2.6",
   # Required by FastAPI when using form data (e.g., OAuth2PasswordRequestForm)
   "python-multipart>=0.0.20",
     "loguru>=0.7",

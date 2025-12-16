@@ -1,0 +1,71 @@
+{
+    "version": "1.0.0",
+    "profiles": {
+        "prod": {
+            "public": {
+                "query": {
+                    "staleTimeMs": 30000,
+                    "gcTimeMs": 300000
+                },
+                "network": {
+                    "requestTimeoutMs": 15000
+                },
+                "retry": {
+                    "baseDelayMs": 500,
+                    "maxDelayMs": 5000,
+                    "maxRetries": 3
+                },
+                "offline": {
+                    "staleBannerAfterMs": 10000
+                },
+                "prefetch": {
+                    "visiblePlusN": 3
+                }
+            }
+        },
+        "dev": {
+            "public": {
+                "query": {
+                    "staleTimeMs": 5000,
+                    "gcTimeMs": 60000
+                },
+                "network": {
+                    "requestTimeoutMs": 20000
+                },
+                "retry": {
+                    "baseDelayMs": 300,
+                    "maxDelayMs": 3000,
+                    "maxRetries": 2
+                },
+                "offline": {
+                    "staleBannerAfterMs": 5000
+                },
+                "prefetch": {
+                    "visiblePlusN": 5
+                }
+            }
+        },
+        "e2e": {
+            "public": {
+                "query": {
+                    "staleTimeMs": 0,
+                    "gcTimeMs": 1000
+                },
+                "network": {
+                    "requestTimeoutMs": 5000
+                },
+                "retry": {
+                    "baseDelayMs": 0,
+                    "maxDelayMs": 0,
+                    "maxRetries": 0
+                },
+                "offline": {
+                    "staleBannerAfterMs": 0
+                },
+                "prefetch": {
+                    "visiblePlusN": 1
+                }
+            }
+        }
+    }
+}

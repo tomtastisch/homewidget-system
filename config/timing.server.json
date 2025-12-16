@@ -1,0 +1,59 @@
+{
+    "version": "1.0.0",
+    "profiles": {
+        "prod": {
+            "server": {
+                "auth": {
+                    "accessTokenTtlMs": 3600000,
+                    "refreshTokenTtlMs": 2592000000
+                },
+                "security": {
+                    "lockout": {
+                        "maxAttempts": 5,
+                        "cooldownMs": 900000
+                    },
+                    "rateLimit": {
+                        "windowMs": 60000,
+                        "maxRequests": 120
+                    }
+                }
+            }
+        },
+        "dev": {
+            "server": {
+                "auth": {
+                    "accessTokenTtlMs": 7200000,
+                    "refreshTokenTtlMs": 604800000
+                },
+                "security": {
+                    "lockout": {
+                        "maxAttempts": 99,
+                        "cooldownMs": 1000
+                    },
+                    "rateLimit": {
+                        "windowMs": 60000,
+                        "maxRequests": 1000
+                    }
+                }
+            }
+        },
+        "e2e": {
+            "server": {
+                "auth": {
+                    "accessTokenTtlMs": 60000,
+                    "refreshTokenTtlMs": 600000
+                },
+                "security": {
+                    "lockout": {
+                        "maxAttempts": 9999,
+                        "cooldownMs": 0
+                    },
+                    "rateLimit": {
+                        "windowMs": 1000,
+                        "maxRequests": 10000
+                    }
+                }
+            }
+        }
+    }
+}

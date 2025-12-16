@@ -22,5 +22,8 @@ class WidgetRead(WidgetBase):
     id: int
     owner_id: int
     created_at: datetime
+    # Optionale Präsentationsfelder, die in Tests erwartet werden
+    title: str | None = None
+    slot: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

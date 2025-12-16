@@ -46,7 +46,7 @@ describe('HomeScreen roles', () => {
 	afterEach(() => {
 		if (queryClient) {
 			queryClient.clear();
-			queryClient.unmount();
+			queryClient.unmount?.();
 		}
 	});
 	

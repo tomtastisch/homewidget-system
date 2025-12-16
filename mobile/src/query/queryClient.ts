@@ -47,7 +47,7 @@ export function getQueryClient(): QueryClient {
 export function __resetQueryClientForTests() {
 	if (singleton) {
 		singleton.clear();
-		singleton.unmount();
+		singleton.unmount?.();
 	}
 	singleton = null;
 }

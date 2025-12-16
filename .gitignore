@@ -208,6 +208,7 @@ mobile/web-build/
 # Python caches and bytecode (explicit)
 **/__pycache__/
 *.pyc
+.eslintcache
 
 # Local development database
 homewidget.db

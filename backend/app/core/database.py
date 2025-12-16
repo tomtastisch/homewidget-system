@@ -80,7 +80,11 @@ def init_db() -> None:
             try:
                 with engine.begin() as conn:  # type: ignore[attr-defined]
                     # Mini-Schreibprobe
+                    # noinspection SqlDialectInspection,SqlNoDataSourceInspection
+                    # language=SQL, dialect=SQLite
                     conn.exec_driver_sql("PRAGMA user_version=1")
+                    # noinspection SqlDialectInspection,SqlNoDataSourceInspection
+                    # language=SQL, dialect=SQLite
                     conn.exec_driver_sql("PRAGMA user_version")
             except Exception as exc:  # noqa: BLE001
                 fallback = "sqlite:////tmp/homewidget-e2e.db"
@@ -97,12 +101,31 @@ def init_db() -> None:
 
     # Modelle importieren, damit sie in den SQLModel-Metadaten registriert sind
     # (verhindert fehlende Tabellen/Spalten, wenn init_db() früh im Lifespan läuft)
-    try:  # lokale Importe, um zyklische Abhängigkeiten zu vermeiden
-        from ..models.user import User  # noqa: F401
-        from ..models.widget import Widget, RefreshToken  # noqa: F401
-    except Exception as exc:  # pragma: no cover - defensive
-        LOG.warning("model_import_failed", extra={"error": str(exc)})
+    # Nur importieren, wenn die Metadaten noch leer sind, um unnötige Seiteneffekte zu vermeiden.
+    if not SQLModel.metadata.tables:
+        try:  # lokale Importe, um zyklische Abhängigkeiten zu vermeiden
+            from ..models.user import User  # noqa: F401
+            from ..models.widget import Widget, RefreshToken  # noqa: F401
+        except Exception as exc:  # pragma: no cover - defensive
+            LOG.warning("model_import_failed", extra={"error": str(exc)})
     SQLModel.metadata.create_all(engine)
+
+    # Leichte Auto‑Migrationen für SQLite in Nicht‑Prod:
+    # Füge fehlende Spalten hinzu, die in älteren lokalen DB‑Dateien fehlen können.
+    try:
+        if settings.ENV != "prod" and settings.DATABASE_URL.startswith("sqlite://"):
+            with engine.begin() as conn:  # type: ignore[attr-defined]
+                # Prüfe, ob 'role' in Tabelle 'users' existiert
+                res = conn.exec_driver_sql("PRAGMA table_info('users')")
+                cols = {row[1] for row in res.fetchall()}  # row[1] = name
+                if "role" not in cols:
+                    LOG.warning("db_auto_migrate_add_users_role")
+                    # SQLite: ALTER TABLE ADD COLUMN mit Default
+                    # noinspection SqlDialectInspection,SqlNoDataSourceInspection
+                    # language=SQL, dialect=SQLite
+                    conn.exec_driver_sql("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'common'")
+    except Exception as exc:  # pragma: no cover - Migration darf init nicht verhindern
+        LOG.warning("db_sqlite_auto_migrate_failed", exc_info=exc)
     LOG.info("Database schema ready")
 
 

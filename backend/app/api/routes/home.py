@@ -31,7 +31,7 @@ def _current_feed_rule() -> RateRule:
 
     Hinweis: bewusst „lazy“ pro Request, damit Timing-/Config-Updates sofort greifen.
     """
-    # kleines TTL-Cache, um häufige Aufrufe zu entlasten
+    # kleiner TTL-Cache, um häufige Aufrufe zu entlasten
     import time
 
     global _FEED_RULE_CACHE, _FEED_RULE_CACHE_TS
@@ -73,8 +73,12 @@ def get_feed(
 
     LOG.debug("fetching_feed_for_user", extra={"user_email": user.email})
     widgets = HomeFeedService(session).get_user_widgets(user)
-    LOG.info("feed_delivered", extra={"count": len(widgets)})
-    return widgets
+    # ORM -> Schema konvertieren, um genau list[WidgetRead] zurückzugeben
+    widgets_read: list[WidgetRead] = [
+        WidgetRead.model_validate(w, from_attributes=True) for w in widgets
+    ]
+    LOG.info("feed_delivered", extra={"count": len(widgets_read)})
+    return widgets_read
 
 
 @router.get("/feed_v1", response_model=FeedPageV1)
@@ -97,7 +101,9 @@ def get_feed_v1(
         if real_page and real_page.items:
             LOG.info("feed_v1_real_delivered", extra={"count": len(real_page.items)})
             return real_page
+
         LOG.info("feed_v1_real_empty_fallback_to_fixtures")
+
     except Exception as exc:  # noqa: BLE001
         LOG.warning(
             "feed_v1_real_exception_fallback",

@@ -11,7 +11,7 @@
         "web": "expo start --web --port 19006",
         "build": "npx expo export --platform web --output-dir web-build",
         "lint": "eslint .",
-        "test": "jest",
+        "test": "jest --ci --runInBand --detectOpenHandles",
         "e2e": "detox test --config ./detox.config.js",
         "e2e:ios": "detox test -c ios.sim.debug",
         "e2e:android": "detox test -c android.emu.debug",

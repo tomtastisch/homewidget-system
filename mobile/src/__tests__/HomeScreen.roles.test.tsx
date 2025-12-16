@@ -1,5 +1,6 @@
 import React from 'react';
 import {cleanup, render, waitFor} from '@testing-library/react-native';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
 
@@ -39,13 +40,16 @@ jest.mock('../api/homeApi', () => ({
 describe('HomeScreen roles', () => {
 	it('shows COMMON badge when authenticated with role common', async () => {
 		mockCurrentRole = 'common';
+		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
 		const {getByText, unmount} = render(
-			<ToastProvider>
-				<HomeScreen
-					navigation={{navigate: jest.fn()} as any}
-					route={{key: 'Home', name: 'Home', params: undefined} as any}
-				/>
-			</ToastProvider>
+			<QueryClientProvider client={qc}>
+				<ToastProvider>
+					<HomeScreen
+						navigation={{navigate: jest.fn()} as any}
+						route={{key: 'Home', name: 'Home', params: undefined} as any}
+					/>
+				</ToastProvider>
+			</QueryClientProvider>
 		);
 		await waitFor(() => expect(getByText('COMMON')).toBeTruthy());
 		await waitFor(() => expect(getByText('Willkommen')).toBeTruthy());
@@ -55,13 +59,16 @@ describe('HomeScreen roles', () => {
 	
 	it('shows PREMIUM badge when authenticated with role premium', async () => {
 		mockCurrentRole = 'premium';
+		const qc = new QueryClient({defaultOptions: {queries: {retry: false}}});
 		const {getByText, unmount} = render(
-			<ToastProvider>
-				<HomeScreen
-					navigation={{navigate: jest.fn()} as any}
-					route={{key: 'Home', name: 'Home', params: undefined} as any}
-				/>
-			</ToastProvider>
+			<QueryClientProvider client={qc}>
+				<ToastProvider>
+					<HomeScreen
+						navigation={{navigate: jest.fn()} as any}
+						route={{key: 'Home', name: 'Home', params: undefined} as any}
+					/>
+				</ToastProvider>
+			</QueryClientProvider>
 		);
 		await waitFor(() => expect(getByText('PREMIUM')).toBeTruthy());
 		await waitFor(() => expect(getByText('Exklusiv')).toBeTruthy());

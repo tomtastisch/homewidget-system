@@ -1,5 +1,6 @@
 import React from 'react';
 import {render, waitFor} from '@testing-library/react-native';
+import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
 
@@ -38,13 +39,18 @@ jest.mock('../auth/AuthContext', () => ({
 
 describe('HomeScreen', () => {
 	it('renders widgets by type and shows demo banner when unauthenticated', async () => {
+		const qc = new QueryClient({
+			defaultOptions: {queries: {retry: false}},
+		});
 		const {getByText, queryByText} = render(
-			<ToastProvider>
-				<HomeScreen
-					navigation={{navigate: jest.fn()} as any}
-					route={{key: 'Home', name: 'Home', params: undefined} as any}
-				/>
-			</ToastProvider>
+			<QueryClientProvider client={qc}>
+				<ToastProvider>
+					<HomeScreen
+						navigation={{navigate: jest.fn()} as any}
+						route={{key: 'Home', name: 'Home', params: undefined} as any}
+					/>
+				</ToastProvider>
+			</QueryClientProvider>
 		);
 		
 		expect(getByText('Home‑Feed')).toBeTruthy();

@@ -155,8 +155,8 @@ export default function HomeScreen({ navigation }: Props) {
 				renderItem={({item}) => (
 					<WidgetCard
 						title={item.name}
-						description={`Widget #${item.id}`}
-						ctaLabel="Details ansehen"
+						description=""
+						ctaLabel="Mehr"
 						onPress={() => onPressWidget(item.id)}
 					/>
 				)}

@@ -37,7 +37,7 @@ test.describe('@standard Feed', () => {
 		await loginAs(page, user.email, user.password);
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
-		// Warte auf stabilen Netz- & UI-Zustand statt hartem Sleep
+		// Zustandsbasiertes Warten auf stabilen Netz- & UI-Zustand
 		await waitForNetworkIdle(page, budgets.feedLoadMs);
 		
 		// Verifiziere, dass Feed geladen wurde (über API)

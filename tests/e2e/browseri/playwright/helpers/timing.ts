@@ -9,6 +9,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 type TimingPublic = {
 	query: { staleTimeMs: number; gcTimeMs: number };

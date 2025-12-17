@@ -61,7 +61,7 @@ test.describe('@standard Auth Resilience', () => {
 		await page.getByTestId('login.submit').click();
 		
 		// Erwarte Fehler (entweder UI-Validierung oder Backend-Fehler)
-		// Warte deterministisch auf Ruhe im Netzwerk/DOM statt hartem Sleep
+		// Zustandsbasiertes Warten auf Ruhe im Netzwerk/DOM
 		await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 		
 		// Verifiziere: Login-Form noch sichtbar

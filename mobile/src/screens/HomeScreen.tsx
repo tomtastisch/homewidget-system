@@ -16,42 +16,67 @@ import {useAuth} from '../auth/AuthContext';
 import {WidgetCard} from '../components/widgets';
 import {useToast} from '../ui/ToastContext';
 import {useHomeFeedInfinite} from '../hooks/useHomeFeedInfinite';
+import {useHomeFeed} from '../hooks/useHomeFeed';
 import type {WidgetContractV1} from '../api/schemas/v1';
 import {TID} from '../testing/testids';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+
+// Temporäres Widget-Interface für Authenticated-Flow bis Migration abgeschlossen
+interface LegacyWidget {
+	id: number;
+	name: string;
+}
 
 export default function HomeScreen({ navigation }: Props) {
 	const {status, role} = useAuth();
 	const {showError} = useToast();
 	const isAuthed = status === 'authenticated';
 	
-	// Nutze InfiniteQuery für Demo-Flow (unauth); auth-Flow kann später erweitert werden
-	const feedQuery = useHomeFeedInfinite(20, !isAuthed);
+	// Demo-Flow (unauth): Nutze InfiniteQuery auf feed_v1
+	const demoFeedQuery = useHomeFeedInfinite(20, !isAuthed);
 	
-	// Flatten pages zu einer Liste von Widgets
-	const widgets: WidgetContractV1[] = useMemo(() => {
-		if (!feedQuery.data?.pages) return [];
-		return feedQuery.data.pages.flatMap(page => page.items);
-	}, [feedQuery.data]);
+	// Auth-Flow: Nutze vorerst alte Query (Übergangsphase)
+	const authFeedQuery = useHomeFeed({enabled: isAuthed});
 	
-	const loading = feedQuery.isFetching && !feedQuery.isFetchingNextPage;
+	// Flatten pages zu einer Liste von Widgets (Demo-Flow)
+	const demoWidgets: WidgetContractV1[] = useMemo(() => {
+		if (!demoFeedQuery.data?.pages) return [];
+		return demoFeedQuery.data.pages.flatMap(page => page.items);
+	}, [demoFeedQuery.data]);
+	
+	// Auth-Flow Widgets (alte Struktur)
+	const authWidgets: LegacyWidget[] = useMemo(() => {
+		return (authFeedQuery.data || []).map(w => ({id: w.id, name: w.name}));
+	}, [authFeedQuery.data]);
+	
+	// Kombiniere zu einheitlicher Liste
+	const widgets: LegacyWidget[] = useMemo(() => {
+		return isAuthed ? authWidgets : demoWidgets;
+	}, [isAuthed, authWidgets, demoWidgets]);
+	
+	const loading = isAuthed 
+		? authFeedQuery.isFetching 
+		: (demoFeedQuery.isFetching && !demoFeedQuery.isFetchingNextPage);
+	
 	const error: string | null = useMemo(() => {
-		if (feedQuery.isError) {
-			const e: any = feedQuery.error as any;
+		const query = isAuthed ? authFeedQuery : demoFeedQuery;
+		if (query.isError) {
+			const e: any = query.error as any;
 			return e?.message || 'Fehler beim Laden des Feeds.';
 		}
 		return null;
-	}, [feedQuery.isError, feedQuery.error]);
+	}, [isAuthed, authFeedQuery.isError, authFeedQuery.error, demoFeedQuery.isError, demoFeedQuery.error]);
 	
 	// Zeige den Fehler-Toast nur, wenn sich der Fehlerstatus ändert
 	useEffect(() => {
-		if (feedQuery.isError) {
-			const e: any = feedQuery.error as any;
+		const query = isAuthed ? authFeedQuery : demoFeedQuery;
+		if (query.isError) {
+			const e: any = query.error as any;
 			const msg = e?.message || 'Fehler beim Laden des Feeds.';
 			showError(msg);
 		}
-	}, [feedQuery.isError, showError]);
+	}, [isAuthed, authFeedQuery.isError, demoFeedQuery.isError, showError]);
 	
 	const onPressWidget = useCallback((widgetId: number) => {
 		// Placeholder für Navigation zu Widget-Detail
@@ -60,10 +85,18 @@ export default function HomeScreen({ navigation }: Props) {
 	}, []);
 	
 	const handleLoadMore = useCallback(() => {
-		if (feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) {
-			feedQuery.fetchNextPage();
+		if (!isAuthed && demoFeedQuery.hasNextPage && !demoFeedQuery.isFetchingNextPage) {
+			demoFeedQuery.fetchNextPage();
 		}
-	}, [feedQuery]);
+	}, [isAuthed, demoFeedQuery]);
+	
+	const handleRefresh = useCallback(() => {
+		if (isAuthed) {
+			authFeedQuery.refetch();
+		} else {
+			demoFeedQuery.refetch();
+		}
+	}, [isAuthed, authFeedQuery, demoFeedQuery]);
 	
 	return (
 		<View style={styles.container} testID={TID.home.screen}>
@@ -76,7 +109,7 @@ export default function HomeScreen({ navigation }: Props) {
 						<Text style={styles.badgeText}>{!isAuthed ? 'DEMO' : (role || 'user').toUpperCase()}</Text>
 					</View>
 				</View>
-				<Button title="Neu laden" onPress={() => feedQuery.refetch()}/>
+				<Button title="Neu laden" onPress={handleRefresh}/>
 			</View>
 			{!isAuthed && (
 				<View style={styles.demoBanner} testID={TID.home.demoBanner}>
@@ -96,7 +129,7 @@ export default function HomeScreen({ navigation }: Props) {
 				<View style={styles.errorBox}>
 					<Text style={styles.errorText}>{error}</Text>
 					<View style={{marginTop: 8}}>
-						<Button title="Erneut versuchen" onPress={() => feedQuery.refetch()}/>
+						<Button title="Erneut versuchen" onPress={handleRefresh}/>
 					</View>
 				</View>
 			)}
@@ -110,7 +143,7 @@ export default function HomeScreen({ navigation }: Props) {
 				testID={TID.home.widgets.list}
 				data={widgets}
 				keyExtractor={(w) => String(w.id)}
-				refreshControl={<RefreshControl refreshing={loading} onRefresh={() => feedQuery.refetch()}/>} 
+				refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh}/>} 
 				onEndReached={handleLoadMore}
 				onEndReachedThreshold={0.5}
 				renderItem={({item}) => (
@@ -124,7 +157,7 @@ export default function HomeScreen({ navigation }: Props) {
 				ListEmptyComponent={!loading && !error ?
 					<Text testID={TID.home.empty}>Aktuell keine Widgets verfügbar.</Text> : null}
 				ListFooterComponent={
-					feedQuery.isFetchingNextPage ? (
+					!isAuthed && demoFeedQuery.isFetchingNextPage ? (
 						<View style={styles.loadingContainer}>
 							<ActivityIndicator size="small" color="#0066cc" />
 							<Text style={styles.loadingText}>Weitere Widgets laden...</Text>

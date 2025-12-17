@@ -63,7 +63,7 @@ test.describe('@advanced Browser & UX', () => {
 		// Klick Home-Button zum Zurück-Navigieren (keine stillen Fallbacks, um echte Probleme nicht zu kaschieren)
 		await page.getByRole('button', {name: /Home|^Home$/i}).click({timeout: 5_000});
 		
-		// Warte auf Navigation/Idle statt hartem Sleep
+		// Zustandsbasiertes Warten auf Navigation/Idle
 		await waitForNavigation(page, budgets.navigationMs);
 		
 		// Token sollte noch vorhanden sein

@@ -2,6 +2,10 @@ import {chromium, type FullConfig} from '@playwright/test';
 import {timeouts} from './helpers/timing';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * Globales Setup für Playwright: wärmt das Expo‑Web‑Bundle vor Teststart auf.

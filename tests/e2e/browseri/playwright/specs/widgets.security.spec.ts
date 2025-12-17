@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/test';
 import {loginAs, loginViaApi} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
+import {DEFAULT_PASSWORD, uniqueEmail} from '../helpers/testdata';
 import {createWidget, deleteWidgetById} from '../helpers/widgets';
 
 /**
@@ -13,17 +14,17 @@ import {createWidget, deleteWidgetById} from '../helpers/widgets';
 test.describe('@minimal Widget Security', () => {
 	test('@minimal WIDGET-04: Fremdes Widget löschen → 404', async ({page}) => {
 	const api = await newApiRequestContext();
-	
-	// User A erstellt Widget
-	const emailA = `owner+${Date.now()}@example.com`;
-	const pwd = 'Secret1234!';
-	await api.post('/api/auth/register', {data: {email: emailA, password: pwd}});
-	const loginA = await (await api.post('/api/auth/login', {form: {username: emailA, password: pwd}})).json();
+		
+		// User A erstellt Widget
+		const emailA = uniqueEmail('owner');
+		const pwd = DEFAULT_PASSWORD;
+		await api.post('/api/auth/register', {data: {email: emailA, password: pwd}});
+		const loginA = await (await api.post('/api/auth/login', {form: {username: emailA, password: pwd}})).json();
 	const w = await createWidget(api, 'Owned by A', '{}', loginA.access_token);
-	
-	// User B versucht zu löschen
-	const emailB = `other+${Date.now()}@example.com`;
-	await api.post('/api/auth/register', {data: {email: emailB, password: pwd}});
+		
+		// User B versucht zu löschen
+		const emailB = uniqueEmail('other');
+		await api.post('/api/auth/register', {data: {email: emailB, password: pwd}});
 	
 	// Login als User B über UI
 	await loginAs(page, emailB, pwd);
@@ -43,8 +44,8 @@ test.describe('@minimal Widget Security', () => {
 	
 	test('@minimal WIDGET-06: XSS in Widget-Name wird escaped in UI', async ({page}) => {
 		const api = await newApiRequestContext();
-		const email = `xss+${Date.now()}@example.com`;
-		const pwd = 'Secret1234!';
+		const email = uniqueEmail('xss');
+		const pwd = DEFAULT_PASSWORD;
 		await api.post('/api/auth/register', {data: {email, password: pwd}});
 		const login = await (await api.post('/api/auth/login', {form: {username: email, password: pwd}})).json();
 		

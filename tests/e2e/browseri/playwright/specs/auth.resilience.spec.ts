@@ -1,6 +1,10 @@
 import {expect, test} from '@playwright/test';
-import {loginAs, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAs} from '../helpers/auth';
+import {waitForNetworkIdle} from '../helpers/waits';
+import {budgets, timeouts} from '../helpers/timing';
 import {newApiRequestContext} from '../helpers/api';
+import {DEFAULT_PASSWORD, INVALID_EMAIL, uniqueEmail, WRONG_PASSWORD} from '../helpers/testdata';
+import {TRACKING} from '../helpers/tracking';
 
 /**
  * Auth-Resilience-Tests: Standard-Ebene
@@ -13,8 +17,8 @@ test.describe('@standard Auth Resilience', () => {
 	// AUTH-04 – Login mit falschem Passwort → saubere Fehlermeldung
 	test('@standard AUTH-04: Login mit falschem Passwort zeigt Fehler', async ({page}) => {
 		const api = await newApiRequestContext();
-		const email = `auth04+${Date.now()}@example.com`;
-		const password = 'CorrectPassword123!';
+		const email = uniqueEmail('auth04');
+		const password = DEFAULT_PASSWORD;
 		await api.post('/api/auth/register', {data: {email, password}});
 		
 		// Navigiere zu Home und öffne Login
@@ -28,11 +32,11 @@ test.describe('@standard Auth Resilience', () => {
 		
 		// Login mit falschem Passwort
 		await page.getByTestId('login.email').fill(email);
-		await page.getByTestId('login.password').fill('WrongPassword999!');
+		await page.getByTestId('login.password').fill(WRONG_PASSWORD);
 		await page.getByTestId('login.submit').click();
 		
 		// Warte auf Fehlermeldung
-		await page.getByTestId('login.error').waitFor({state: 'visible', timeout: 10_000});
+		await page.getByTestId('login.error').waitFor({state: 'visible', timeout: budgets.loginMs});
 		
 		// Verifiziere: Login-Form noch sichtbar (Login fehlgeschlagen)
 		await expect(page.getByTestId('login.email')).toBeVisible();
@@ -52,13 +56,13 @@ test.describe('@standard Auth Resilience', () => {
 		await page.getByTestId('login.email').waitFor({state: 'visible'});
 		
 		// Versuche Login mit ungültiger E-Mail-Adresse (kein @)
-		await page.getByTestId('login.email').fill('invalid-email-format');
-		await page.getByTestId('login.password').fill('SomePassword123!');
+		await page.getByTestId('login.email').fill(INVALID_EMAIL);
+		await page.getByTestId('login.password').fill(DEFAULT_PASSWORD);
 		await page.getByTestId('login.submit').click();
 		
 		// Erwarte Fehler (entweder UI-Validierung oder Backend-Fehler)
-		// UI-Validierung würde Submit verhindern, Backend würde 422 zurückgeben
-		await page.waitForTimeout(2000); // Kurz warten für Validierung/Fehler
+		// Warte deterministisch auf Ruhe im Netzwerk/DOM statt hartem Sleep
+		await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 		
 		// Verifiziere: Login-Form noch sichtbar
 		await expect(page.getByTestId('login.email')).toBeVisible();
@@ -89,7 +93,7 @@ test.describe('@standard Auth Resilience', () => {
 		
 		// Erwarte, dass der Nutzer wieder ausgeloggt ist (Token ungültig)
 		// und der Login-Link wieder sichtbar ist
-		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: budgets.loginMs});
 	});
 	
 	// AUTH-07 – manipuliertes JWT → 401, Re-Login
@@ -115,23 +119,20 @@ test.describe('@standard Auth Resilience', () => {
 		await page.reload();
 		
 		// Erwarte, dass der Nutzer ausgeloggt wurde (401 bei Token-Refresh)
-		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: budgets.loginMs});
 	});
 	
 	// AUTH-08 – Rate-Limit beim Login (429) → klare Fehleranzeige
 	test('@standard AUTH-08: Rate-Limit beim Login wird angezeigt', async ({page}) => {
-		test.skip(true, 'PRODUCT-DEFECT: Backend Login-Rate-Limiting nicht implementiert. ' +
-		                'Ticket: TODO-CREATE-BACKEND-RATE-LIMIT-TICKET. ' +
-		                'Exit: Backend muss 429 nach N fehlgeschlagenen Login-Versuchen zurückgeben. ' +
-		                'UI-Handling ist bereits implementiert (login.error.rateLimit testID in LoginScreen.tsx:15,29-31,44).');
+		test.skip(true, TRACKING.BACKEND_RATE_LIMIT + ' | UI-Handling vorhanden (testID: login.error.rateLimit)');
 		
 		// Hinweis: UI ist bereit (siehe LoginScreen.tsx:15,29-31,44)
 		// - testID="login.error.rateLimit" wird bei status === 429 gesetzt
 		// - Fehlermeldung: "Zu viele Anmeldeversuche. Bitte versuche es später erneut."
 		// Backend muss Rate-Limiting für /api/auth/login implementieren
 		
-		const email = `auth08+${Date.now()}@example.com`;
-		const password = 'TestPassword123!';
+		const email = uniqueEmail('auth08');
+		const password = DEFAULT_PASSWORD;
 		
 		// Registriere Nutzer
 		const api = await newApiRequestContext();
@@ -146,11 +147,11 @@ test.describe('@standard Auth Resilience', () => {
 			await loginLink.click();
 			await page.getByTestId('login.email').waitFor({state: 'visible'});
 			await page.getByTestId('login.email').fill(email);
-			await page.getByTestId('login.password').fill('WrongPassword!');
+			await page.getByTestId('login.password').fill(WRONG_PASSWORD);
 			await page.getByTestId('login.submit').click();
 			
-			// Warte kurz zwischen Versuchen
-			await page.waitForTimeout(500);
+			// Warte deterministisch zwischen Versuchen
+			await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 			
 			// Zurück zum Home (falls noch im Login-Screen)
 			if (await page.getByTestId('login.email').isVisible()) {
@@ -167,7 +168,7 @@ test.describe('@standard Auth Resilience', () => {
 		await page.getByTestId('login.submit').click();
 		
 		// UI-Validierung: Rate-Limit-Fehlermeldung wird angezeigt (testID: login.error.rateLimit)
-		await page.waitForTimeout(3000);
+		await waitForNetworkIdle(page, budgets.apiCallMs);
 		await expect(page.getByTestId('login.error.rateLimit')).toBeVisible();
 		
 		// Verifiziere, dass Login nicht erfolgreich war

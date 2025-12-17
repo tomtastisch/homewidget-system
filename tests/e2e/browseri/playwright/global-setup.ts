@@ -1,4 +1,5 @@
 import {chromium, type FullConfig} from '@playwright/test';
+import {timeouts} from './helpers/timing';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -32,7 +33,9 @@ export default async function globalSetup(config: FullConfig) {
 	} catch {
 	}
 	
-	const totalTimeoutMs = 180_000; // bis zu 3 Minuten nur für Warm‑Up (kein Test‑Timeout)
+	// Reduziert, um schnelleres Feedback bei Fehlschlägen zu erhalten.
+	// Segmentierte Polling-Strategie bleibt erhalten.
+	const totalTimeoutMs = 90_000; // bis zu 90 Sekunden nur für Warm‑Up (kein Test‑Timeout)
 	const start = Date.now();
 	let attempt = 0;
 	let ready = false;
@@ -76,7 +79,10 @@ export default async function globalSetup(config: FullConfig) {
 					ready = true;
 					break;
 				}
-				await page.waitForTimeout(500);
+				// Warte kurz auf Network-Idle (mit kleinem Timeout), statt fixem Sleep
+				await page.waitForLoadState('networkidle', {timeout: Math.min(500, timeouts.uiDefaultMs)}).catch(async () => {
+					await page.waitForTimeout(200);
+				});
 			}
 			
 			// Optional: grobe Fehlererkennung der Dev‑Seite (Overlay)
@@ -89,12 +95,18 @@ export default async function globalSetup(config: FullConfig) {
 			}
 			
 			if (!ready) {
-				// kurze Backoff‑Pause (steigend bis max 8s)
-				await page.waitForTimeout(Math.min(1000 * attempt, 8000));
+				// kurze Backoff‑Pause (steigend), bevorzugt networkidle mit Fallback
+				const backoff = Math.min(1000 * attempt, Math.min(timeouts.uiDefaultMs, 8000));
+				await page.waitForLoadState('networkidle', {timeout: backoff}).catch(async () => {
+					await page.waitForTimeout(250);
+				});
 			}
 		} catch (e) {
 			// Ignoriere Zwischenfehler und versuche erneut (Server evtl. noch nicht bereit)
-			await page.waitForTimeout(Math.min(1000 * attempt, 8000));
+			const backoff = Math.min(1000 * attempt, Math.min(timeouts.uiDefaultMs, 8000));
+			await page.waitForLoadState('networkidle', {timeout: backoff}).catch(async () => {
+				await page.waitForTimeout(250);
+			});
 		}
 	}
 	

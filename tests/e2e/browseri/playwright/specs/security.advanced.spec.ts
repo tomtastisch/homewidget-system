@@ -2,6 +2,8 @@ import {expect, test} from '@playwright/test';
 import {createUserWithRole, loginAsRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 import {deleteWidgetById} from '../helpers/widgets';
+import {waitForNetworkIdle} from '../helpers/waits';
+import {timeouts} from '../helpers/timing';
 
 /**
  * Security-Advanced-Tests: Advanced-Ebene
@@ -98,7 +100,7 @@ test.describe('@advanced Security Advanced', () => {
 		
 		// Navigiere zur App
 		await page.goto('/');
-		await page.waitForTimeout(2000);
+		await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 		
 		// Versuche, Inline-Script zu injizieren (sollte durch CSP blockiert werden)
 		const scriptExecuted = await page.evaluate(() => {

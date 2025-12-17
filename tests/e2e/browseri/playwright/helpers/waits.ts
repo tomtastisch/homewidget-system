@@ -1,4 +1,5 @@
 import {Page} from '@playwright/test';
+import {budgets, timeouts} from './timing';
 
 /**
  * Wartehilfen für state-based waiting statt zeitbasierten Timeouts.
@@ -14,13 +15,20 @@ import {Page} from '@playwright/test';
  * @param page Playwright Page-Objekt
  * @param timeout Maximales Timeout in ms (Standard: 5000)
  */
-export async function waitForNetworkIdle(page: Page, timeout: number = 5000): Promise<void> {
-	try {
-		await page.waitForLoadState('networkidle', {timeout});
-	} catch (e) {
-		// Fallback: Wenn networkidle nicht erreicht wird (z.B. bei Polling),
-		// warte kurz und fahre fort (verhindert Test-Hänger)
-		await page.waitForTimeout(500);
+export async function waitForNetworkIdle(
+	page: Page,
+	timeout: number = timeouts.uiDefaultMs,
+	maxAttempts: number = 3,
+): Promise<void> {
+	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+		try {
+			await page.waitForLoadState('networkidle', {timeout});
+			return;
+		} catch (e) {
+			// Begrenzter Backoff, um Hänger zu vermeiden; kein endloses Warten
+			const backoff = Math.min(250 * attempt, 1000);
+			await page.waitForTimeout(backoff);
+		}
 	}
 }
 
@@ -35,7 +43,7 @@ export async function waitForNetworkIdle(page: Page, timeout: number = 5000): Pr
 export async function waitForApiCall(
 	page: Page,
 	urlPattern: string | RegExp,
-	timeout: number = 10000
+	timeout: number = budgets.apiCallMs
 ): Promise<void> {
 	await page.waitForResponse(
 		(response) => {
@@ -56,7 +64,7 @@ export async function waitForApiCall(
  * @param page Playwright Page-Objekt
  * @param timeout Maximales Timeout in ms (Standard: 5000)
  */
-export async function waitForDOMReady(page: Page, timeout: number = 5000): Promise<void> {
+export async function waitForDOMReady(page: Page, timeout: number = timeouts.uiDefaultMs): Promise<void> {
 	await page.waitForLoadState('domcontentloaded', {timeout});
 }
 
@@ -71,7 +79,7 @@ export async function waitForDOMReady(page: Page, timeout: number = 5000): Promi
 export async function waitForElement(
 	page: Page,
 	testId: string,
-	timeout: number = 5000
+	timeout: number = timeouts.uiDefaultMs
 ): Promise<void> {
 	await page.getByTestId(testId).waitFor({state: 'attached', timeout});
 }
@@ -82,7 +90,7 @@ export async function waitForElement(
  * @param page Playwright Page-Objekt
  * @param timeout Maximales Timeout in ms (Standard: 10000)
  */
-export async function waitForPageLoad(page: Page, timeout: number = 10000): Promise<void> {
+export async function waitForPageLoad(page: Page, timeout: number = timeouts.slowUiMs): Promise<void> {
 	await page.waitForLoadState('load', {timeout});
 }
 
@@ -93,7 +101,7 @@ export async function waitForPageLoad(page: Page, timeout: number = 10000): Prom
  * @param page Playwright Page-Objekt
  * @param timeout Maximales Timeout in ms (Standard: 10000)
  */
-export async function waitAfterReload(page: Page, timeout: number = 10000): Promise<void> {
+export async function waitAfterReload(page: Page, timeout: number = timeouts.slowUiMs): Promise<void> {
 	await waitForDOMReady(page, timeout);
 	await waitForNetworkIdle(page, timeout);
 }
@@ -105,7 +113,7 @@ export async function waitAfterReload(page: Page, timeout: number = 10000): Prom
  * @param page Playwright Page-Objekt
  * @param timeout Maximales Timeout in ms (Standard: 10000)
  */
-export async function waitForNavigation(page: Page, timeout: number = 10000): Promise<void> {
+export async function waitForNavigation(page: Page, timeout: number = budgets.navigationMs): Promise<void> {
 	await page.waitForLoadState('domcontentloaded', {timeout});
 	await waitForNetworkIdle(page, timeout / 2);
 }

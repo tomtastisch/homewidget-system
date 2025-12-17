@@ -168,21 +168,35 @@ export function rawPublic(): TimingPublic {
 // - slowUiMs: großzügiger Puffer für Warm-Ups/Reloads
 // - budgets: spezifische Anwendungsfälle auf Basis obiger Werte
 
+// Timeout-Grenzen: Minimale und maximale Werte für UI-Interaktionen
+const TIMEOUT_UI_MIN_MS = 2000; // Minimale UI-Antwortzeit (Basis für schnelle Interaktionen)
+const TIMEOUT_UI_DEFAULT_MAX_MS = 10_000; // Maximale Standard-UI-Wartezeit
+const TIMEOUT_SLOW_UI_MIN_MS = 5000; // Minimale Wartezeit für langsame UI-Operationen (Warm-Up, Reload)
+const TIMEOUT_SLOW_UI_MAX_MS = 20_000; // Maximale Wartezeit für langsame Operationen
+
+// Budget-Parameter: Faktoren und Grenzen für spezifische E2E-Anwendungsfälle
+const BUDGET_MIN_MS = 3000; // Mindestens 3s für Login/Navigation (Netzwerk + Rendering + Auth-Flow)
+const BUDGET_FEED_MIN_MS = 4000; // Mindestens 4s für Feed-Laden (Netzwerk + Rendering + Datentransformation)
+const BUDGET_MAX_MS = 15_000; // Maximal 15s für komplexe Operationen (Login, Feed)
+const BUDGET_NAVIGATION_MAX_MS = 12_000; // Maximal 12s für einfache Navigationen
+const BUDGET_API_MAX_MS = 10_000; // Maximal 10s für reine API-Calls ohne UI
+const BUDGET_NETWORK_MULTIPLIER = 1.5; // Netzwerk-Timeout × 1.5 für Puffer (Auth-Roundtrips, Retries)
+
 function computeTimeouts() {
 	const pub = rawPublic();
 	return Object.freeze({
 		networkMs: pub.network.requestTimeoutMs,
-		uiDefaultMs: Math.max(2000, Math.min(pub.network.requestTimeoutMs, 10_000)),
-		slowUiMs: Math.max(5000, Math.min(pub.network.requestTimeoutMs * 2, 20_000)),
+		uiDefaultMs: Math.max(TIMEOUT_UI_MIN_MS, Math.min(pub.network.requestTimeoutMs, TIMEOUT_UI_DEFAULT_MAX_MS)),
+		slowUiMs: Math.max(TIMEOUT_SLOW_UI_MIN_MS, Math.min(pub.network.requestTimeoutMs * 2, TIMEOUT_SLOW_UI_MAX_MS)),
 	});
 }
 
 function computeBudgets(t: ReturnType<typeof computeTimeouts>) {
 	return Object.freeze({
-		loginMs: Math.min(Math.max(3000, Math.round(t.networkMs * 1.5)), 15_000),
-		navigationMs: Math.min(Math.max(3000, t.uiDefaultMs), 12_000),
-		apiCallMs: Math.min(t.networkMs, 10_000),
-		feedLoadMs: Math.min(Math.max(4000, Math.round(t.networkMs * 1.5)), 15_000),
+		loginMs: Math.min(Math.max(BUDGET_MIN_MS, Math.round(t.networkMs * BUDGET_NETWORK_MULTIPLIER)), BUDGET_MAX_MS),
+		navigationMs: Math.min(Math.max(BUDGET_MIN_MS, t.uiDefaultMs), BUDGET_NAVIGATION_MAX_MS),
+		apiCallMs: Math.min(t.networkMs, BUDGET_API_MAX_MS),
+		feedLoadMs: Math.min(Math.max(BUDGET_FEED_MIN_MS, Math.round(t.networkMs * BUDGET_NETWORK_MULTIPLIER)), BUDGET_MAX_MS),
 	});
 }
 
@@ -206,6 +220,9 @@ export const timeouts = new Proxy({} as ReturnType<typeof computeTimeouts>, {
 	get(_target, prop) {
 		return ensureTimeouts()[prop as keyof ReturnType<typeof computeTimeouts>];
 	},
+	has(_target, prop) {
+		return prop in ensureTimeouts();
+	},
 	ownKeys() {
 		return Reflect.ownKeys(ensureTimeouts());
 	},
@@ -217,6 +234,9 @@ export const timeouts = new Proxy({} as ReturnType<typeof computeTimeouts>, {
 export const budgets = new Proxy({} as ReturnType<typeof computeBudgets>, {
 	get(_target, prop) {
 		return ensureBudgets()[prop as keyof ReturnType<typeof computeBudgets>];
+	},
+	has(_target, prop) {
+		return prop in ensureBudgets();
 	},
 	ownKeys() {
 		return Reflect.ownKeys(ensureBudgets());

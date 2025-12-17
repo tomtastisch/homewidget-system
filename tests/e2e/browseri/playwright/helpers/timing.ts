@@ -156,7 +156,14 @@ export function currentProfile(): string {
 	return loadTimingPublic().profile;
 }
 
-export const rawPublic = (() => loadTimingPublic().public)();
+/**
+ * Liefert die geladenen PUBLIC-Timings.
+ * Lazy-initialisiert beim ersten Zugriff, damit Test-Setup-Code
+ * die HW_PROFILE-Umgebungsvariable vor dem Import setzen kann.
+ */
+export function rawPublic(): TimingPublic {
+	return loadTimingPublic().public;
+}
 
 // Abgeleitete Timeouts & Budgets für E2E-Spezifikationen
 // Faustregeln:
@@ -165,19 +172,98 @@ export const rawPublic = (() => loadTimingPublic().public)();
 // - slowUiMs: großzügiger Puffer für Warm-Ups/Reloads
 // - budgets: spezifische Anwendungsfälle auf Basis obiger Werte
 
-export const timeouts = Object.freeze({
-	networkMs: rawPublic.network.requestTimeoutMs,
-	uiDefaultMs: Math.max(2000, Math.min(rawPublic.network.requestTimeoutMs, 10_000)),
-	slowUiMs: Math.max(5000, Math.min(rawPublic.network.requestTimeoutMs * 2, 20_000)),
+// Timeout-Grenzen: Minimale und maximale Werte für UI-Interaktionen
+const TIMEOUT_UI_MIN_MS = 2000; // Minimale UI-Antwortzeit (Basis für schnelle Interaktionen)
+const TIMEOUT_UI_DEFAULT_MAX_MS = 10_000; // Maximale Standard-UI-Wartezeit
+const TIMEOUT_SLOW_UI_MIN_MS = 5000; // Minimale Wartezeit für langsame UI-Operationen (Warm-Up, Reload)
+const TIMEOUT_SLOW_UI_MAX_MS = 20_000; // Maximale Wartezeit für langsame Operationen
+
+// Budget-Parameter: Faktoren und Grenzen für spezifische E2E-Anwendungsfälle
+const BUDGET_MIN_MS = 3000; // Mindestens 3s für Login/Navigation (Netzwerk + Rendering + Auth-Flow)
+const BUDGET_FEED_MIN_MS = 4000; // Mindestens 4s für Feed-Laden (Netzwerk + Rendering + Datentransformation)
+const BUDGET_MAX_MS = 15_000; // Maximal 15s für komplexe Operationen (Login, Feed)
+const BUDGET_NAVIGATION_MAX_MS = 12_000; // Maximal 12s für einfache Navigationen
+const BUDGET_API_MAX_MS = 10_000; // Maximal 10s für reine API-Calls ohne UI
+const BUDGET_NETWORK_MULTIPLIER = 1.5; // Netzwerk-Timeout × 1.5 für Puffer (Auth-Roundtrips, Retries)
+
+function computeTimeouts() {
+	const pub = rawPublic();
+	return Object.freeze({
+		networkMs: pub.network.requestTimeoutMs,
+		uiDefaultMs: Math.max(TIMEOUT_UI_MIN_MS, Math.min(pub.network.requestTimeoutMs, TIMEOUT_UI_DEFAULT_MAX_MS)),
+		slowUiMs: Math.max(TIMEOUT_SLOW_UI_MIN_MS, Math.min(pub.network.requestTimeoutMs * 2, TIMEOUT_SLOW_UI_MAX_MS)),
+	});
+}
+
+function computeBudgets(t: ReturnType<typeof computeTimeouts>) {
+	return Object.freeze({
+		loginMs: Math.min(Math.max(BUDGET_MIN_MS, Math.round(t.networkMs * BUDGET_NETWORK_MULTIPLIER)), BUDGET_MAX_MS),
+		navigationMs: Math.min(Math.max(BUDGET_MIN_MS, t.uiDefaultMs), BUDGET_NAVIGATION_MAX_MS),
+		apiCallMs: Math.min(t.networkMs, BUDGET_API_MAX_MS),
+		feedLoadMs: Math.min(Math.max(BUDGET_FEED_MIN_MS, Math.round(t.networkMs * BUDGET_NETWORK_MULTIPLIER)), BUDGET_MAX_MS),
+	});
+}
+
+let cachedTimeouts: ReturnType<typeof computeTimeouts> | null = null;
+let cachedBudgets: ReturnType<typeof computeBudgets> | null = null;
+
+function ensureTimeouts(): ReturnType<typeof computeTimeouts> {
+	if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+	return cachedTimeouts;
+}
+
+function ensureBudgets(): ReturnType<typeof computeBudgets> {
+	if (!cachedBudgets) {
+		const t = ensureTimeouts();
+		cachedBudgets = computeBudgets(t);
+	}
+	return cachedBudgets;
+}
+
+/**
+ * Lazy-initialisierter Proxy für Timeout-Werte.
+ * Lädt Timing-Konfiguration erst beim ersten Zugriff, nicht bei Modulimport.
+ * Implementiert vollständige Proxy-Traps für transparente Object-Semantik.
+ */
+export const timeouts = new Proxy({} as ReturnType<typeof computeTimeouts>, {
+	get(_target, prop) {
+		return ensureTimeouts()[prop as keyof ReturnType<typeof computeTimeouts>];
+	},
+	// Property-Existenz-Check ('prop in obj') delegieren für korrekte Laufzeitsemantik
+	has(_target, prop) {
+		return prop in ensureTimeouts();
+	},
+	ownKeys() {
+		return Reflect.ownKeys(ensureTimeouts());
+	},
+	getOwnPropertyDescriptor(_target, prop) {
+		return Reflect.getOwnPropertyDescriptor(ensureTimeouts(), prop);
+	},
 });
 
-export const budgets = Object.freeze({
-	loginMs: Math.min(Math.max(3000, Math.round(timeouts.networkMs * 1.5)), 15_000),
-	navigationMs: Math.min(Math.max(3000, timeouts.uiDefaultMs), 12_000),
-	apiCallMs: Math.min(timeouts.networkMs, 10_000),
-	feedLoadMs: Math.min(Math.max(4000, Math.round(timeouts.networkMs * 1.5)), 15_000),
+/**
+ * Lazy-initialisierter Proxy für Budget-Werte (abgeleitete Timeouts für spezifische Use Cases).
+ * Lädt Timing-Konfiguration erst beim ersten Zugriff, nicht bei Modulimport.
+ * Implementiert vollständige Proxy-Traps für transparente Object-Semantik.
+ */
+export const budgets = new Proxy({} as ReturnType<typeof computeBudgets>, {
+	get(_target, prop) {
+		return ensureBudgets()[prop as keyof ReturnType<typeof computeBudgets>];
+	},
+	// Property-Existenz-Check ('prop in obj') delegieren für korrekte Laufzeitsemantik
+	has(_target, prop) {
+		return prop in ensureBudgets();
+	},
+	ownKeys() {
+		return Reflect.ownKeys(ensureBudgets());
+	},
+	getOwnPropertyDescriptor(_target, prop) {
+		return Reflect.getOwnPropertyDescriptor(ensureBudgets(), prop);
+	},
 });
 
 export function __resetTimingCacheForTests() {
 	cached = null;
+	cachedTimeouts = null;
+	cachedBudgets = null;
 }

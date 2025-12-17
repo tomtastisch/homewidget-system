@@ -4,28 +4,7 @@ import {waitAfterReload, waitForNavigation} from '../helpers/waits';
 import {budgets} from '../helpers/timing';
 import {newApiRequestContext} from '../helpers/api';
 import {TRACKING} from '../helpers/tracking';
-
-/**
- * Sanitiert einen String für die Verwendung als Dateiname.
- * Entfernt oder ersetzt Zeichen, die in Dateinamen problematisch sein können.
- * 
- * @param name - Der zu sanitierende String
- * @returns Sicherer Dateiname ohne problematische Zeichen
- * @throws Error wenn der sanitierte Name leer wäre
- */
-function sanitizeFilename(name: string): string {
-	const sanitized = name
-		.replace(/\s+/g, '_')             // Leerzeichen durch Unterstrich ersetzen
-		.replace(/["/\\:*?<>|`]/g, '')    // Ungültige Dateinamen-Zeichen entfernen
-		.replace(/['"„""]/g, '')          // Anführungszeichen entfernen
-		.replace(/\.+$/g, '');            // Trailing dots entfernen
-	
-	if (!sanitized) {
-		throw new Error(`Sanitized filename is empty for input: "${name}"`);
-	}
-	
-	return sanitized;
-}
+import {sanitizeFilename} from '../helpers/filesystem';
 
 /**
  * Browser-UX-Tests: Advanced-Ebene

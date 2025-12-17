@@ -216,10 +216,16 @@ function ensureBudgets(): ReturnType<typeof computeBudgets> {
 	return cachedBudgets;
 }
 
+/**
+ * Lazy-initialisierter Proxy für Timeout-Werte.
+ * Lädt Timing-Konfiguration erst beim ersten Zugriff, nicht bei Modulimport.
+ * Implementiert vollständige Proxy-Traps für transparente Object-Semantik.
+ */
 export const timeouts = new Proxy({} as ReturnType<typeof computeTimeouts>, {
 	get(_target, prop) {
 		return ensureTimeouts()[prop as keyof ReturnType<typeof computeTimeouts>];
 	},
+	// Property-Existenz-Check ('prop in obj') delegieren für korrekte Laufzeitsemantik
 	has(_target, prop) {
 		return prop in ensureTimeouts();
 	},
@@ -231,10 +237,16 @@ export const timeouts = new Proxy({} as ReturnType<typeof computeTimeouts>, {
 	},
 });
 
+/**
+ * Lazy-initialisierter Proxy für Budget-Werte (abgeleitete Timeouts für spezifische Use Cases).
+ * Lädt Timing-Konfiguration erst beim ersten Zugriff, nicht bei Modulimport.
+ * Implementiert vollständige Proxy-Traps für transparente Object-Semantik.
+ */
 export const budgets = new Proxy({} as ReturnType<typeof computeBudgets>, {
 	get(_target, prop) {
 		return ensureBudgets()[prop as keyof ReturnType<typeof computeBudgets>];
 	},
+	// Property-Existenz-Check ('prop in obj') delegieren für korrekte Laufzeitsemantik
 	has(_target, prop) {
 		return prop in ensureBudgets();
 	},

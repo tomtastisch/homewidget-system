@@ -18,5 +18,8 @@
         "@playwright/test": "1.57.0",
         "@types/node": "^25.0.1",
         "typescript": "^5.6.3"
+    },
+    "dependencies": {
+        "sanitize-filename": "^1.6.3"
     }
 }

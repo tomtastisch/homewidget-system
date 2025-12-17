@@ -63,7 +63,7 @@ test.describe('@advanced Browser & UX', () => {
 		// Klick Home-Button zum Zurück-Navigieren (keine stillen Fallbacks, um echte Probleme nicht zu kaschieren)
 		await page.getByRole('button', {name: /Home|^Home$/i}).click({timeout: 5_000});
 		
-		// Warte auf Navigation/Idle statt hartem Sleep
+		// Zustandsbasiertes Warten auf Navigation/Idle
 		await waitForNavigation(page, budgets.navigationMs);
 		
 		// Token sollte noch vorhanden sein
@@ -107,7 +107,7 @@ test.describe('@advanced Browser & UX', () => {
 			});
 		});
 		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// TODO: Sobald Fallback-Mechanismus implementiert ist:
 		// - App sollte Warnung anzeigen oder In-Memory-Storage nutzen
@@ -135,7 +135,7 @@ test.describe('@advanced Browser & UX', () => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'browser02-quota');
 		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Öffne Login
 		const loginLink = page.getByTestId('home.loginLink');
@@ -162,7 +162,7 @@ test.describe('@advanced Browser & UX', () => {
 	
 	// BROWSER-03 – Back-Button-Navigation
 	test('@advanced BROWSER-03: Browser Back-Button funktioniert korrekt', async ({page}) => {
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Klicke auf Login-Link
 		const loginLink = page.getByTestId('home.loginLink');
@@ -187,7 +187,7 @@ test.describe('@advanced Browser & UX', () => {
 		test.skip(isCI, TRACKING.ACCESSIBILITY_AUTOFOCUS);
 		test.fixme(!isCI, TRACKING.ACCESSIBILITY_AUTOFOCUS);
 		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Klicke auf Login-Link
 		const loginLink = page.getByTestId('home.loginLink');
@@ -209,7 +209,7 @@ test.describe('@advanced Browser & UX', () => {
 	test('@advanced BROWSER-05: Keyboard-Navigation funktioniert', async ({page}) => {
 		test.skip(process.env.CI === 'true', TRACKING.KEYBOARD_ACCESSIBILITY);
 		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Nutze Tab-Taste für Navigation
 		await page.keyboard.press('Tab');
@@ -230,7 +230,7 @@ test.describe('@advanced Browser & UX', () => {
 	for (const v of mobileViewports) {
 		test(`@advanced BROWSER-06: App funktioniert auf Mobile-Viewport – ${v.name}`, async ({page}) => {
 			await page.setViewportSize(v.size);
-			await page.goto('/');
+			await page.goto('/', {timeout: budgets.navigationMs});
 			await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
 			await page.screenshot({path: `test-results/browser-06-mobile-${v.name.replace(/\s+/g, '_')}.png`});
 		});
@@ -244,7 +244,7 @@ test.describe('@advanced Browser & UX', () => {
 	for (const v of tabletViewports) {
 		test(`@advanced BROWSER-06: App funktioniert auf Tablet-Viewport – ${v.name}`, async ({page}) => {
 			await page.setViewportSize(v.size);
-			await page.goto('/');
+			await page.goto('/', {timeout: budgets.navigationMs});
 			await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
 			await page.screenshot({path: `test-results/browser-06-tablet-${v.name.replace(/\s+/g, '_')}.png`});
 		});

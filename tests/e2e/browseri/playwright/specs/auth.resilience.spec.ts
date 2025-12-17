@@ -61,7 +61,7 @@ test.describe('@standard Auth Resilience', () => {
 		await page.getByTestId('login.submit').click();
 		
 		// Erwarte Fehler (entweder UI-Validierung oder Backend-Fehler)
-		// Warte deterministisch auf Ruhe im Netzwerk/DOM statt hartem Sleep
+		// Wartet auf stabilen Netzwerk- und DOM-Zustand anstelle eines festen Timeouts
 		await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 		
 		// Verifiziere: Login-Form noch sichtbar
@@ -150,7 +150,7 @@ test.describe('@standard Auth Resilience', () => {
 			await page.getByTestId('login.password').fill(WRONG_PASSWORD);
 			await page.getByTestId('login.submit').click();
 			
-			// Warte deterministisch zwischen Versuchen
+			// Wartet auf stabilen Netzwerk- und DOM-Zustand anstelle eines festen Timeouts
 			await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 			
 			// Zurück zum Home (falls noch im Login-Screen)

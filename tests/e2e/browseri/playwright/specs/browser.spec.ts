@@ -6,6 +6,21 @@ import {newApiRequestContext} from '../helpers/api';
 import {TRACKING} from '../helpers/tracking';
 
 /**
+ * Sanitiert einen String für die Verwendung als Dateiname.
+ * Entfernt oder ersetzt Zeichen, die in Dateinamen problematisch sein können.
+ * 
+ * @param name - Der zu sanitierende String
+ * @returns Sicherer Dateiname ohne problematische Zeichen
+ */
+function sanitizeFilename(name: string): string {
+	return name
+		.replace(/\s+/g, '_')           // Leerzeichen durch Unterstrich ersetzen
+		.replace(/["/\\:*?<>|]/g, '')   // Ungültige Dateinamen-Zeichen entfernen
+		.replace(/['"„""]/g, '')        // Anführungszeichen entfernen
+		.replace(/\.+$/g, '');          // Trailing dots entfernen
+}
+
+/**
  * Browser-UX-Tests: Advanced-Ebene
  * 
  * Tests für Browser-spezifische Features wie Session-Persistence, Storage-Fallbacks.
@@ -232,7 +247,7 @@ test.describe('@advanced Browser & UX', () => {
 			await page.setViewportSize(v.size);
 			await page.goto('/');
 			await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
-			await page.screenshot({path: `test-results/browser-06-mobile-${v.name.replace(/\s+/g, '_')}.png`});
+			await page.screenshot({path: `test-results/browser-06-mobile-${sanitizeFilename(v.name)}.png`});
 		});
 	}
 	
@@ -246,7 +261,7 @@ test.describe('@advanced Browser & UX', () => {
 			await page.setViewportSize(v.size);
 			await page.goto('/');
 			await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
-			await page.screenshot({path: `test-results/browser-06-tablet-${v.name.replace(/\s+/g, '_')}.png`});
+			await page.screenshot({path: `test-results/browser-06-tablet-${sanitizeFilename(v.name)}.png`});
 		});
 	}
 });

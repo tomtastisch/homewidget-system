@@ -14,6 +14,7 @@ import {budgets, timeouts} from './timing';
  * 
  * @param page Playwright Page-Objekt
  * @param timeout Maximales Timeout in ms (Standard: 5000)
+ * @param maxAttempts Maximale Anzahl der Versuche (Standard: 3)
  */
 export async function waitForNetworkIdle(
 	page: Page,

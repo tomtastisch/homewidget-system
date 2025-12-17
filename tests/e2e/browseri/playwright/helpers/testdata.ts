@@ -18,3 +18,9 @@ export function uniqueEmail(prefix = 'user'): string {
  * Einheitliches Standardpasswort für Testnutzer.
  */
 export const DEFAULT_PASSWORD = 'TestPass123!';
+
+/**
+ * Weitere zentrale Testdaten-Konstanten zur Vermeidung harter Strings in Specs
+ */
+export const INVALID_EMAIL = 'invalid-email-format';
+export const WRONG_PASSWORD = 'WrongPassword999!';

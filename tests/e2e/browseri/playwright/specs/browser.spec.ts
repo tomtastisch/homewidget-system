@@ -1,6 +1,10 @@
 import {expect, test} from '@playwright/test';
 import {createUserWithRole, loginAsRole} from '../helpers/auth';
+import {waitAfterReload, waitForNavigation} from '../helpers/waits';
+import {budgets} from '../helpers/timing';
 import {newApiRequestContext} from '../helpers/api';
+import {TRACKING} from '../helpers/tracking';
+import {sanitizeFilename} from '../helpers/filesystem';
 
 /**
  * Browser-UX-Tests: Advanced-Ebene
@@ -24,10 +28,10 @@ test.describe('@advanced Browser & UX', () => {
 		
 		// Reload
 		await page.reload();
-		await page.waitForTimeout(2000);
+		await waitAfterReload(page, budgets.navigationMs);
 		
 		// Verifiziere, dass User noch eingeloggt ist (Session persistiert)
-		await expect(page.getByTestId('home.loginLink')).not.toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('home.loginLink')).not.toBeVisible({timeout: budgets.navigationMs});
 		
 		// Token sollte noch vorhanden sein
 		// Hinweis: Backend kann einen neuen Token bei Refresh zurückgeben (Token-Rotation für Sicherheit)
@@ -51,20 +55,17 @@ test.describe('@advanced Browser & UX', () => {
 		
 		// Navigiere innerhalb der App zum Account-Screen
 		await page.getByRole('button', {name: 'Account'}).click();
-		await expect(page.getByTestId('account.role')).toBeVisible({timeout: 10_000});
+		await expect(page.getByTestId('account.role')).toBeVisible({timeout: budgets.navigationMs});
 		
 		// Bleibe innerhalb der Single-Page-App; prüfe, dass Token vorhanden ist
 		const tokenInside = await page.evaluate(() => localStorage.getItem('hw_refresh_token'));
 		expect(tokenInside).not.toBeNull();
 		
-		// Klick Home-Button zum Zurück-Navigieren (statt page.goBack(), um localStorage-SecurityErrors zu vermeiden)
-		await page.getByRole('button', {name: /Home|^Home$/i}).click({timeout: 5_000}).catch(() => {
-			// Fallback: wenn Home-Button nicht existiert, nutze Back-Navigation über beliebige Methode
-			// Die App muss jedenfalls navigierbar bleiben
-		});
+		// Klick Home-Button zum Zurück-Navigieren (keine stillen Fallbacks, um echte Probleme nicht zu kaschieren)
+		await page.getByRole('button', {name: /Home|^Home$/i}).click({timeout: 5_000});
 		
-		// Warte kurz auf Navigation
-		await page.waitForTimeout(1000);
+		// Zustandsbasiertes Warten auf Navigation/Idle
+		await waitForNavigation(page, budgets.navigationMs);
 		
 		// Token sollte noch vorhanden sein
 		const tokenAfter = await page.evaluate(() => localStorage.getItem('hw_refresh_token')).catch(() => null);
@@ -79,11 +80,8 @@ test.describe('@advanced Browser & UX', () => {
 	// BROWSER-02 – Fallback bei eingeschränktem Storage (sofern relevant)
 	test('@bestenfalls BROWSER-02: App funktioniert mit deaktiviertem LocalStorage', async ({page}) => {
 		const isCI = process.env.CI === 'true';
-		const reason =
-			'BLOCKED: Expo-Web benötigt localStorage für Token-Persistenz; stabiler Storage-Fallback fehlt und das Deaktivieren von localStorage ist in Browsern oft durch Security-Policies instabil.';
-		
-		test.skip(isCI, reason);
-		test.fixme(!isCI, reason);
+		test.skip(isCI, TRACKING.STORAGE_LIMITATION);
+		test.fixme(!isCI, TRACKING.STORAGE_LIMITATION);
 		
 		// Hinweis: Expo-Web auf Browser benötigt localStorage für Token-Speicherung.
 		// Dieser Test ist konzeptionell und wird übersprungen, da das Überschreiben von localStorage
@@ -110,7 +108,7 @@ test.describe('@advanced Browser & UX', () => {
 			});
 		});
 		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// TODO: Sobald Fallback-Mechanismus implementiert ist:
 		// - App sollte Warnung anzeigen oder In-Memory-Storage nutzen
@@ -138,7 +136,7 @@ test.describe('@advanced Browser & UX', () => {
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'browser02-quota');
 		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Öffne Login
 		const loginLink = page.getByTestId('home.loginLink');
@@ -165,7 +163,7 @@ test.describe('@advanced Browser & UX', () => {
 	
 	// BROWSER-03 – Back-Button-Navigation
 	test('@advanced BROWSER-03: Browser Back-Button funktioniert korrekt', async ({page}) => {
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Klicke auf Login-Link
 		const loginLink = page.getByTestId('home.loginLink');
@@ -187,13 +185,10 @@ test.describe('@advanced Browser & UX', () => {
 	// BROWSER-04 – Fokus-Management für Accessibility
 	test('@advanced BROWSER-04: Fokus wird korrekt gesetzt nach Navigation', async ({page}) => {
 		const isCI = process.env.CI === 'true';
-		const reason =
-			'BLOCKED: Auto-Fokus auf erstem Input-Feld ist im LoginScreen aktuell nicht implementiert (kein autoFocus/Focus-Management).';
+		test.skip(isCI, TRACKING.ACCESSIBILITY_AUTOFOCUS);
+		test.fixme(!isCI, TRACKING.ACCESSIBILITY_AUTOFOCUS);
 		
-		test.skip(isCI, reason);
-		test.fixme(!isCI, reason);
-		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Klicke auf Login-Link
 		const loginLink = page.getByTestId('home.loginLink');
@@ -213,9 +208,9 @@ test.describe('@advanced Browser & UX', () => {
 	
 	// BROWSER-05 – Keyboard-Navigation
 	test('@advanced BROWSER-05: Keyboard-Navigation funktioniert', async ({page}) => {
-		test.skip(process.env.CI === 'true', 'BLOCKED-UI: Keyboard-Navigation-Highlighting nicht sichtbar implementiert. Entfernen sobald Keyboard-Accessibility implementiert ist.');
+		test.skip(process.env.CI === 'true', TRACKING.KEYBOARD_ACCESSIBILITY);
 		
-		await page.goto('/');
+		await page.goto('/', {timeout: budgets.navigationMs});
 		
 		// Nutze Tab-Taste für Navigation
 		await page.keyboard.press('Tab');
@@ -227,26 +222,32 @@ test.describe('@advanced Browser & UX', () => {
 	});
 	
 	// BROWSER-06 – Responsive Design / Mobile Viewport
-	test('@advanced BROWSER-06: App funktioniert auf Mobile-Viewport', async ({page}) => {
-		// Setze Mobile-Viewport
-		await page.setViewportSize({width: 375, height: 667}); // iPhone SE
-		
-		await page.goto('/');
-		
-		// Verifiziere, dass wichtige Elemente sichtbar sind
-		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
-		
-		await page.screenshot({path: 'test-results/browser-06-mobile.png'});
-	});
+	const mobileViewports = [
+		{name: 'iPhone SE', size: {width: 375, height: 667}},
+		{name: 'iPhone 12/13', size: {width: 390, height: 844}},
+		{name: 'Pixel 5', size: {width: 393, height: 851}},
+	];
 	
-	test('@advanced BROWSER-06: App funktioniert auf Tablet-Viewport', async ({page}) => {
-		// Setze Tablet-Viewport
-		await page.setViewportSize({width: 768, height: 1024}); // iPad
-		
-		await page.goto('/');
-		
-		await expect(page.getByTestId('home.loginLink')).toBeVisible();
-		
-		await page.screenshot({path: 'test-results/browser-06-tablet.png'});
-	});
+	for (const v of mobileViewports) {
+		test(`@advanced BROWSER-06: App funktioniert auf Mobile-Viewport – ${v.name}`, async ({page}) => {
+			await page.setViewportSize(v.size);
+			await page.goto('/', {timeout: budgets.navigationMs});
+			await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
+			await page.screenshot({path: `test-results/browser-06-mobile-${sanitizeFilename(v.name)}.png`});
+		});
+	}
+	
+	const tabletViewports = [
+		{name: 'iPad', size: {width: 768, height: 1024}},
+		{name: 'iPad Pro 11"', size: {width: 834, height: 1194}},
+	];
+	
+	for (const v of tabletViewports) {
+		test(`@advanced BROWSER-06: App funktioniert auf Tablet-Viewport – ${v.name}`, async ({page}) => {
+			await page.setViewportSize(v.size);
+			await page.goto('/', {timeout: budgets.navigationMs});
+			await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});
+			await page.screenshot({path: `test-results/browser-06-tablet-${sanitizeFilename(v.name)}.png`});
+		});
+	}
 });

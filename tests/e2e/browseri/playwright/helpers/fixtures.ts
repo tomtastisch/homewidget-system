@@ -1,5 +1,6 @@
 import {expect, Page, test as base} from '@playwright/test';
 import {newApiRequestContext} from './api';
+import {DEFAULT_PASSWORD, uniqueEmail} from './testdata';
 
 type AuthContext = {
 	email: string;
@@ -15,8 +16,8 @@ type Fixtures = {
 export const test = base.extend<Fixtures>({
 	authenticatedPage: async ({page}: { page: Page }, use: any) => {
 		const api = await newApiRequestContext();
-		const email = `demo+${Date.now()}@example.com`;
-		const password = 'Demo1234!';
+		const email = uniqueEmail('demo');
+		const password = DEFAULT_PASSWORD;
 		
 		// Ensure user exists (idempotent enough for tests)
 		await api.post('/api/auth/register', {data: {email, password}});

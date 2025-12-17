@@ -1,6 +1,9 @@
 import {expect, test} from '@playwright/test';
 import {createUserWithRole, loginAs, loginAsRole} from '../helpers/auth';
+import {waitAfterReload, waitForNetworkIdle} from '../helpers/waits';
+import {budgets} from '../helpers/timing';
 import {newApiRequestContext} from '../helpers/api';
+import {TRACKING} from '../helpers/tracking';
 import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
 /**
@@ -34,8 +37,8 @@ test.describe('@standard Feed', () => {
 		await loginAs(page, user.email, user.password);
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();
 		
-		// Warte kurz, dass Feed geladen wird
-		await page.waitForTimeout(2000);
+		// Zustandsbasiertes Warten auf stabilen Netz- & UI-Zustand
+		await waitForNetworkIdle(page, budgets.feedLoadMs);
 		
 		// Verifiziere, dass Feed geladen wurde (über API)
 		const widgets = await listWidgets(api, user.access_token);
@@ -49,8 +52,8 @@ test.describe('@standard Feed', () => {
 		).toBeTruthy();
 		
 		// UI-Validierung: Widget-Namen sind jetzt im Feed sichtbar (testID: feed.widget.name)
-		await expect(page.getByText('Feed Test Widget 1')).toBeVisible({timeout: 10_000});
-		await expect(page.getByText('Feed Test Widget 2')).toBeVisible({timeout: 10_000});
+		await expect(page.getByText('Feed Test Widget 1')).toBeVisible({timeout: budgets.feedLoadMs});
+		await expect(page.getByText('Feed Test Widget 2')).toBeVisible({timeout: budgets.feedLoadMs});
 		
 		await page.screenshot({path: 'test-results/feed-01-widgets-loaded.png'});
 		
@@ -62,11 +65,8 @@ test.describe('@standard Feed', () => {
 	// FEED-02 – Feed-Caching (30 s) wird respektiert
 	test('@standard FEED-02: Feed-Caching verhindert redundante API-Calls', async ({page}) => {
 		const isCI = process.env.CI === 'true';
-		const reason =
-			'BLOCKED: Clientseitiges Feed-Caching (TTL/Store) ist im Mobile-Client aktuell nicht implementiert. HomeScreen lädt den Feed bei jedem Mount/Reload erneut via getHomeWidgets() -> /api/home/feed.';
-		
-		test.skip(isCI, reason);
-		test.fixme(!isCI, reason);
+		test.skip(isCI, TRACKING.FEED_CACHING);
+		test.fixme(!isCI, TRACKING.FEED_CACHING);
 		
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'feed02');
@@ -99,11 +99,11 @@ test.describe('@standard Feed', () => {
 		
 		// Initial load
 		await page.reload();
-		await page.waitForTimeout(2000);
+		await waitAfterReload(page, budgets.feedLoadMs);
 		
 		// Reload innerhalb Cache-Zeitfenster (sollte Cache nutzen, kein neuer API-Call)
 		await page.reload();
-		await page.waitForTimeout(2000);
+		await waitAfterReload(page, budgets.feedLoadMs);
 		
 		// @TODO: Sobald Caching implementiert ist, verifiziere:
 		// expect(feedCalls.length).toBe(1); // kein neuer Call wegen Cache (Beispiel)
@@ -137,23 +137,26 @@ test.describe('@standard Feed', () => {
 				await route.continue();
 			}
 		});
-		
-		// Trigger Feed-Reload
-		await page.reload();
-		
-		// Warte länger auf Toast (Toast hat Animation + Delay)
-		await page.waitForTimeout(1500);
-		
-		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
-		await expect(page.getByTestId('error.toast')).toBeVisible({timeout: 10_000});
-		// Text-Check auf Toast-Element beschränken, um strict mode violation zu vermeiden
-		await expect(page.getByTestId('error.toast').getByText(/Rate limit|zu viele|too many/i)).toBeVisible({timeout: 5_000});
+			
+			// Trigger Feed-Reload
+			await page.reload();
+			
+			// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
+			await expect(page.getByTestId('error.toast')).toBeVisible({timeout: budgets.apiCallMs});
+			// Text-Check auf Toast-Element beschränken, um strict mode violation zu vermeiden
+			await expect(page.getByTestId('error.toast').getByText(/Rate limit|zu viele|too many/i)).toBeVisible({timeout: budgets.apiCallMs});
 		
 		await page.screenshot({path: 'test-results/feed-03-rate-limit.png'});
 	});
 	
 	// FEED-04 – XSS-Inhalte im Feed werden nicht ausgeführt
 	test('@standard FEED-04: XSS in Feed-Inhalten wird escaped', async ({page}) => {
+		// Sicherheit: In Produktions-ähnlichen Umgebungen (z.B. wenn PLAYWRIGHT_ENV=prod oder NODE_ENV=production)
+		// nicht mit absichtlichen XSS-Payloads testen, um IDS/Alarme nicht zu triggern.
+		const isProdLike = (process.env.PLAYWRIGHT_ENV === 'prod') || (process.env.NODE_ENV === 'production');
+		if (isProdLike) {
+			test.skip(true, 'Safety-Guard: XSS-Tests sind in Produktions-ähnlichen Umgebungen deaktiviert.');
+		}
 		const api = await newApiRequestContext();
 		const user = await createUserWithRole(api, 'demo', 'feed04');
 		

@@ -64,7 +64,7 @@ jobs:
             -   name: 📱 Node 20 einrichten
                 uses: actions/setup-node@v4
                 with:
-                    node-version: '20.19.4'
+                    node-version: '20.x'
                     cache: 'npm'
                     cache-dependency-path: 'mobile/package-lock.json'
 
@@ -163,6 +163,7 @@ jobs:
             -   name: 🚀 Expo-Web im E2E-Modus starten
                 env:
                     EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8100
+                    HW_PROFILE: e2e
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
 
@@ -174,6 +175,7 @@ jobs:
                 env:
                     PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
                     E2E_API_BASE_URL: http://127.0.0.1:8100
+                    HW_PROFILE: e2e
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_minimal_tests
 
@@ -224,6 +226,7 @@ jobs:
             -   name: 🚀 Expo-Web im E2E-Modus starten
                 env:
                     EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8100
+                    HW_PROFILE: e2e
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
 
@@ -235,5 +238,6 @@ jobs:
                 env:
                     PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
                     E2E_API_BASE_URL: http://127.0.0.1:8100
+                    HW_PROFILE: e2e
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_playwright_standard_tests

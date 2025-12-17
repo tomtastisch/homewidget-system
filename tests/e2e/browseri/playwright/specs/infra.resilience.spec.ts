@@ -1,6 +1,8 @@
 import {expect, test} from '@playwright/test';
 import {newApiRequestContext} from '../helpers/api';
-import {loginAs, loginAsRole, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAs, loginAsRole} from '../helpers/auth';
+import {waitAfterReload, waitForNetworkIdle} from '../helpers/waits';
+import {budgets, timeouts} from '../helpers/timing';
 
 /**
  * Infrastruktur-Resilience-Tests: Standard- und Advanced-Ebene
@@ -27,8 +29,8 @@ test.describe('@standard Infrastructure Resilience', () => {
 		// Trigger Feed-Reload (um Backend-Call auszulösen)
 		await page.reload();
 		
-		// Warte auf Error-Anzeige
-		await page.waitForTimeout(3000);
+		// Warte auf Error-Anzeige (zustandsbasiert anstelle eines festen Timeouts)
+		await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 		
 		// UI-Validierung: Error-Toast oder Error-Box wird angezeigt
 		// Da Backend komplett down ist, sollte entweder Toast oder die ErrorBox im HomeScreen erscheinen
@@ -98,7 +100,7 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		await expect(page.getByTestId('loading.spinner')).toBeVisible();
 		
 		// Warte auf vollständiges Laden
-		await page.waitForTimeout(5000);
+		await waitForNetworkIdle(page, timeouts.slowUiMs);
 		
 		// UI-Validierung: Loading-Indicator verschwindet nach erfolgreichem Load
 		await expect(page.getByTestId('loading.spinner')).not.toBeVisible();
@@ -119,7 +121,7 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		
 		// Versuche, Feed zu reloaden
 		await page.reload();
-		await page.waitForTimeout(3000);
+		await waitAfterReload(page, budgets.navigationMs);
 		
 		// UI-Validierung: Offline-Indikator wird angezeigt (testID: status.offline)
 		await expect(page.getByTestId('status.offline')).toBeVisible();
@@ -132,7 +134,7 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		
 		// Reload sollte wieder funktionieren
 		await page.reload();
-		await page.waitForTimeout(2000);
+		await waitAfterReload(page, budgets.navigationMs);
 		
 		// UI-Validierung: Offline-Indikator verschwindet
 		await expect(page.getByTestId('status.offline')).not.toBeVisible();
@@ -158,8 +160,8 @@ test.describe('@advanced Infrastructure - Performance & Network', () => {
 		// Versuche Feed zu laden (sollte nach Timeout abbrechen)
 		await page.reload();
 		
-		// Warte kurz auf Fehlerbehandlung
-		await page.waitForTimeout(3000);
+		// Warte auf Fehlerbehandlung (UI stabil)
+		await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 		
 		// UI-Validierung: Timeout-Error wird angezeigt (testID: error.toast)
 		await expect(page.getByTestId('error.toast')).toBeVisible();
@@ -195,7 +197,7 @@ test.describe('@advanced Infrastructure - Error Recovery', () => {
 		
 		// Reload während Ausfall (sollte Fehler zeigen)
 		await page.reload();
-		await page.waitForTimeout(2000);
+		await waitAfterReload(page, budgets.navigationMs);
 		
 		// UI-Validierung: Error-Toast wird angezeigt (testID: error.toast)
 		await expect(page.getByTestId('error.toast')).toBeVisible();
@@ -207,7 +209,7 @@ test.describe('@advanced Infrastructure - Error Recovery', () => {
 		
 		// Reload sollte jetzt wieder funktionieren
 		await page.reload();
-		await page.waitForTimeout(2000);
+		await waitAfterReload(page, budgets.navigationMs);
 		
 		// UI-Validierung: App funktioniert wieder normal
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible();

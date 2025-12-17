@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/test';
 import {loginAs} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
+import {DEFAULT_PASSWORD, uniqueEmail} from '../helpers/testdata';
 import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
 /**
@@ -13,9 +14,9 @@ import {createWidget, deleteWidgetById, listWidgets} from '../helpers/widgets';
 
 test.describe('@minimal Widget Basic', () => {
 	test('@minimal WIDGET-01: Eigene Widgets anzeigen nach Login', async ({page}) => {
-	const api = await newApiRequestContext();
-	const email = `w1+${Date.now()}@example.com`;
-	const password = 'Secret1234!';
+		const api = await newApiRequestContext();
+		const email = uniqueEmail('w1');
+		const password = DEFAULT_PASSWORD;
 	await api.post('/api/auth/register', {data: {email, password}});
 	
 	// Login über UI
@@ -36,9 +37,9 @@ test.describe('@minimal Widget Basic', () => {
 	});
 
 	test('@minimal WIDGET-02: Widget erstellen und im Feed sehen', async ({page}) => {
-	const api = await newApiRequestContext();
-	const email = `w2+${Date.now()}@example.com`;
-	const password = 'Secret1234!';
+		const api = await newApiRequestContext();
+		const email = uniqueEmail('w2');
+		const password = DEFAULT_PASSWORD;
 	await api.post('/api/auth/register', {data: {email, password}});
 	const login = await (await api.post('/api/auth/login', {form: {username: email, password}})).json();
 	
@@ -57,9 +58,9 @@ test.describe('@minimal Widget Basic', () => {
 	});
 
 	test('@minimal WIDGET-03: Eigenes Widget löschen', async ({page}) => {
-	const api = await newApiRequestContext();
-	const email = `w3+${Date.now()}@example.com`;
-	const password = 'Secret1234!';
+		const api = await newApiRequestContext();
+		const email = uniqueEmail('w3');
+		const password = DEFAULT_PASSWORD;
 	await api.post('/api/auth/register', {data: {email, password}});
 	const login = await (await api.post('/api/auth/login', {form: {username: email, password}})).json();
 	

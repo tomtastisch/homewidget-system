@@ -1,6 +1,7 @@
 import {expect, test} from '@playwright/test';
 import {loginAs, logout} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
+import {DEFAULT_PASSWORD, uniqueEmail, WRONG_PASSWORD} from '../helpers/testdata';
 
 /**
  * Auth-Tests: UI-basierte End-to-End-Tests über Expo-Web (Minimal-Ebene)
@@ -13,9 +14,9 @@ test.describe('@minimal Auth Basic', () => {
 	// AUTH-01 – Login mit gültigen Daten (Happy Path) über UI
 	test('@minimal AUTH-01: Login mit gültigen Daten über UI', async ({page}) => {
 	// Erstelle Testbenutzer über API (Setup)
-	const api = await newApiRequestContext();
-	const email = `auth01+${Date.now()}@example.com`;
-	const password = 'Secret1234!';
+		const api = await newApiRequestContext();
+		const email = uniqueEmail('auth01');
+		const password = DEFAULT_PASSWORD;
 	await api.post('/api/auth/register', {data: {email, password}});
 	
 	// Login über UI
@@ -32,9 +33,9 @@ test.describe('@minimal Auth Basic', () => {
 	// AUTH-02 – Logout über UI
 	test('@minimal AUTH-02: Logout über UI', async ({page}) => {
 	// Setup: Testbenutzer erstellen und einloggen
-	const api = await newApiRequestContext();
-	const email = `auth02+${Date.now()}@example.com`;
-	const password = 'Secret1234!';
+		const api = await newApiRequestContext();
+		const email = uniqueEmail('auth02');
+		const password = DEFAULT_PASSWORD;
 	await api.post('/api/auth/register', {data: {email, password}});
 	
 	// Login über UI
@@ -66,8 +67,8 @@ test.describe('@minimal Auth Basic', () => {
 	await page.getByTestId('login.email').waitFor({state: 'visible'});
 	
 	// Falsche Credentials eingeben
-	await page.getByTestId('login.email').fill('nonexistent@example.com');
-	await page.getByTestId('login.password').fill('wrongpassword');
+		await page.getByTestId('login.email').fill('nonexistent@example.com');
+		await page.getByTestId('login.password').fill(WRONG_PASSWORD);
 	await page.getByTestId('login.submit').click();
 	
 	// Warte auf Fehlermeldung nach fehlerhaftem Login

@@ -189,42 +189,40 @@ function computeBudgets(t: ReturnType<typeof computeTimeouts>) {
 let cachedTimeouts: ReturnType<typeof computeTimeouts> | null = null;
 let cachedBudgets: ReturnType<typeof computeBudgets> | null = null;
 
+function ensureTimeouts(): ReturnType<typeof computeTimeouts> {
+	if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+	return cachedTimeouts;
+}
+
+function ensureBudgets(): ReturnType<typeof computeBudgets> {
+	if (!cachedBudgets) {
+		const t = ensureTimeouts();
+		cachedBudgets = computeBudgets(t);
+	}
+	return cachedBudgets;
+}
+
 export const timeouts = new Proxy({} as ReturnType<typeof computeTimeouts>, {
 	get(_target, prop) {
-		if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
-		return cachedTimeouts[prop as keyof ReturnType<typeof computeTimeouts>];
+		return ensureTimeouts()[prop as keyof ReturnType<typeof computeTimeouts>];
 	},
 	ownKeys() {
-		if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
-		return Reflect.ownKeys(cachedTimeouts);
+		return Reflect.ownKeys(ensureTimeouts());
 	},
 	getOwnPropertyDescriptor(_target, prop) {
-		if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
-		return Reflect.getOwnPropertyDescriptor(cachedTimeouts, prop);
+		return Reflect.getOwnPropertyDescriptor(ensureTimeouts(), prop);
 	},
 });
 
 export const budgets = new Proxy({} as ReturnType<typeof computeBudgets>, {
 	get(_target, prop) {
-		if (!cachedBudgets) {
-			if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
-			cachedBudgets = computeBudgets(cachedTimeouts);
-		}
-		return cachedBudgets[prop as keyof ReturnType<typeof computeBudgets>];
+		return ensureBudgets()[prop as keyof ReturnType<typeof computeBudgets>];
 	},
 	ownKeys() {
-		if (!cachedBudgets) {
-			if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
-			cachedBudgets = computeBudgets(cachedTimeouts);
-		}
-		return Reflect.ownKeys(cachedBudgets);
+		return Reflect.ownKeys(ensureBudgets());
 	},
 	getOwnPropertyDescriptor(_target, prop) {
-		if (!cachedBudgets) {
-			if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
-			cachedBudgets = computeBudgets(cachedTimeouts);
-		}
-		return Reflect.getOwnPropertyDescriptor(cachedBudgets, prop);
+		return Reflect.getOwnPropertyDescriptor(ensureBudgets(), prop);
 	},
 });
 

@@ -29,7 +29,7 @@ test.describe('@standard Infrastructure Resilience', () => {
 		// Trigger Feed-Reload (um Backend-Call auszulösen)
 		await page.reload();
 		
-		// Zustandsbasiertes Warten auf Error-Anzeige
+		// Warte auf Error-Anzeige (zustandsbasiert anstelle eines festen Timeouts)
 		await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 		
 		// UI-Validierung: Error-Toast oder Error-Box wird angezeigt

@@ -17,13 +17,12 @@ import {WidgetCard} from '../components/widgets';
 import {useToast} from '../ui/ToastContext';
 import {useHomeFeedInfinite} from '../hooks/useHomeFeedInfinite';
 import {useHomeFeed} from '../hooks/useHomeFeed';
-import type {WidgetContractV1} from '../api/schemas/v1';
 import {TID} from '../testing/testids';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
-// Temporäres Widget-Interface für Authenticated-Flow bis Migration abgeschlossen
-interface LegacyWidget {
+// Gemeinsames Widget-Interface für Rendering (beide Flows)
+interface WidgetForRendering {
 	id: number;
 	name: string;
 }
@@ -40,18 +39,20 @@ export default function HomeScreen({ navigation }: Props) {
 	const authFeedQuery = useHomeFeed({enabled: isAuthed});
 	
 	// Flatten pages zu einer Liste von Widgets (Demo-Flow)
-	const demoWidgets: WidgetContractV1[] = useMemo(() => {
+	const demoWidgets: WidgetForRendering[] = useMemo(() => {
 		if (!demoFeedQuery.data?.pages) return [];
-		return demoFeedQuery.data.pages.flatMap(page => page.items);
+		return demoFeedQuery.data.pages.flatMap(page => 
+			page.items.map(item => ({id: item.id, name: item.name}))
+		);
 	}, [demoFeedQuery.data]);
 	
 	// Auth-Flow Widgets (alte Struktur)
-	const authWidgets: LegacyWidget[] = useMemo(() => {
+	const authWidgets: WidgetForRendering[] = useMemo(() => {
 		return (authFeedQuery.data || []).map(w => ({id: w.id, name: w.name}));
 	}, [authFeedQuery.data]);
 	
 	// Kombiniere zu einheitlicher Liste
-	const widgets: LegacyWidget[] = useMemo(() => {
+	const widgets: WidgetForRendering[] = useMemo(() => {
 		return isAuthed ? authWidgets : demoWidgets;
 	}, [isAuthed, authWidgets, demoWidgets]);
 	

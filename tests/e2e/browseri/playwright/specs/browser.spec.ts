@@ -11,13 +11,20 @@ import {TRACKING} from '../helpers/tracking';
  * 
  * @param name - Der zu sanitierende String
  * @returns Sicherer Dateiname ohne problematische Zeichen
+ * @throws Error wenn der sanitierte Name leer wäre
  */
 function sanitizeFilename(name: string): string {
-	return name
-		.replace(/\s+/g, '_')           // Leerzeichen durch Unterstrich ersetzen
-		.replace(/["/\\:*?<>|]/g, '')   // Ungültige Dateinamen-Zeichen entfernen
-		.replace(/['"„""]/g, '')        // Anführungszeichen entfernen
-		.replace(/\.+$/g, '');          // Trailing dots entfernen
+	const sanitized = name
+		.replace(/\s+/g, '_')             // Leerzeichen durch Unterstrich ersetzen
+		.replace(/["/\\:*?<>|`]/g, '')    // Ungültige Dateinamen-Zeichen entfernen
+		.replace(/['"„""]/g, '')          // Anführungszeichen entfernen
+		.replace(/\.+$/g, '');            // Trailing dots entfernen
+	
+	if (!sanitized) {
+		throw new Error(`Sanitized filename is empty for input: "${name}"`);
+	}
+	
+	return sanitized;
 }
 
 /**

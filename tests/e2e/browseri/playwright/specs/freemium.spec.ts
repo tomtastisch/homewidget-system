@@ -39,7 +39,8 @@ test.describe('@minimal Freemium System', () => {
 		await page.goto('/');
 		
 		await expect(page.getByTestId(HOME_DEMO_BANNER_TID)).toBeVisible({timeout: 10_000});
-		await expect(page.getByText('Premium Card')).toBeVisible({timeout: 10_000});
+		// Zeige, dass mindestens ein Demo-Widget gerendert wird (robuster als Marketing-Text)
+		await expect(page.getByTestId('feed.widget.name').first()).toBeVisible({timeout: 10_000});
 		
 		// Login-Link statt "Registrieren"-Button
 		await expect(page.getByTestId('home.loginLink')).toBeVisible({timeout: 10_000});

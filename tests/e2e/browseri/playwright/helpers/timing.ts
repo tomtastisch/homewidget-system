@@ -152,7 +152,14 @@ export function currentProfile(): string {
 	return loadTimingPublic().profile;
 }
 
-export const rawPublic = (() => loadTimingPublic().public)();
+/**
+ * Liefert die geladenen PUBLIC-Timings.
+ * Lazy-initialisiert beim ersten Zugriff, damit Test-Setup-Code
+ * die HW_PROFILE-Umgebungsvariable vor dem Import setzen kann.
+ */
+export function rawPublic(): TimingPublic {
+	return loadTimingPublic().public;
+}
 
 // Abgeleitete Timeouts & Budgets für E2E-Spezifikationen
 // Faustregeln:
@@ -161,19 +168,68 @@ export const rawPublic = (() => loadTimingPublic().public)();
 // - slowUiMs: großzügiger Puffer für Warm-Ups/Reloads
 // - budgets: spezifische Anwendungsfälle auf Basis obiger Werte
 
-export const timeouts = Object.freeze({
-	networkMs: rawPublic.network.requestTimeoutMs,
-	uiDefaultMs: Math.max(2000, Math.min(rawPublic.network.requestTimeoutMs, 10_000)),
-	slowUiMs: Math.max(5000, Math.min(rawPublic.network.requestTimeoutMs * 2, 20_000)),
+function computeTimeouts() {
+	const pub = rawPublic();
+	return Object.freeze({
+		networkMs: pub.network.requestTimeoutMs,
+		uiDefaultMs: Math.max(2000, Math.min(pub.network.requestTimeoutMs, 10_000)),
+		slowUiMs: Math.max(5000, Math.min(pub.network.requestTimeoutMs * 2, 20_000)),
+	});
+}
+
+function computeBudgets(t: ReturnType<typeof computeTimeouts>) {
+	return Object.freeze({
+		loginMs: Math.min(Math.max(3000, Math.round(t.networkMs * 1.5)), 15_000),
+		navigationMs: Math.min(Math.max(3000, t.uiDefaultMs), 12_000),
+		apiCallMs: Math.min(t.networkMs, 10_000),
+		feedLoadMs: Math.min(Math.max(4000, Math.round(t.networkMs * 1.5)), 15_000),
+	});
+}
+
+let cachedTimeouts: ReturnType<typeof computeTimeouts> | null = null;
+let cachedBudgets: ReturnType<typeof computeBudgets> | null = null;
+
+export const timeouts = new Proxy({} as ReturnType<typeof computeTimeouts>, {
+	get(_target, prop) {
+		if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+		return cachedTimeouts[prop as keyof ReturnType<typeof computeTimeouts>];
+	},
+	ownKeys() {
+		if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+		return Reflect.ownKeys(cachedTimeouts);
+	},
+	getOwnPropertyDescriptor(_target, prop) {
+		if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+		return Reflect.getOwnPropertyDescriptor(cachedTimeouts, prop);
+	},
 });
 
-export const budgets = Object.freeze({
-	loginMs: Math.min(Math.max(3000, Math.round(timeouts.networkMs * 1.5)), 15_000),
-	navigationMs: Math.min(Math.max(3000, timeouts.uiDefaultMs), 12_000),
-	apiCallMs: Math.min(timeouts.networkMs, 10_000),
-	feedLoadMs: Math.min(Math.max(4000, Math.round(timeouts.networkMs * 1.5)), 15_000),
+export const budgets = new Proxy({} as ReturnType<typeof computeBudgets>, {
+	get(_target, prop) {
+		if (!cachedBudgets) {
+			if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+			cachedBudgets = computeBudgets(cachedTimeouts);
+		}
+		return cachedBudgets[prop as keyof ReturnType<typeof computeBudgets>];
+	},
+	ownKeys() {
+		if (!cachedBudgets) {
+			if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+			cachedBudgets = computeBudgets(cachedTimeouts);
+		}
+		return Reflect.ownKeys(cachedBudgets);
+	},
+	getOwnPropertyDescriptor(_target, prop) {
+		if (!cachedBudgets) {
+			if (!cachedTimeouts) cachedTimeouts = computeTimeouts();
+			cachedBudgets = computeBudgets(cachedTimeouts);
+		}
+		return Reflect.getOwnPropertyDescriptor(cachedBudgets, prop);
+	},
 });
 
 export function __resetTimingCacheForTests() {
 	cached = null;
+	cachedTimeouts = null;
+	cachedBudgets = null;
 }

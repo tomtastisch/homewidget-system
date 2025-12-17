@@ -150,7 +150,7 @@ test.describe('@standard Auth Resilience', () => {
 			await page.getByTestId('login.password').fill(WRONG_PASSWORD);
 			await page.getByTestId('login.submit').click();
 			
-			// Warte deterministisch zwischen Versuchen
+			// Wartet zwischen Versuchen auf Network-Idle
 			await waitForNetworkIdle(page, timeouts.uiDefaultMs);
 			
 			// Zurück zum Home (falls noch im Login-Screen)

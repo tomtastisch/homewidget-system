@@ -90,7 +90,7 @@ function loadTimingPublic(): { profile: string; public: TimingPublic } {
 	
 	const configPath = resolveConfigPath();
 	if (!configPath) {
-		// Fallback: harte, konservative Defaults für Notfälle (halten Tests am Laufen)
+		// Fallback: konservative Standard-Werte für Konfigurationsfehler oder fehlende Konfigurationsdatei
 		const fallback: TimingPublic = {
 			query: {staleTimeMs: 0, gcTimeMs: 1000},
 			network: {requestTimeoutMs: 5000},

@@ -11,86 +11,98 @@ import {
 	View
 } from 'react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {type BackendWidget} from '../api/homeApi';
 import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
-import {parseBackendWidget, type ParsedWidget} from '../types/widgets';
-import {WidgetBanner, WidgetCard} from '../components/widgets';
+import {WidgetCard} from '../components/widgets';
 import {useToast} from '../ui/ToastContext';
+import {useHomeFeedInfinite} from '../hooks/useHomeFeedInfinite';
 import {useHomeFeed} from '../hooks/useHomeFeed';
 import {TID} from '../testing/testids';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
-const DEMO_WIDGETS: BackendWidget[] = [
-	{
-		id: 1,
-		name: 'Sommer Sale',
-		created_at: new Date(0).toISOString(),
-		config_json: JSON.stringify({
-			type: 'banner',
-			title: '-20 % auf alles',
-			description: 'Nur heute',
-			cta_label: 'Shop',
-			cta_target: 'shop://summer',
-		}),
-	},
-	{
-		id: 2,
-		name: 'Kreditkarte',
-		created_at: new Date(0).toISOString(),
-		config_json: JSON.stringify({
-			type: 'card',
-			title: 'Premium Card',
-			description: 'Mit Bonuspunkten',
-			cta_label: 'Jetzt beantragen',
-			cta_target: 'product://card',
-		}),
-	},
-];
+// Gemeinsames Widget-Interface für Rendering (beide Flows)
+interface WidgetForRendering {
+	id: number;
+	name: string;
+}
 
 export default function HomeScreen({ navigation }: Props) {
 	const {status, role} = useAuth();
 	const {showError} = useToast();
 	const isAuthed = status === 'authenticated';
 	
-	const feedQuery = useHomeFeed({enabled: isAuthed});
+	// Demo-Flow (unauth): Nutze InfiniteQuery auf feed_v1
+	const demoFeedQuery = useHomeFeedInfinite(20, !isAuthed);
 	
-	const widgets: BackendWidget[] = useMemo(() => {
-		return isAuthed ? (feedQuery.data || []) : DEMO_WIDGETS;
-	}, [isAuthed, feedQuery.data]);
+	// Auth-Flow: Nutze vorerst alte Query (Übergangsphase)
+	const authFeedQuery = useHomeFeed({enabled: isAuthed});
 	
-	const loading = isAuthed ? feedQuery.isFetching : false;
+	// Flatten pages zu einer Liste von Widgets (Demo-Flow)
+	const demoWidgets: WidgetForRendering[] = useMemo(() => {
+		if (!demoFeedQuery.data?.pages) return [];
+		return demoFeedQuery.data.pages.flatMap(page => 
+			page.items.map(item => ({id: item.id, name: item.name}))
+		);
+	}, [demoFeedQuery.data]);
+	
+	// Auth-Flow Widgets (alte Struktur)
+	const authWidgets: WidgetForRendering[] = useMemo(() => {
+		return (authFeedQuery.data || []).map(w => ({id: w.id, name: w.name}));
+	}, [authFeedQuery.data]);
+	
+	// Kombiniere zu einheitlicher Liste
+	const widgets: WidgetForRendering[] = useMemo(() => {
+		return isAuthed ? authWidgets : demoWidgets;
+	}, [isAuthed, authWidgets, demoWidgets]);
+	
+	// Loading-State: Initial load only (Haupt-Spinner nicht bei Next-Page)
+	// Auth-Flow: useQuery hat keine Pagination, daher nur isFetching
+	// Demo-Flow: useInfiniteQuery hat Pagination, daher isFetching && !isFetchingNextPage
+	const loading = isAuthed 
+		? authFeedQuery.isFetching
+		: (demoFeedQuery.isFetching && !demoFeedQuery.isFetchingNextPage);
+	
+	// Fehlerextraktion in wiederverwendbare Funktion
+	const extractErrorMessage = useCallback((err: unknown): string => {
+		const e = err as any;
+		return e?.message || 'Fehler beim Laden des Feeds.';
+	}, []);
+	
 	const error: string | null = useMemo(() => {
-		if (!isAuthed) return null;
-		if (feedQuery.isError) {
-			const e: any = feedQuery.error as any;
-			return e?.message || 'Fehler beim Laden des Feeds.';
+		const query = isAuthed ? authFeedQuery : demoFeedQuery;
+		if (query.isError) {
+			return extractErrorMessage(query.error);
 		}
 		return null;
-	}, [isAuthed, feedQuery.isError, feedQuery.error]);
+	}, [isAuthed, authFeedQuery.isError, authFeedQuery.error, demoFeedQuery.isError, demoFeedQuery.error, extractErrorMessage]);
 	
 	// Zeige den Fehler-Toast nur, wenn sich der Fehlerstatus ändert
 	useEffect(() => {
-		if (!isAuthed) return;
-		if (feedQuery.isError) {
-			const e: any = feedQuery.error as any;
-			const msg = e?.message || 'Fehler beim Laden des Feeds.';
-			showError(msg);
+		if (error) {
+			showError(error);
 		}
-	}, [isAuthed, feedQuery.isError, showError]);
+	}, [error, showError]);
 	
-	const parsed: ParsedWidget[] = useMemo(() => widgets.map(parseBackendWidget), [widgets]);
-	
-	const onPressCta = useCallback((target?: string) => {
-		if (!target) {
-			Alert.alert('Aktion', 'Keine Aktion konfiguriert.');
-			return;
-		}
-		// Placeholder; später Deep-Link in Produktjourneys
-		Alert.alert('CTA', `Ziel: ${target}`);
-		console.log('CTA pressed', target);
+	const onPressWidget = useCallback((widgetId: number) => {
+		// Placeholder für Navigation zu Widget-Detail
+		Alert.alert('Widget', `Widget ${widgetId} angeklickt`);
+		console.log('Widget pressed', widgetId);
 	}, []);
+	
+	const handleLoadMore = useCallback(() => {
+		if (!isAuthed && demoFeedQuery.hasNextPage && !demoFeedQuery.isFetchingNextPage) {
+			demoFeedQuery.fetchNextPage();
+		}
+	}, [isAuthed, demoFeedQuery.hasNextPage, demoFeedQuery.isFetchingNextPage, demoFeedQuery.fetchNextPage]);
+	
+	const handleRefresh = useCallback(() => {
+		if (isAuthed) {
+			authFeedQuery.refetch();
+		} else {
+			demoFeedQuery.refetch();
+		}
+	}, [isAuthed, authFeedQuery.refetch, demoFeedQuery.refetch]);
 	
 	return (
 		<View style={styles.container} testID={TID.home.screen}>
@@ -103,11 +115,7 @@ export default function HomeScreen({ navigation }: Props) {
 						<Text style={styles.badgeText}>{!isAuthed ? 'DEMO' : (role || 'user').toUpperCase()}</Text>
 					</View>
 				</View>
-				<Button title="Neu laden" onPress={() => {
-					if (isAuthed) {
-						feedQuery.refetch();
-					}
-				}}/>
+				<Button title="Neu laden" onPress={handleRefresh}/>
 			</View>
 			{!isAuthed && (
 				<View style={styles.demoBanner} testID={TID.home.demoBanner}>
@@ -127,7 +135,7 @@ export default function HomeScreen({ navigation }: Props) {
 				<View style={styles.errorBox}>
 					<Text style={styles.errorText}>{error}</Text>
 					<View style={{marginTop: 8}}>
-						<Button title="Erneut versuchen" onPress={() => feedQuery.refetch()}/>
+						<Button title="Erneut versuchen" onPress={handleRefresh}/>
 					</View>
 				</View>
 			)}
@@ -139,38 +147,29 @@ export default function HomeScreen({ navigation }: Props) {
 			)}
 			<FlatList
 				testID={TID.home.widgets.list}
-				data={parsed}
+				data={widgets}
 				keyExtractor={(w) => String(w.id)}
-				refreshControl={<RefreshControl refreshing={loading} onRefresh={() => feedQuery.refetch()}/>} 
-				renderItem={({item}) => {
-					const cfg = item.config;
-					switch (cfg.type) {
-						case 'banner':
-							return (
-								<WidgetBanner
-									title={cfg.title || item.name}
-									description={cfg.description}
-									imageUrl={cfg.image_url}
-									ctaLabel={cfg.cta_label}
-									onPress={() => onPressCta(cfg.cta_target)}
-								/>
-							);
-						case 'card':
-						case 'teaser':
-						default:
-							return (
-								<WidgetCard
-									title={cfg.title || item.name}
-									description={cfg.description}
-									imageUrl={cfg.image_url}
-									ctaLabel={cfg.cta_label}
-									onPress={() => onPressCta(cfg.cta_target)}
-								/>
-							);
-					}
-				}}
+				refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh}/>} 
+				onEndReached={handleLoadMore}
+				onEndReachedThreshold={0.5}
+				renderItem={({item}) => (
+					<WidgetCard
+						title={item.name}
+						description=""
+						ctaLabel="Mehr"
+						onPress={() => onPressWidget(item.id)}
+					/>
+				)}
 				ListEmptyComponent={!loading && !error ?
 					<Text testID={TID.home.empty}>Aktuell keine Widgets verfügbar.</Text> : null}
+				ListFooterComponent={
+					!isAuthed && demoFeedQuery.isFetchingNextPage ? (
+						<View style={styles.loadingContainer}>
+							<ActivityIndicator size="small" color="#0066cc" />
+							<Text style={styles.loadingText}>Weitere Widgets laden...</Text>
+						</View>
+					) : null
+				}
 			/>
 		</View>
 	);

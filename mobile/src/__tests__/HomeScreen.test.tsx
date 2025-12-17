@@ -15,8 +15,9 @@ jest.mock('../api/demoFeedV1', () => ({
 			{id: 1003, name: 'Offers', priority: 10, created_at: '2024-01-03T08:00:00Z'},
 		];
 		
-		const start = cursor || 0;
-		const end = start + (limit || 20);
+		const start = cursor ?? 0;
+		const pageLimit = limit ?? 20;
+		const end = Math.min(start + pageLimit, items.length);
 		const pageItems = items.slice(start, end);
 		const hasMore = end < items.length;
 		

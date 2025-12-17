@@ -56,28 +56,31 @@ export default function HomeScreen({ navigation }: Props) {
 		return isAuthed ? authWidgets : demoWidgets;
 	}, [isAuthed, authWidgets, demoWidgets]);
 	
+	// Loading-State: Konsistent für beide Flows (Haupt-Spinner nicht bei Pagination)
 	const loading = isAuthed 
-		? authFeedQuery.isFetching 
+		? (authFeedQuery.isFetching)
 		: (demoFeedQuery.isFetching && !demoFeedQuery.isFetchingNextPage);
+	
+	// Fehlerextraktion in wiederverwendbare Funktion
+	const extractErrorMessage = useCallback((err: unknown): string => {
+		const e = err as any;
+		return e?.message || 'Fehler beim Laden des Feeds.';
+	}, []);
 	
 	const error: string | null = useMemo(() => {
 		const query = isAuthed ? authFeedQuery : demoFeedQuery;
 		if (query.isError) {
-			const e: any = query.error as any;
-			return e?.message || 'Fehler beim Laden des Feeds.';
+			return extractErrorMessage(query.error);
 		}
 		return null;
-	}, [isAuthed, authFeedQuery.isError, authFeedQuery.error, demoFeedQuery.isError, demoFeedQuery.error]);
+	}, [isAuthed, authFeedQuery.isError, authFeedQuery.error, demoFeedQuery.isError, demoFeedQuery.error, extractErrorMessage]);
 	
 	// Zeige den Fehler-Toast nur, wenn sich der Fehlerstatus ändert
 	useEffect(() => {
-		const query = isAuthed ? authFeedQuery : demoFeedQuery;
-		if (query.isError) {
-			const e: any = query.error as any;
-			const msg = e?.message || 'Fehler beim Laden des Feeds.';
-			showError(msg);
+		if (error) {
+			showError(error);
 		}
-	}, [isAuthed, authFeedQuery.isError, demoFeedQuery.isError, showError]);
+	}, [error, showError]);
 	
 	const onPressWidget = useCallback((widgetId: number) => {
 		// Placeholder für Navigation zu Widget-Detail
@@ -89,7 +92,7 @@ export default function HomeScreen({ navigation }: Props) {
 		if (!isAuthed && demoFeedQuery.hasNextPage && !demoFeedQuery.isFetchingNextPage) {
 			demoFeedQuery.fetchNextPage();
 		}
-	}, [isAuthed, demoFeedQuery]);
+	}, [isAuthed, demoFeedQuery.hasNextPage, demoFeedQuery.isFetchingNextPage, demoFeedQuery.fetchNextPage]);
 	
 	const handleRefresh = useCallback(() => {
 		if (isAuthed) {
@@ -97,7 +100,7 @@ export default function HomeScreen({ navigation }: Props) {
 		} else {
 			demoFeedQuery.refetch();
 		}
-	}, [isAuthed, authFeedQuery, demoFeedQuery]);
+	}, [isAuthed, authFeedQuery.refetch, demoFeedQuery.refetch]);
 	
 	return (
 		<View style={styles.container} testID={TID.home.screen}>

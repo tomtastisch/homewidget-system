@@ -19,14 +19,14 @@ export const HOME_FEED_INFINITE_QK = ['home', 'feed_v1_infinite'] as const;
  * - Nächste Seite über `next_cursor` der API; `null` beendet Pagination.
  * - Nutzt unauthenticated Demo-Endpoint für Demo-Flow.
  */
-export function useHomeFeedInfinite(limit = 20, enabled = true) {
+export function useHomeFeedInfinite(limit: number = 20, enabled: boolean = true) {
 	const staleTime = getTimingPublic().query.staleTimeMs;
 	
-	return useInfiniteQuery<FeedPageV1>({
+	return useInfiniteQuery({
 		queryKey: [...HOME_FEED_INFINITE_QK, limit] as const,
-		queryFn: ({pageParam}) => getDemoFeedPage({cursor: pageParam ?? null, limit}),
+		queryFn: ({pageParam}: {pageParam: number | null}) => getDemoFeedPage({cursor: pageParam, limit}),
 		initialPageParam: null as number | null,
-		getNextPageParam: (lastPage) => lastPage.next_cursor ?? null,
+		getNextPageParam: (lastPage: FeedPageV1) => lastPage.next_cursor ?? undefined,
 		enabled,
 		staleTime,
 	});

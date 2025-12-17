@@ -21,16 +21,29 @@ export async function waitForNetworkIdle(
 	timeout: number = timeouts.uiDefaultMs,
 	maxAttempts: number = 3,
 ): Promise<void> {
+	let lastError: Error | undefined;
+	
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		try {
 			await page.waitForLoadState('networkidle', {timeout});
 			return;
 		} catch (e) {
-			// Begrenzter Backoff, um Hänger zu vermeiden; kein endloses Warten
-			const backoff = Math.min(250 * attempt, 1000);
-			await page.waitForTimeout(backoff);
+			lastError = e as Error;
+			console.log(`[WAIT] Network-Idle Versuch ${attempt}/${maxAttempts} fehlgeschlagen: ${lastError.message}`);
+			
+			if (attempt < maxAttempts) {
+				// Begrenzter Backoff, um Hänger zu vermeiden; kein endloses Warten
+				const backoff = Math.min(250 * attempt, 1000);
+				await page.waitForTimeout(backoff);
+			}
 		}
 	}
+	
+	// Nach Erschöpfung aller Versuche Fehler werfen
+	throw new Error(
+		`Network-Idle konnte nicht erreicht werden nach ${maxAttempts} Versuchen. ` +
+		`Letzter Fehler: ${lastError?.message || 'Unbekannt'}`
+	);
 }
 
 /**

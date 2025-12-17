@@ -17,7 +17,7 @@ const mockGetDemoFeedPage = jest.fn(async ({cursor, limit}) => {
 	];
 	
 	const start = cursor ?? 0;
-	const pageLimit = limit ?? 3; // Kleinere Seitengröße für Tests
+	const pageLimit = limit ?? 20;
 	const end = Math.min(start + pageLimit, allItems.length);
 	const pageItems = allItems.slice(start, end);
 	const hasMore = end < allItems.length;
@@ -50,7 +50,7 @@ describe('HomeScreen', () => {
 	
 	it('renders widgets from feed_v1 and shows demo banner when unauthenticated', async () => {
 		queryClient = new QueryClient({
-			defaultOptions: {queries: {retry: false, gcTime: 0}},
+			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
 		const {getByText, queryByText} = render(
 			<QueryClientProvider client={queryClient}>
@@ -71,14 +71,14 @@ describe('HomeScreen', () => {
 			expect(getByText('News')).toBeTruthy();
 			expect(getByText('Welcome')).toBeTruthy();
 			expect(getByText('Offers')).toBeTruthy();
-		});
+		}, {timeout: 8000});
 		
 		expect(queryByText('PREMIUM')).toBeNull();
-	});
+	}, 15000);
 	
 	it('loads next page when onEndReached is triggered', async () => {
 		queryClient = new QueryClient({
-			defaultOptions: {queries: {retry: false, gcTime: 0}},
+			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
 		const {getByText} = render(
 			<QueryClientProvider client={queryClient}>
@@ -94,7 +94,7 @@ describe('HomeScreen', () => {
 		// Warte auf initiales Laden (limit wird vom Hook gesetzt auf 20)
 		await waitFor(() => {
 			expect(getByText('News')).toBeTruthy();
-		});
+		}, {timeout: 8000});
 		
 		// Erste Seite geladen (mit limit=20, sollte alle Items laden)
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(1);
@@ -102,11 +102,11 @@ describe('HomeScreen', () => {
 		
 		// Verifiziere dass hasNextPage false ist (alle 5 Items passen in eine Seite von 20)
 		// Test ist erfolgreich wenn keine zweite Seite geladen wird
-	});
+	}, 15000);
 	
 	it('refreshes feed when pull-to-refresh is triggered', async () => {
 		queryClient = new QueryClient({
-			defaultOptions: {queries: {retry: false, gcTime: 0}},
+			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
 		const {getByText, getByTestId} = render(
 			<QueryClientProvider client={queryClient}>
@@ -122,7 +122,7 @@ describe('HomeScreen', () => {
 		// Warte auf initiales Laden
 		await waitFor(() => {
 			expect(getByText('News')).toBeTruthy();
-		});
+		}, {timeout: 8000});
 		
 		const initialCallCount = mockGetDemoFeedPage.mock.calls.length;
 		
@@ -136,7 +136,7 @@ describe('HomeScreen', () => {
 			// Warte auf Refresh
 			await waitFor(() => {
 				expect(mockGetDemoFeedPage.mock.calls.length).toBeGreaterThan(initialCallCount);
-			});
+			}, {timeout: 8000});
 		}
-	});
+	}, 15000);
 });

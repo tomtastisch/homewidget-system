@@ -33,9 +33,42 @@ export default async function globalSetup(config: FullConfig) {
 	} catch {
 	}
 	
-	// Reduziert, um schnelleres Feedback bei Fehlschlägen zu erhalten.
-	// Segmentierte Polling-Strategie bleibt erhalten.
-	const totalTimeoutMs = 90_000; // bis zu 90 Sekunden nur für Warm‑Up (kein Test‑Timeout)
+	/**
+	 * Ermittelt das Warm‑Up‑Timeout abhängig von Environment‑Variablen.
+	 *
+	 * Prioritäten:
+	 * 1. PLAYWRIGHT_WARMUP_TIMEOUT_MS (Millisekunden, > 0 und numerisch)
+	 * 2. HW_PROFILE (z. B. "dev", "e2e", "ci-slow", "ci-fast")
+	 * 3. Fallback: 90_000 ms, um bestehendes Standardverhalten zu erhalten.
+	 */
+	function resolveWarmupTimeoutMs(): number {
+		const envTimeout = process.env.PLAYWRIGHT_WARMUP_TIMEOUT_MS;
+		if (envTimeout) {
+			const parsed = Number(envTimeout);
+			if (Number.isFinite(parsed) && parsed > 0) {
+				return parsed;
+			}
+		}
+	
+		const hwProfile = (process.env.HW_PROFILE || '').toLowerCase();
+		switch (hwProfile) {
+			case 'dev':
+			case 'ci-slow':
+				// Längeres Timeout für langsame Entwicklungs- oder CI‑Profile
+				return 180_000;
+			case 'e2e':
+			case 'ci-fast':
+				// Kürzeres Timeout für optimierte oder schnelle E2E‑Runs
+				return 90_000;
+			default:
+				// Kompatibles Standardverhalten beibehalten
+				return 90_000;
+		}
+	}
+	
+	// Warm‑Up‑Timeout konfigurierbar halten, um langsame CI‑Umgebungen zu unterstützen.
+	// Segmentierte Polling‑Strategie bleibt erhalten.
+	const totalTimeoutMs = resolveWarmupTimeoutMs(); // Standard: 90 Sekunden, via Env/HW_PROFILE anpassbar
 	const start = Date.now();
 	let attempt = 0;
 	let ready = false;

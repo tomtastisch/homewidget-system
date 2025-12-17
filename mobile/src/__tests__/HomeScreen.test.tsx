@@ -5,32 +5,26 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
 
-// Mock API
-jest.mock('../api/homeApi', () => ({
-	getHomeWidgets: jest.fn(async () => [
-		{
-			id: 1,
-			name: 'Sommer Sale',
-			config_json: JSON.stringify({
-				type: 'banner',
-				title: '-20% auf alles',
-				description: 'Nur heute',
-				cta_label: 'Shop',
-				cta_target: 'shop://summer'
-			}),
-		},
-		{
-			id: 2,
-			name: 'Kreditkarte',
-			config_json: JSON.stringify({
-				type: 'card',
-				title: 'Premium Card',
-				description: 'Mit Bonuspunkten',
-				cta_label: 'Jetzt beantragen',
-				cta_target: 'product://card'
-			}),
-		},
-	]),
+// Mock feed_v1 API
+jest.mock('../api/demoFeedV1', () => ({
+	getDemoFeedPage: jest.fn(async ({cursor, limit}) => {
+		// Simuliere paginierte Daten
+		const items = [
+			{id: 1001, name: 'News', priority: 5, created_at: '2024-01-01T08:00:00Z'},
+			{id: 1002, name: 'Welcome', priority: 10, created_at: '2024-01-02T08:00:00Z'},
+			{id: 1003, name: 'Offers', priority: 10, created_at: '2024-01-03T08:00:00Z'},
+		];
+		
+		const start = cursor || 0;
+		const end = start + (limit || 20);
+		const pageItems = items.slice(start, end);
+		const hasMore = end < items.length;
+		
+		return {
+			items: pageItems,
+			next_cursor: hasMore ? end : null,
+		};
+	}),
 }));
 
 // Mock AuthContext
@@ -48,7 +42,7 @@ describe('HomeScreen', () => {
 		}
 	});
 	
-	it('renders widgets by type and shows demo banner when unauthenticated', async () => {
+	it('renders widgets from feed_v1 and shows demo banner when unauthenticated', async () => {
 		queryClient = new QueryClient({
 			defaultOptions: {queries: {retry: false, gcTime: 0}},
 		});
@@ -65,13 +59,12 @@ describe('HomeScreen', () => {
 		
 		expect(getByText('Home‑Feed')).toBeTruthy();
 		expect(getByText('DEMO')).toBeTruthy();
-		expect(getByText('Demonstrations‑Ansicht – Inhalte sind Beispiele')).toBeTruthy(); // ← Korrigierter Text
+		expect(getByText('Demonstrations‑Ansicht – Inhalte sind Beispiele')).toBeTruthy();
 		
 		await waitFor(() => {
-			expect(getByText(/-20\s% auf alles/i)).toBeTruthy(); // banner title
-			expect(getByText('Shop')).toBeTruthy(); // banner CTA
-			expect(getByText('Premium Card')).toBeTruthy(); // card title
-			expect(getByText('Jetzt beantragen')).toBeTruthy(); // card CTA
+			expect(getByText('News')).toBeTruthy();
+			expect(getByText('Welcome')).toBeTruthy();
+			expect(getByText('Offers')).toBeTruthy();
 		});
 		
 		expect(queryByText('PREMIUM')).toBeNull();

@@ -21,7 +21,7 @@ const WINDOWS_RESERVED = (() => {
 export type SanitizeFilenameOptions = Readonly<{
 	/**
 	 * Ersetzungszeichen/-string für nicht erlaubte Zeichen.
-	 * Muss nicht-leer sein und darf keine Pfadseparatoren enthalten.
+	 * Muss nicht-leer sein und darf keine Pfadseparatoren enthalten
 	 *
 	 * Default: "_"
 	 */
@@ -34,7 +34,7 @@ export type SanitizeFilenameOptions = Readonly<{
 	maxLength?: number;
 	
 	/**
-	 * Fügt einen deterministischen Hash-Suffix hinzu, um Kollisionen zu vermeiden.
+	 * Fügt ein deterministisches Hash-Suffix hinzu, um Kollisionen zu vermeiden.
 	 * Default: false
 	 */
 	unique?: boolean;

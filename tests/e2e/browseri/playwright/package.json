@@ -2,6 +2,7 @@
     "name": "homewidget-e2e-playwright",
     "version": "0.1.0",
     "private": true,
+    "type": "module",
     "description": "Browser E2E (minimal, standard, advanced) for homewidget-system using Playwright",
     "license": "MIT",
     "scripts": {
@@ -18,5 +19,8 @@
         "@playwright/test": "1.57.0",
         "@types/node": "^25.0.1",
         "typescript": "^5.6.3"
+    },
+    "dependencies": {
+        "filenamify": "^7.0.1"
     }
 }

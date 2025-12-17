@@ -28,7 +28,7 @@ export async function waitForNetworkIdle(
 			return;
 		} catch (e) {
 			lastError = e as Error;
-			console.log(`[WAIT] Network-Idle Versuch ${attempt}/${maxAttempts} fehlgeschlagen`);
+			console.log(`[WAIT] Network-Idle Versuch ${attempt}/${maxAttempts} fehlgeschlagen: ${lastError.message}`);
 			
 			if (attempt < maxAttempts) {
 				// Begrenzter Backoff, um Hänger zu vermeiden; kein endloses Warten
@@ -40,8 +40,8 @@ export async function waitForNetworkIdle(
 	
 	// Nach Erschöpfung aller Versuche Fehler werfen
 	throw new Error(
-		`waitForNetworkIdle fehlgeschlagen nach ${maxAttempts} Versuchen. ` +
-		`Ursprünglicher Fehler: ${lastError?.message || 'Unbekannt'}`
+		`Network-Idle konnte nicht erreicht werden nach ${maxAttempts} Versuchen. ` +
+		`Letzter Fehler: ${lastError?.message || 'Unbekannt'}`
 	);
 }
 

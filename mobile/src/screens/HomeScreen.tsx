@@ -56,9 +56,11 @@ export default function HomeScreen({ navigation }: Props) {
 		return isAuthed ? authWidgets : demoWidgets;
 	}, [isAuthed, authWidgets, demoWidgets]);
 	
-	// Loading-State: Konsistent für beide Flows (Haupt-Spinner nicht bei Pagination)
+	// Loading-State: Initial load only (Haupt-Spinner nicht bei Next-Page)
+	// Auth-Flow: useQuery hat keine Pagination, daher nur isFetching
+	// Demo-Flow: useInfiniteQuery hat Pagination, daher isFetching && !isFetchingNextPage
 	const loading = isAuthed 
-		? (authFeedQuery.isFetching)
+		? authFeedQuery.isFetching
 		: (demoFeedQuery.isFetching && !demoFeedQuery.isFetchingNextPage);
 	
 	// Fehlerextraktion in wiederverwendbare Funktion

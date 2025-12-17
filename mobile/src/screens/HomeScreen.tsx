@@ -145,13 +145,24 @@ export default function HomeScreen({ navigation }: Props) {
 					<Text style={styles.loadingText}>Laden...</Text>
 				</View>
 			)}
+			{/* FlatList mit Virtualisierungs-Optimierungen (HW-NEXT-03B):
+			    - initialNumToRender: 10 Items initial für schnellen Start
+			    - maxToRenderPerBatch: 5 Items pro Batch für inkrementelles Rendering
+			    - windowSize: 5 Screens für Balance zwischen Performance und Scroll-Smoothness
+			    - removeClippedSubviews: true für Memory-Optimierung bei langen Listen
+			    - onEndReachedThreshold: 0.3 für frühzeitiges Paging (30% vor Ende)
+			*/}
 			<FlatList
 				testID={TID.home.widgets.list}
 				data={widgets}
 				keyExtractor={(w) => String(w.id)}
 				refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh}/>} 
 				onEndReached={handleLoadMore}
-				onEndReachedThreshold={0.5}
+				onEndReachedThreshold={0.3}
+				initialNumToRender={10}
+				maxToRenderPerBatch={5}
+				windowSize={5}
+				removeClippedSubviews={true}
 				renderItem={({item}) => (
 					<WidgetCard
 						title={item.name}

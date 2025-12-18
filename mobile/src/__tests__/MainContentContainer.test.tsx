@@ -1,6 +1,7 @@
 import React from 'react';
 import {describe, expect, it} from '@jest/globals';
 import {render} from '@testing-library/react-native';
+import {Text} from 'react-native';
 import {MainContentContainer} from '../components/MainContentContainer';
 
 describe('MainContentContainer', () => {
@@ -29,7 +30,6 @@ describe('MainContentContainer', () => {
 	});
 	
 	it('renders with custom content in slots', () => {
-		const {Text} = require('react-native');
 		const customSlots = [
 			{content: <Text>Custom Content 1</Text>},
 			{content: <Text>Custom Content 2</Text>},

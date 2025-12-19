@@ -1,3 +1,6 @@
+[tool.uv.workspace]
+members = ["backend"]
+
 [tool.ruff]
 line-length = 120
 target-version = "py313"

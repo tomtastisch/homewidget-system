@@ -245,10 +245,10 @@ step_e2e_playwright_install() {
     log_info "Installiere Playwright-Dependencies (Browsers Path: ${PLAYWRIGHT_BROWSERS_PATH})..."
     (
         cd "${playwright_dir}" || exit 1
-        ensure_npm || exit 1
-        
-        # Laufzeit-Downloads waehrend npm ci verhindern
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-fund --no-audit
+        ensure_pnpm || exit 1
+
+        # Laufzeit-Downloads waehrend pnpm install verhindern
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm install --frozen-lockfile --prefer-offline
         
         # Explizite Installation der Browser (hier Download erlauben)
         log_info "Installiere/Verifiziere Browser-Binaries..."

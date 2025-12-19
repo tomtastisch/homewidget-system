@@ -1,0 +1,90 @@
+name: Playwright Setup
+
+on:
+  workflow_dispatch:
+  workflow_call:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  copilot-setup-steps:
+    name: copilot-setup-steps
+    runs-on: ubuntu-latest
+    env:
+      # Fester Pfad fuer Browser-Binaries, damit sie deterministisch gefunden werden
+      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.playwright-browsers
+      # Standardmaessig Downloads ueberspringen (Sicherheitsnetz)
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (v20)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+        id: pnpm-cache
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Cache Playwright Browsers
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          # Key enthaelt OS und Lockfile-Hash fuer deterministische Versionierung
+          key: ${{ runner.os }}-playwright-v1.57.0-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-v1.57.0-
+
+      - name: Install Dependencies (pnpm install)
+        working-directory: tests/e2e/browseri/playwright
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Install/Verify Playwright Browsers & Deps
+        working-directory: tests/e2e/browseri/playwright
+        run: |
+          if [ "${{ steps.cache-playwright.outputs.cache-hit }}" == "true" ]; then
+            echo "SUCCESS: Playwright browsers found in cache at ${{ env.PLAYWRIGHT_BROWSERS_PATH }}."
+            echo "Verifying installation and ensuring system dependencies are present..."
+            # --with-deps installiert notwendige OS-Pakete. 
+            # Da Binaries im Cache sind, sollte Playwright nichts nachladen muessen.
+            npx playwright install --with-deps chromium
+            echo "LOG: Everything ready. Nothing further to do."
+          else
+            echo "INFO: Cache miss. Installing Playwright browsers to ${{ env.PLAYWRIGHT_BROWSERS_PATH }}..."
+            # Wir deaktivieren den Skip kurzzeitig, um die Browser initial zu laden
+            PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 npx playwright install --with-deps chromium
+            echo "LOG: Browser installation and setup completed successfully."
+          fi
+
+      - name: Final Audit
+        run: |
+          echo "Deterministic Playwright setup verification:"
+          echo "PLAYWRIGHT_BROWSERS_PATH: $PLAYWRIGHT_BROWSERS_PATH"
+          echo "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: $PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD"
+          if [ -d "$PLAYWRIGHT_BROWSERS_PATH" ]; then
+            echo "Browser directory exists."
+            ls -ld "$PLAYWRIGHT_BROWSERS_PATH"
+          else
+            echo "ERROR: Browser directory missing!"
+            exit 1
+          fi

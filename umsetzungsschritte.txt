@@ -1,0 +1,25 @@
+DOKUMENTATION DER UMSETZUNGSSCHRITTE
+
+Vorgang 1: Konsistente Migration auf pnpm
+-----------------------------------------
+Schritt 1.1: Umstellung der Installationsbefehle in tools/dev/pipeline/ci_steps.sh
+Begründung: Die Migration auf pnpm erfordert, dass alle automatisierten Skripte denselben Paketmanager verwenden, um Konsistenz zwischen lokaler Entwicklung und CI zu gewährleisten. Dies geschah hier, um die Playwright-Umgebung direkt für die neuen Workflows vorzubereiten.
+
+Schritt 1.2: Entfernen veralteter package-lock.json Dateien (Root, mobile/, tests/e2e/...)
+Begründung: Das Vorhandensein mehrerer Lockfiles unterschiedlicher Paketmanager führt zu Konflikten und Fehlern bei der Abhängigkeitsauflösung. Die Löschung war notwendig, um pnpm als einzige "Source of Truth" zu etablieren.
+
+Vorgang 2: Erweiterung der CI-Automatisierung
+---------------------------------------------
+Schritt 2.1: Erstellung des GitHub Workflows .github/workflows/copilot-setup-steps.yml
+Begründung: Dieser Workflow wurde erstellt, um eine deterministische und gecachte Playwright-Installation bereitzustellen. Er nutzt pnpm-spezifische Caching-Strategien, um die CI-Laufzeiten signifikant zu verkürzen.
+
+Schritt 2.2: Integration des hw-ci Skripts und der Konfiguration tools/ci/hw-ci.config.json
+Begründung: Dieses Tool ermöglicht die Steuerung von GitHub Actions direkt aus dem Terminal. Es wurde hier hinzugefügt, um dem Entwickler effizientere Feedback-Zyklen ohne ständigen Wechsel zur Weboberfläche zu ermöglichen.
+
+Vorgang 3: Versionskontrolle und Qualitätssicherung
+---------------------------------------------------
+Schritt 3.1: Staging der Änderungen mittels git add und git rm
+Begründung: Dieser Schritt war notwendig, um die neuen Tools und die Migration für den nächsten Commit vorzubereiten. Dies geschah genau zu diesem Zeitpunkt, um einen sauberen und logisch zusammenhängenden Snapshot der Migration zu erstellen.
+
+Schritt 3.2: Verifizierung der Umgebung (pnpm install & playwright test --list)
+Begründung: Vor dem Abschluss der Arbeiten muss sichergestellt werden, dass die neue pnpm-Struktur funktioniert. Der Test-Listing-Befehl bestätigt, dass die Playwright-Integration trotz Paketmanager-Wechsel voll einsatzbereit ist.

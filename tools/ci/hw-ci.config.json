@@ -1,0 +1,6 @@
+{
+  "workflow_name": "CI",
+  "default_branch": "copilot/featui-maincontent-grid-slots",
+  "poll_seconds": 3,
+  "poll_timeout_seconds": 180
+}

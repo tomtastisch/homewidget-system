@@ -313,7 +313,7 @@ step_mobile_expo_doctor() {
         return 0
     fi
     run_mobile_cmd "expo-doctor (Konfigurationsprüfung)" \
-        "npx expo-doctor"
+        "npm run doctor"
 }
 
 ## @brief Mobile Linting ausführen.

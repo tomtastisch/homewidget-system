@@ -32,14 +32,32 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 # Backend-Schritte
 # -----------------------------------------------------------------------------
 
-## @brief Backend-Entwicklungsumgebung (venv, Abhängigkeiten) einrichten.
+## @brief Backend-Entwicklungsumgebung (uv, Abhängigkeiten) einrichten.
 step_backend_setup_env() {
     if [[ ! -d "${BACKEND_DIR}" ]]; then
         log_warn "Backend-Verzeichnis fehlt – Schritt 'Backend-Setup' wird übersprungen."
         return 0
     fi
-    log_info "Initialisiere Backend-Entwicklungsumgebung über tools/dev/setup_dev_env.sh"
-    PYTHON_BIN=python3 bash "${PROJECT_ROOT}/tools/dev/setup_dev_env.sh"
+    log_info "Initialisiere Backend-Entwicklungsumgebung über uv sync"
+    ensure_uv || return 1
+    uv sync --project backend --locked
+}
+
+## @brief Backend CI-Guards (uv.lock diff) ausführen.
+step_backend_uv_guards() {
+    log_info "Führe Backend-Guards aus..."
+    git diff --exit-code uv.lock || {
+        log_error "ERROR: uv.lock changed in CI. Please commit your lockfile changes."
+        exit 1
+    }
+    uv pip check
+}
+
+## @brief Backend Security Audit (uv audit) ausführen.
+step_backend_uv_audit() {
+    log_info "Führe Backend Security Audit (uv audit) aus..."
+    ensure_uv || return 1
+    uv audit --level high
 }
 
 ## @brief Backend-Linting und Typprüfung (Ruff + MyPy) ausführen.
@@ -221,12 +239,22 @@ step_e2e_playwright_install() {
         return 0
     fi
     
-    log_info "Installiere Playwright-Dependencies..."
+    # Deterministic Playwright Setup
+    export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-${PROJECT_ROOT}/.playwright-browsers}"
+    
+    log_info "Installiere Playwright-Dependencies (Browsers Path: ${PLAYWRIGHT_BROWSERS_PATH})..."
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
-        npm ci --no-fund --no-audit
-        npx playwright install --with-deps chromium
+        
+        # Laufzeit-Downloads waehrend npm ci verhindern
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-fund --no-audit
+        
+        # Explizite Installation der Browser (hier Download erlauben)
+        log_info "Installiere/Verifiziere Browser-Binaries..."
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0 npx playwright install --with-deps chromium
+        
+        log_info "Playwright-Setup abgeschlossen."
     )
 }
 
@@ -242,12 +270,19 @@ step_e2e_playwright_minimal_tests() {
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
+        
+        # Deterministic Playwright Configuration
+        export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-${PROJECT_ROOT}/.playwright-browsers}"
+        export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+        
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
         # Minimal-Suite benötigt keinen strikten UI-Warm-Up – weich ausführen
         export PLAYWRIGHT_WARMUP_MODE="soft"
         # Server wird außerhalb von Playwright gemanagt
         export PLAYWRIGHT_NO_AUTO_START="true"
+        
+        log_info "Starten der Tests (Downloads deaktiviert, Path: ${PLAYWRIGHT_BROWSERS_PATH})..."
         npx playwright test --project=minimal
     )
 }
@@ -264,10 +299,17 @@ step_e2e_playwright_standard_tests() {
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
+        
+        # Deterministic Playwright Configuration
+        export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-${PROJECT_ROOT}/.playwright-browsers}"
+        export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+        
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
         # Server wird außerhalb von Playwright gemanagt
         export PLAYWRIGHT_NO_AUTO_START="true"
+        
+        log_info "Starten der Tests (Downloads deaktiviert, Path: ${PLAYWRIGHT_BROWSERS_PATH})..."
         npx playwright test --project=standard
     )
 }
@@ -284,10 +326,17 @@ step_e2e_playwright_all_tests() {
     (
         cd "${playwright_dir}" || exit 1
         ensure_npm || exit 1
+        
+        # Deterministic Playwright Configuration
+        export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-${PROJECT_ROOT}/.playwright-browsers}"
+        export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+        
         export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
         export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
         # Server wird außerhalb von Playwright gemanagt
         export PLAYWRIGHT_NO_AUTO_START="true"
+        
+        log_info "Starten der Tests (Downloads deaktiviert, Path: ${PLAYWRIGHT_BROWSERS_PATH})..."
         npx playwright test --project=advanced
     )
 }
@@ -296,14 +345,50 @@ step_e2e_playwright_all_tests() {
 # Mobile-Schritte
 # -----------------------------------------------------------------------------
 
-## @brief Mobile-Abhängigkeiten über npm ci installieren.
+## @brief Mobile-Abhängigkeiten über pnpm installieren.
 step_mobile_install_deps() {
     if [[ ! -d "${MOBILE_DIR}" ]]; then
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Abhängigkeiten' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "npm ci (mobile)" \
-        "npm ci --no-fund --no-audit"
+    ensure_pnpm || return 1
+    log_info "pnpm install (mobile, frozen-lockfile)"
+    pnpm -C mobile install --frozen-lockfile
+}
+
+## @brief Mobile CI-Guards (pnpm guards) ausführen.
+step_mobile_pnpm_guards() {
+    log_info "Führe Mobile-Guards aus..."
+    ensure_pnpm || return 1
+    # Guard: recursive-install=false
+    test "$(pnpm config get recursive-install)" = "false" || {
+        log_error "Guard failed: recursive-install must be false"
+        exit 1
+    }
+    # Guard: No root node_modules
+    test ! -d node_modules || {
+        log_error "Guard failed: root node_modules detected (Leakage)"
+        exit 1
+    }
+    # Guard: pnpm-lock.yaml stability
+    git diff --exit-code pnpm-lock.yaml || {
+        log_error "ERROR: pnpm-lock.yaml changed in CI. Please commit your lockfile changes."
+        exit 1
+    }
+}
+
+## @brief Mobile Lockfile-Check (pnpm dedupe --check).
+step_mobile_pnpm_dedupe() {
+    log_info "Führe pnpm dedupe --check aus..."
+    ensure_pnpm || return 1
+    pnpm -C mobile dedupe --check
+}
+
+## @brief Mobile Security Audit (pnpm audit).
+step_mobile_audit() {
+    log_info "Führe Mobile Security Audit (pnpm audit) aus..."
+    ensure_pnpm || return 1
+    pnpm -C mobile audit --audit-level=high
 }
 
 ## @brief Expo-Konfiguration mit expo-doctor prüfen.
@@ -313,7 +398,7 @@ step_mobile_expo_doctor() {
         return 0
     fi
     run_mobile_cmd "expo-doctor (Konfigurationsprüfung)" \
-        "npx expo-doctor"
+        "pnpm exec expo-doctor"
 }
 
 ## @brief Mobile Linting ausführen.
@@ -322,8 +407,8 @@ step_mobile_lint() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Linting' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "npm run lint (mobile)" \
-        "npm run lint"
+    run_mobile_cmd "pnpm run lint (mobile)" \
+        "pnpm run lint"
 }
 
 ## @brief Mobile TypeScript-Check ausführen.
@@ -332,8 +417,8 @@ step_mobile_typescript_check() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile TypeScript-Check' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "npx tsc --noEmit (mobile)" \
-        "npx tsc --noEmit"
+    run_mobile_cmd "pnpm exec tsc --noEmit (mobile)" \
+        "pnpm exec tsc --noEmit"
 }
 
 ## @brief Mobile Jest-Tests ausführen, falls ein test-Skript existiert.
@@ -342,10 +427,10 @@ step_mobile_jest_tests() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Tests' wird übersprungen."
         return 0
     fi
-    # Bevorzugt ein leichtgewichtiges CI-Testskript, falls vorhanden; fallback auf 'npm test -- --ci'.
-    run_mobile_cmd "npm run test:ci (mobile), falls definiert" \
-        "if jq -e '.scripts[\"test:ci\"]' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' npm run test:ci; \
-         elif jq -e '.scripts.test' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' npm test -- --ci; \
+    # Bevorzugt ein leichtgewichtiges CI-Testskript, falls vorhanden; fallback auf 'pnpm test -- --ci'.
+    run_mobile_cmd "pnpm run test:ci (mobile), falls definiert" \
+        "if jq -e '.scripts[\"test:ci\"]' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' pnpm run test:ci; \
+         elif jq -e '.scripts.test' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' pnpm test -- --ci; \
          else echo 'Kein test- oder test:ci-Skript definiert – Tests übersprungen.'; fi"
 }
 
@@ -355,26 +440,45 @@ step_mobile_build() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Build' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "npm run build (mobile), falls definiert" \
-        "if jq -e '.scripts.build' package.json > /dev/null 2>&1; then npm run build; else echo 'Kein build-Skript definiert – Build-Schritt übersprungen.'; fi"
+    run_mobile_cmd "pnpm run build (mobile), falls definiert" \
+        "if jq -e '.scripts.build' package.json > /dev/null 2>&1; then pnpm run build; else echo 'Kein build-Skript definiert – Build-Schritt übersprungen.'; fi"
+}
+
+# -----------------------------------------------------------------------------
+# Repo-weite Governance
+# -----------------------------------------------------------------------------
+
+## @brief Secrets Check via gitleaks.
+step_repo_secrets() {
+    log_info "Führe Secrets Check (gitleaks) aus..."
+    if ! command -v gitleaks >/dev/null 2>&1; then
+        log_warn "gitleaks nicht gefunden. Überspringe Check."
+        return 0
+    fi
+    gitleaks detect --source="${PROJECT_ROOT}" --verbose --redact
 }
 
 # -----------------------------------------------------------------------------
 # Aggregierte Pipeline-Schritte
 # -----------------------------------------------------------------------------
 
-## @brief Vollständige Backend-Pipeline (Setup, Qualität, Unit- + Integrationstests).
+## @brief Vollständige Backend-Pipeline (Setup, Guards, Qualität, Audit, Unit- + Integrationstests).
 step_pipeline_backend() {
     step_backend_setup_env
+    step_backend_uv_guards
     step_backend_quality
+    step_backend_uv_audit
     step_backend_unit_tests
     step_backend_integration_tests
 }
 
-## @brief Vollständige Mobile-Pipeline (Deps, expo-doctor, Lint, TS, Jest, Build).
+## @brief Vollständige Mobile-Pipeline (Deps, Guards, Dedupe, expo-doctor, Audit, Lint, TS, Jest, Build).
 step_pipeline_mobile() {
     step_mobile_install_deps
+    step_mobile_pnpm_guards
+    step_mobile_pnpm_dedupe
     step_mobile_expo_doctor
+    step_mobile_audit
     step_mobile_lint
     step_mobile_typescript_check
     step_mobile_jest_tests
@@ -405,7 +509,9 @@ usage() {
 Verwendung: tools/dev/pipeline/ci_steps.sh <kommando>
 
 Verfügbare Kommandos:
-  backend_setup_env               Backend-Entwicklungsumgebung vorbereiten
+  backend_setup_env               Backend-Entwicklungsumgebung vorbereiten (uv sync)
+  backend_uv_guards               Backend-Guards (Lockfile-Check)
+  backend_uv_audit                Backend-Security-Audit (uv audit)
   backend_quality                 Backend-Qualität (Ruff + MyPy)
   backend_unit_tests              Backend Unit-Tests
   backend_integration_tests       Backend Integrationstests
@@ -418,12 +524,17 @@ Verfügbare Kommandos:
   e2e_playwright_standard_tests   Playwright Standard-Tests ausführen (Minimal + Standard)
   e2e_playwright_all_tests        Playwright alle Tests ausführen (inkl. Advanced)
 
-  mobile_install_deps             Mobile-Abhängigkeiten installieren (npm ci)
+  mobile_install_deps             Mobile-Abhängigkeiten installieren (pnpm install)
+  mobile_pnpm_guards              Mobile-Guards (pnpm config, lockfile, node_modules)
+  mobile_pnpm_dedupe              Mobile-Lockfile-Check (pnpm dedupe)
+  mobile_audit                    Mobile-Security-Audit (pnpm audit)
   mobile_expo_doctor              Expo-Konfiguration prüfen (expo-doctor)
   mobile_lint                     Mobile Linting
   mobile_typescript_check         Mobile TypeScript-Check
   mobile_jest_tests               Mobile Jest-Tests (falls definiert)
   mobile_build                    Mobile Build (falls definiert)
+
+  repo_secrets                    Secrets Check (gitleaks)
 
   pipeline_backend                Backend-Pipeline (Setup + Qualität + Unit/Integrationstests)
   pipeline_mobile                 Mobile-Pipeline (Deps + expo-doctor + Lint + TS + Tests + Build)
@@ -442,6 +553,12 @@ main() {
     case "${cmd}" in
         backend_setup_env)
             step_backend_setup_env
+            ;;
+        backend_uv_guards)
+            step_backend_uv_guards
+            ;;
+        backend_uv_audit)
+            step_backend_uv_audit
             ;;
         backend_quality)
             step_backend_quality
@@ -476,6 +593,15 @@ main() {
         mobile_install_deps)
             step_mobile_install_deps
             ;;
+        mobile_pnpm_guards)
+            step_mobile_pnpm_guards
+            ;;
+        mobile_pnpm_dedupe)
+            step_mobile_pnpm_dedupe
+            ;;
+        mobile_audit)
+            step_mobile_audit
+            ;;
         mobile_expo_doctor)
             step_mobile_expo_doctor
             ;;
@@ -490,6 +616,9 @@ main() {
             ;;
         mobile_build)
             step_mobile_build
+            ;;
+        repo_secrets)
+            step_repo_secrets
             ;;
         pipeline_backend)
             step_pipeline_backend

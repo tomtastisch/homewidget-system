@@ -102,7 +102,7 @@ specs/
 
 ---
 
-## 📊 Test-Status
+## 📊 Test-Status (Playwright)
 
 ```bash
 # Beispiel-Output von letztem Run:

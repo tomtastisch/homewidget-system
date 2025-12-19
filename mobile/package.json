@@ -15,6 +15,7 @@
         "build": "npx expo export --platform web --output-dir web-build",
         "lint": "eslint . --cache",
         "doctor": "expo-doctor",
+        "type-check": "tsc --noEmit",
         "test": "jest",
         "test:ci": "jest --ci",
         "test:local": "jest --runInBand --detectOpenHandles",

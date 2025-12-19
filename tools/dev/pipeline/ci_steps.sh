@@ -332,8 +332,8 @@ step_mobile_typescript_check() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile TypeScript-Check' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "npx tsc --noEmit (mobile)" \
-        "npx tsc --noEmit"
+    run_mobile_cmd "npm run type-check (mobile)" \
+        "npm run type-check"
 }
 
 ## @brief Mobile Jest-Tests ausführen, falls ein test-Skript existiert.

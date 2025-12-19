@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {TID} from '../testing/testids';
 
 /**
@@ -20,7 +20,7 @@ interface MainContentContainerProps {
 
 export function MainContentContainer({slots, slotCount = 3}: MainContentContainerProps) {
 	// Verwende entweder die übergebenen Slots oder erstelle Platzhalter-Slots
-	const displaySlots = slots || Array.from({length: slotCount}, () => ({}));
+	const displaySlots: MainContentSlot[] = slots || Array.from({length: slotCount}, () => ({}));
 	
 	return (
 		<View style={styles.container} testID={TID.home.mainContent}>

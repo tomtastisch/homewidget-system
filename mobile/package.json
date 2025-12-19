@@ -14,6 +14,8 @@
         "web": "expo start --web --port 19006",
         "build": "npx expo export --platform web --output-dir web-build",
         "lint": "eslint . --cache",
+        "doctor": "expo-doctor",
+        "type-check": "tsc --noEmit",
         "test": "jest",
         "test:ci": "jest --ci",
         "test:local": "jest --runInBand --detectOpenHandles",
@@ -56,6 +58,7 @@
         "detox": "^20.46.0",
         "eslint": "^9.39.1",
         "jest": "~29.7.0",
+        "expo-doctor": "1.17.14",
         "jest-expo": "~54.0.16",
         "react-test-renderer": "19.1.0",
         "ts-node": "^10.9.2",
@@ -82,5 +85,12 @@
     },
     "engines": {
         "node": ">=20.19.4"
+    },
+    "expo": {
+        "install": {
+            "exclude": [
+                "expo-asset"
+            ]
+        }
     }
 }

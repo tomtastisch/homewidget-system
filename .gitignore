@@ -224,3 +224,5 @@ test_e2e.db
 **/.last-run.json
 **/playwright-report/
 /.output.txt
+/tools/ci/hw-ci
+/tools/ci/hw-ci.config.json

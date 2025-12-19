@@ -37,6 +37,14 @@ test.describe('Expo-Web Integration Smoke Tests', () => {
 		// Verify we can interact with the link
 		await expect(loginLink).toBeEnabled();
 		
+		// HW-NEXT-03C: Prüfe MainContentContainer mit Slots
+		const mainContent = page.getByTestId('home.mainContent');
+		await expect(mainContent).toBeVisible({timeout: 10_000});
+		
+		// Verifiziere, dass mindestens ein Slot sichtbar ist
+		const firstSlot = page.getByTestId('home.mainContent.slot.0');
+		await expect(firstSlot).toBeVisible({timeout: 10_000});
+		
 		// Take a screenshot for visual verification
 		await page.screenshot({path: 'test-results/expo-web-smoke-home.png'});
 	});

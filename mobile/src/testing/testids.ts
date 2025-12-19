@@ -17,6 +17,8 @@ export const TID = {
 		},
 		loginLink: 'home.loginLink',
 		demoBanner: 'home.demoBanner',
+		mainContent: 'home.mainContent',
+		mainContentSlot: (index: number) => `home.mainContent.slot.${index}`,
 	},
 } as const;
 

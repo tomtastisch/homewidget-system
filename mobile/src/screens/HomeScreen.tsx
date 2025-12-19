@@ -14,6 +14,7 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
 import {WidgetCard} from '../components/widgets';
+import {MainContentContainer} from '../components/MainContentContainer';
 import {useToast} from '../ui/ToastContext';
 import {useHomeFeedInfinite} from '../hooks/useHomeFeedInfinite';
 import {useHomeFeed} from '../hooks/useHomeFeed';
@@ -145,6 +146,7 @@ export default function HomeScreen({ navigation }: Props) {
 					<Text style={styles.loadingText}>Laden...</Text>
 				</View>
 			)}
+			<MainContentContainer slotCount={3} />
 			{/* FlatList mit Virtualisierungs-Optimierungen (HW-NEXT-03B):
 			    - initialNumToRender: 10 Items initial für schnellen Start
 			    - maxToRenderPerBatch: 5 Items pro Batch für inkrementelles Rendering

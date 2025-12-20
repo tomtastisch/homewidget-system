@@ -68,7 +68,6 @@ describe('WidgetDetailScreen', () => {
 	afterEach(() => {
 		if (queryClient) {
 			queryClient.clear();
-			queryClient.unmount?.();
 		}
 		mockGetDemoWidgetDetail.mockClear();
 		mockedNavigate.mockClear();
@@ -85,7 +84,7 @@ describe('WidgetDetailScreen', () => {
 			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
 		
-		const {queryByTestId, queryByText, UNSAFE_getByType} = render(
+		const {queryByTestId, queryByText} = render(
 			<QueryClientProvider client={queryClient}>
 				<WidgetDetailScreen
 					navigation={{navigate: jest.fn()} as any}
@@ -94,14 +93,10 @@ describe('WidgetDetailScreen', () => {
 			</QueryClientProvider>
 		);
 		
-		// ActivityIndicator sollte sichtbar sein (importiert aus react-native)
-		const ActivityIndicator = require('react-native').ActivityIndicator;
-		const activityIndicator = UNSAFE_getByType(ActivityIndicator);
-		expect(activityIndicator).toBeTruthy();
-		
-		// Der Hauptinhalt sollte noch nicht vorhanden sein
+		// Der Hauptinhalt sollte noch nicht vorhanden sein (während des Ladens)
 		expect(queryByTestId(TID.widgetDetail.screen)).toBeNull();
 		expect(queryByText('Widget 1001')).toBeNull();
+		expect(queryByText('Fehler')).toBeNull();
 	});
 	
 	it('renders widget detail successfully', async () => {

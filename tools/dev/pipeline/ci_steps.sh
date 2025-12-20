@@ -403,8 +403,9 @@ step_mobile_expo_doctor() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'expo-doctor' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "expo-doctor (Konfigurationsprüfung)" \
-        "pnpm exec expo-doctor"
+    log_info "Führe expo-doctor aus (Workspace-Kontext)..."
+    ensure_pnpm || return 1
+    pnpm -C mobile exec expo-doctor
 }
 
 ## @brief Mobile Linting ausführen.
@@ -413,8 +414,9 @@ step_mobile_lint() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Linting' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "pnpm run lint (mobile)" \
-        "pnpm run lint"
+    log_info "Führe Mobile-Linting aus..."
+    ensure_pnpm || return 1
+    pnpm -C mobile run lint
 }
 
 ## @brief Mobile TypeScript-Check ausführen.
@@ -423,8 +425,9 @@ step_mobile_typescript_check() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile TypeScript-Check' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "pnpm exec tsc --noEmit (mobile)" \
-        "pnpm exec tsc --noEmit"
+    log_info "Führe Mobile-TypeScript-Check aus..."
+    ensure_pnpm || return 1
+    pnpm -C mobile run type-check
 }
 
 ## @brief Mobile Jest-Tests ausführen, falls ein test-Skript existiert.
@@ -433,11 +436,19 @@ step_mobile_jest_tests() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Tests' wird übersprungen."
         return 0
     fi
+    log_info "Führe Mobile-Jest-Tests aus..."
+    ensure_pnpm || return 1
     # Bevorzugt ein leichtgewichtiges CI-Testskript, falls vorhanden; fallback auf 'pnpm test -- --ci'.
-    run_mobile_cmd "pnpm run test:ci (mobile), falls definiert" \
-        "if jq -e '.scripts[\"test:ci\"]' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' pnpm run test:ci; \
-         elif jq -e '.scripts.test' package.json > /dev/null 2>&1; then BABEL_CACHE_PATH='.cache/babel.json' pnpm test -- --ci; \
-         else echo 'Kein test- oder test:ci-Skript definiert – Tests übersprungen.'; fi"
+    (
+        cd "${MOBILE_DIR}" || exit 1
+        if jq -e '.scripts["test:ci"]' package.json > /dev/null 2>&1; then 
+            BABEL_CACHE_PATH='.cache/babel.json' pnpm run test:ci
+        elif jq -e '.scripts.test' package.json > /dev/null 2>&1; then 
+            BABEL_CACHE_PATH='.cache/babel.json' pnpm test -- --ci
+        else 
+            echo 'Kein test- oder test:ci-Skript definiert – Tests übersprungen.'
+        fi
+    )
 }
 
 ## @brief Mobile Build ausführen, falls ein build-Skript existiert.
@@ -446,8 +457,16 @@ step_mobile_build() {
         log_warn "Mobile-Verzeichnis fehlt – Schritt 'Mobile-Build' wird übersprungen."
         return 0
     fi
-    run_mobile_cmd "pnpm run build (mobile), falls definiert" \
-        "if jq -e '.scripts.build' package.json > /dev/null 2>&1; then pnpm run build; else echo 'Kein build-Skript definiert – Build-Schritt übersprungen.'; fi"
+    log_info "Führe Mobile-Build aus..."
+    ensure_pnpm || return 1
+    (
+        cd "${MOBILE_DIR}" || exit 1
+        if jq -e '.scripts.build' package.json > /dev/null 2>&1; then 
+            pnpm run build
+        else 
+            echo 'Kein build-Skript definiert – Build übersprungen.'
+        fi
+    )
 }
 
 # -----------------------------------------------------------------------------

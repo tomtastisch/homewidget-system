@@ -365,11 +365,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const branch = github.event.workflow_run.head_branch;
             const prs = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              head: `${context.repo.owner}:${github.event.workflow_run.head_branch}`
+              head: `${context.repo.owner}:${branch}`
             });
             
             if (prs.data.length > 0) {

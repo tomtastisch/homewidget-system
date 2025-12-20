@@ -49,7 +49,11 @@ function Router() {
       <Stack.Navigator>
 	      {/* Home is accessible for both demo (guest) and authenticated users */}
 	      <Stack.Screen name="Home" component={HomeScreen} options={{title: 'Home'}}/>
-	      <Stack.Screen name="WidgetDetail" component={WidgetDetailScreen} options={{title: 'Widget Detail'}}/>
+	      <Stack.Screen
+		      name="WidgetDetail"
+		      component={WidgetDetailScreen}
+		      options={{title: 'Widget-Details'}}
+	      />
 	      <Stack.Screen name="Offers" component={OffersScreen} options={{title: 'Angebote'}}/>
 	      {isAuthed ? (
 		      <Stack.Screen name="Account" component={AccountScreen} options={{title: 'Account'}}/>

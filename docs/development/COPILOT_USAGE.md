@@ -365,21 +365,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const branch = github.event.workflow_run.head_branch;
-            const prs = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${context.repo.owner}:${branch}`
-            });
+            // workflow_run hat eine pull_requests Array
+            const pullRequests = github.event.workflow_run.pull_requests;
             
-            if (prs.data.length > 0) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prs.data[0].number,
-                body: '@copilot CI ist grün. Bitte führe einen finalen Review durch.'
-              });
+            if (pullRequests && pullRequests.length > 0) {
+              // Kommentar für jeden assoziierten PR
+              for (const pr of pullRequests) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: '@copilot CI ist grün. Bitte führe einen finalen Review durch.'
+                });
+              }
             }
 ```
 

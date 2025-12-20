@@ -226,3 +226,7 @@ test_e2e.db
 /.output.txt
 /tools/ci/hw-ci
 /tools/ci/hw-ci.config.json
+
+# JetBrains build output
+/out/
+out/

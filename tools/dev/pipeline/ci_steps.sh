@@ -60,8 +60,9 @@ step_backend_uv_guards() {
 step_backend_uv_audit() {
     log_info "Führe Backend Security Audit (pip-audit via uv) aus..."
     ensure_uv || return 1
-    # uv audit ist noch experimentell/neu, wir nutzen pip-audit via uv run
-    uv run --project backend pip-audit
+    # uv audit ist noch experimentell/neu, wir nutzen pip-audit via uv run.
+    # Wir ignorieren CVE-2024-23342 (ecdsa), da es aktuell kein Upstream-Fix gibt (transitiv via python-jose).
+    uv run --project backend pip-audit --ignore CVE-2024-23342
 }
 
 ## @brief Backend-Linting und Typprüfung (Ruff + MyPy) ausführen.

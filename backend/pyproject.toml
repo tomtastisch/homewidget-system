@@ -13,37 +13,37 @@ dependencies = [
   "fastapi-cache2>=0.2",
   "fastapi-limiter>=0.1",
   "pydantic[email]>=2.12.5",
-    "pydantic-settings>=2.6",
+  "pydantic-settings>=2.6",
   # Required by FastAPI when using form data (e.g., OAuth2PasswordRequestForm)
   "python-multipart>=0.0.20",
-    "loguru>=0.7",
+  "loguru>=0.7",
 ]
 
 [project.optional-dependencies]
 dev = [
-    # Linting / Typing
+  # Linting / Typing
   "ruff>=0.6",
   "mypy>=1.11",
   "types-python-jose",
-    # Tests / Test-Runner
+  # Tests / Test-Runner
   "pytest>=7.0",
   "pytest-asyncio>=0.23",
-    "pytest-cov",
-    "pytest-timeout",
-    "pytest-socket",
-    # HTTP / API-Testing
-    # Starlette/FastAPI TestClient benötigt httpx
-    "httpx>=0.24",
-    "respx",
-    "schemathesis",
-    # Zeitmanipulation / Testdaten / Property-based Tests
+  "pytest-cov",
+  "pytest-timeout",
+  "pytest-socket",
+  # HTTP / API-Testing
+  # Starlette/FastAPI TestClient benötigt httpx
+  "httpx>=0.24",
+  "respx",
+  "schemathesis",
+  # Zeitmanipulation / Testdaten / Property-based Tests
   # Deterministische Zeitmanipulation für Token-Expiry-Tests
   "freezegun>=1.5",
   # Realistischere Testdaten (z. B. E-Mails) – optional genutzt
   "faker>=26.0",
-    "hypothesis",
-    # Security / Dependencies
-    "pip-audit",
+  "hypothesis",
+  # Security / Dependencies
+  "pip-audit",
 ]
 
 [build-system]

@@ -113,3 +113,5 @@ solange:
 - fachliches Verhalten korrekt und plausibel bleibt,
 - Tests bestehen und
 - bestehende öffentliche APIs nicht ohne Not gebrochen werden.
+<!-- ATomTool-att-required -->
+Hinweis: Für CI/Review ausschließlich / verwenden. Details: .junie/ATomTool.md

@@ -10,6 +10,7 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../App';
 import {useDemoDetail} from '../hooks/useDemoDetail';
 import {TID} from '../testing/testids';
+import {BlocksRenderer} from '../components/renderers/BlocksRenderer';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WidgetDetail'>;
 
@@ -49,9 +50,12 @@ export default function WidgetDetailScreen({ route }: Props) {
 			<View style={styles.content}>
 				<Text style={styles.title}>{detail.container.title}</Text>
 				<Text>{detail.container.description}</Text>
+				
+				<View style={styles.blocksContainer}>
+					<BlocksRenderer blocks={detail.content_spec.blocks} />
+				</View>
+
 				<Text style={styles.idText}>ID: {detail.id}</Text>
-				{/* BlocksRenderer wird in Phase 2 implementiert */}
-				<Text style={styles.placeholder}>Inhalt folgt in Phase 2...</Text>
 			</View>
 		</ScrollView>
 	);
@@ -81,13 +85,11 @@ const styles = StyleSheet.create({
 		color: '#888',
 		fontSize: 12,
 	},
+	blocksContainer: {
+		marginTop: 20,
+	},
 	error: {
 		color: 'red',
 		fontSize: 16,
 	},
-	placeholder: {
-		marginTop: 20,
-		fontStyle: 'italic',
-		color: '#666',
-	}
 });

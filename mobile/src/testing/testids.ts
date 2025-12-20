@@ -23,6 +23,9 @@ export const TID = {
 	widgetDetail: {
 		screen: 'widgetDetail.screen',
 	},
+	offers: {
+		screen: 'offers.screen',
+	},
 } as const;
 
 export type TestIds = typeof TID;

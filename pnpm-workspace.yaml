@@ -1,0 +1,4 @@
+packages:
+  - 'mobile'
+  - 'tests/e2e/browseri'
+  - 'tests/e2e/browseri/playwright'

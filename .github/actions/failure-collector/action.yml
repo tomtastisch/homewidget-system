@@ -1,0 +1,73 @@
+name: 'CI Failure Collector'
+description: 'Sammelt Debug-Informationen bei CI-Fehlschlägen'
+runs:
+  using: "composite"
+  steps:
+    - name: Collect Failure Data
+      shell: bash
+      run: |
+        set +e
+        echo "Starting failure collection..."
+        BUNDLE_DIR="ci_failure_bundle"
+        mkdir -p "$BUNDLE_DIR/git_diffs"
+
+        # meta.txt
+        {
+          echo "repo: ${{ github.repository }}"
+          echo "run_id: ${{ github.run_id }}"
+          echo "workflow: ${{ github.workflow }}"
+          echo "job: ${{ github.job }}"
+          echo "sha: ${{ github.sha }}"
+          echo "ref: ${{ github.ref }}"
+          echo "event_name: ${{ github.event_name }}"
+          echo "runner_os: ${{ runner.os }}"
+          echo "timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+        } > "$BUNDLE_DIR/meta.txt"
+
+        # git_diffs
+        if [ -f "pnpm-lock.yaml" ]; then
+          git diff pnpm-lock.yaml > "$BUNDLE_DIR/git_diffs/diff_pnpm_lock.txt"
+        fi
+        if [ -f "uv.lock" ]; then
+          git diff uv.lock > "$BUNDLE_DIR/git_diffs/diff_uv_lock.txt"
+        fi
+
+        # js_context.txt
+        {
+          echo "--- JS Context ---"
+          node -v 2>/dev/null || echo "node not found"
+          corepack --version 2>/dev/null || echo "corepack not found"
+          pnpm -v 2>/dev/null || echo "pnpm not found"
+          if command -v pnpm >/dev/null 2>&1; then
+            pnpm config get recursive-install 2>/dev/null
+            pnpm config get node-linker 2>/dev/null
+          fi
+        } > "$BUNDLE_DIR/js_context.txt"
+
+        # py_context.txt
+        {
+          echo "--- Python Context ---"
+          python --version 2>/dev/null || python3 --version 2>/dev/null || echo "python not found"
+          uv --version 2>/dev/null || echo "uv not found"
+        } > "$BUNDLE_DIR/py_context.txt"
+
+        # hint.txt
+        {
+          echo "--- Terminal Access Hints ---"
+          echo "How to fetch logs and artifacts locally via GitHub CLI (gh):"
+          echo ""
+          echo "1. Check status of last run:"
+          echo "   ./tools/ci/ci-last-run.sh"
+          echo ""
+          echo "2. View failed logs:"
+          echo "   ./tools/ci/ci-last-failed-log.sh"
+          echo ""
+          echo "3. Download all artifacts:"
+          echo "   ./tools/ci/ci-download-artifacts-last-run.sh"
+          echo ""
+          echo "4. Watch current run:"
+          echo "   ./tools/ci/ci-watch-last-run.sh"
+        } > "$BUNDLE_DIR/hint.txt"
+
+        echo "Failure collection completed. Folder: $BUNDLE_DIR"
+        exit 0

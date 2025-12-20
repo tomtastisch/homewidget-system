@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+require() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: Missing dependency: $1"; exit 1; }; }
+
+require gh
+require jq
+require gum
+require git
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [[ -z "${REPO_ROOT}" ]]; then
+  echo "ERROR: Not inside a Git repository."
+  exit 1
+fi
+cd "$REPO_ROOT"
+
+CFG_FILE="$REPO_ROOT/tools/ci/hw-ci.config.json"
+if [[ ! -f "$CFG_FILE" ]]; then
+  echo "ERROR: Config not found: $CFG_FILE"
+  exit 1
+fi
+
+WF_NAME="$(jq -r '.workflow_name' "$CFG_FILE")"
+DEFAULT_BRANCH="$(jq -r '.default_branch' "$CFG_FILE")"
+POLL_SECONDS="$(jq -r '.poll_seconds' "$CFG_FILE")"
+POLL_TIMEOUT="$(jq -r '.poll_timeout_seconds' "$CFG_FILE")"
+
+usage() {
+  cat <<EOF
+Usage:
+  hw-ci                 # attach wenn Run für HEAD existiert, sonst trigger + warten (Default)
+  hw-ci nowait          # attach/trigger, aber nicht blockieren (gibt Run-ID aus)
+  hw-ci status <id>     # Status/Conclusion für Run-ID
+  hw-ci logs <id>       # Logs anzeigen (vollständig)
+EOF
+}
+
+ensure_auth() {
+  if ! gh auth status >/dev/null 2>&1; then
+    echo "ERROR: gh ist nicht eingeloggt. Bitte: gh auth login"
+    exit 1
+  fi
+}
+
+head_sha() { git rev-parse HEAD; }
+current_branch() { git rev-parse --abbrev-ref HEAD; }
+
+# Prüft, ob der Branch remote existiert (wichtig für workflow_dispatch refs)
+branch_exists_on_origin() {
+  local br="$1"
+  git ls-remote --exit-code --heads origin "$br" >/dev/null 2>&1
+}
+
+# Find newest run_id for workflow where headSha == sha (best-effort attach nach push)
+find_run_for_sha() {
+  local sha="$1"
+  gh run list -w "$WF_NAME" --limit 30 --json databaseId,headSha \
+    | jq -r --arg sha "$sha" 'map(select(.headSha == $sha)) | (.[0].databaseId // empty)'
+}
+
+latest_run_id_for_ref() {
+  local ref="$1"
+  gh run list -w "$WF_NAME" --branch "$ref" --limit 1 --json databaseId \
+    | jq -r '.[0].databaseId // empty'
+}
+
+run_status_line() {
+  local id="$1"
+  gh run view "$id" --json status,conclusion,url,displayTitle \
+    | jq -r '"status=\(.status) conclusion=\(.conclusion // "null") title=\(.displayTitle) url=\(.url)"'
+}
+
+wait_for_run_completion() {
+  local id="$1"
+  gh run watch "$id" --exit-status
+}
+
+print_failed_logs_hint() {
+  local id="$1"
+  echo
+  echo "===== RUN VIEW ====="
+  gh run view "$id" || true
+  echo
+  echo "===== RUN LOGS (tail) ====="
+  gh run view "$id" --log 2>/dev/null | tail -n 200 || true
+}
+
+trigger_workflow_on_ref() {
+  local ref="$1"
+  gh workflow run "$WF_NAME" --ref "$ref" >/dev/null
+}
+
+ensure_auth
+
+CMD="${1:-}"
+case "$CMD" in
+  ""|"nowait")
+    sha="$(head_sha)"
+    run_id="$(find_run_for_sha "$sha")"
+
+    if [[ -n "${run_id}" ]]; then
+      gum style --bold "Attach: Run für HEAD gefunden (id=$run_id)"
+      echo "$(run_status_line "$run_id")"
+    else
+      # Trigger: bevorzugt aktueller Branch wenn remote vorhanden, sonst default_branch
+      br="$(current_branch)"
+      ref="$DEFAULT_BRANCH"
+      if branch_exists_on_origin "$br"; then
+        ref="$br"
+      fi
+
+      gum style --bold "Trigger: workflow_dispatch ($WF_NAME) auf ref=$ref"
+      before_id="$(latest_run_id_for_ref "$ref")"
+      trigger_workflow_on_ref "$ref"
+
+      # Poll: neue Run-ID auf diesem ref erkennen (verhindert endloses Warten bei nicht angekommenem Trigger)
+      start="$(date +%s)"
+      while true; do
+        run_id="$(latest_run_id_for_ref "$ref")"
+        if [[ -n "${run_id}" && "${run_id}" != "${before_id}" ]]; then
+          break
+        fi
+        now="$(date +%s)"
+        if (( now - start >= POLL_TIMEOUT )); then
+          echo "ERROR: Keine neue Run-ID innerhalb von ${POLL_TIMEOUT}s gefunden (ref=$ref)."
+          echo "Diagnose:"
+          echo " - Internet/VPN prüfen"
+          echo " - Workflow '$WF_NAME' muss workflow_dispatch unterstützen"
+          echo " - Actions/Permissions prüfen"
+          exit 2
+        fi
+        sleep "$POLL_SECONDS"
+      done
+
+      gum style --bold "Run-ID erhalten: $run_id"
+      echo "$(run_status_line "$run_id")"
+    fi
+
+    if [[ "$CMD" == "nowait" ]]; then
+      echo "$run_id"
+      exit 0
+    fi
+
+    if wait_for_run_completion "$run_id"; then
+      gum style --bold "CI: SUCCESS (id=$run_id)"
+      exit 0
+    else
+      gum style --bold "CI: FAILURE (id=$run_id)"
+      print_failed_logs_hint "$run_id"
+      exit 1
+    fi
+    ;;
+  "status")
+    if [[ $# -ne 2 ]]; then usage; exit 2; fi
+    id="$2"
+    echo "$(run_status_line "$id")"
+    ;;
+  "logs")
+    if [[ $# -ne 2 ]]; then usage; exit 2; fi
+    id="$2"
+    gh run view "$id" --log
+    ;;
+  "-h"|"--help"|"help")
+    usage
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

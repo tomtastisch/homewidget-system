@@ -92,6 +92,32 @@ require_cmd() {
     return 0
 }
 
+## @brief Stellt sicher, dass pnpm im PATH verfügbar ist.
+ensure_pnpm() {
+    if command -v pnpm >/dev/null 2>&1; then
+        return 0
+    fi
+    log_info "pnpm nicht gefunden – aktiviere corepack."
+    corepack enable
+    if ! command -v pnpm >/dev/null 2>&1; then
+        log_error "pnpm ist auch nach corepack enable nicht im PATH."
+        return 1
+    fi
+}
+
+## @brief Stellt sicher, dass uv im PATH verfügbar ist.
+ensure_uv() {
+    if command -v uv >/dev/null 2>&1; then
+        return 0
+    fi
+    log_info "uv nicht gefunden – installiere uv via pip (Fallback)."
+    pip install uv
+    if ! command -v uv >/dev/null 2>&1; then
+        log_error "uv konnte nicht installiert werden."
+        return 1
+    fi
+}
+
 ## @brief Stellt sicher, dass npm im PATH verfügbar ist (nvm: Node 20.19.4).
 ensure_npm() {
     if command -v npm >/dev/null 2>&1; then

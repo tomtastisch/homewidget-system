@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
 		marginTop: 20,
 	},
 	error: {
-		color: 'red',
+		color: '#b00020',
 		fontSize: 16,
 	},
 });

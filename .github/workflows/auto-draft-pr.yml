@@ -1,0 +1,42 @@
+name: Auto-Draft PR
+
+# Dieser Workflow markiert neu erstellte Pull Requests automatisch als Draft,
+# sodass der "Ready for Review"-Button nach erfolgreichem CI-Durchlauf verfügbar ist.
+
+on:
+    pull_request:
+        types: [opened, reopened]
+
+permissions:
+    pull-requests: write
+    contents: read
+
+jobs:
+    auto-draft:
+        runs-on: ubuntu-latest
+        # Nur ausführen, wenn PR noch nicht als Draft markiert ist
+        if: github.event.pull_request.draft == false
+        steps:
+            -   name: 📝 PR als Draft markieren
+                uses: actions/github-script@v7
+                with:
+                    script: |
+                        const prNumber = context.payload.pull_request.number;
+                        const owner = context.repo.owner;
+                        const repo = context.repo.repo;
+                        
+                        console.log(`Markiere PR #${prNumber} als Draft...`);
+                        
+                        try {
+                            await github.rest.pulls.update({
+                                owner: owner,
+                                repo: repo,
+                                pull_number: prNumber,
+                                draft: true
+                            });
+                            console.log(`✅ PR #${prNumber} wurde erfolgreich als Draft markiert.`);
+                            console.log('💡 Nach erfolgreichem CI-Durchlauf kann der "Ready for Review"-Button genutzt werden.');
+                        } catch (error) {
+                            console.error(`❌ Fehler beim Markieren von PR #${prNumber} als Draft:`, error);
+                            throw error;
+                        }

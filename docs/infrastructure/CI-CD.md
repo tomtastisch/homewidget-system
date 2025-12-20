@@ -10,7 +10,34 @@ Das **Homewidget System** nutzt **GitHub Actions** zur automatisierten Validieru
 
 - **Backend-Checks** (Python/FastAPI): Linting, Type-Checking, Tests
 - **Mobile-Checks** (TypeScript/React Native): Linting, Type-Checking, Build-Validierung
+- **Auto-Draft PR**: Neue PRs werden automatisch als Draft markiert
 - **Trigger**: Push auf `main`/`master`, alle Pull Requests
+
+---
+
+## 📝 Auto-Draft Pull Requests
+
+### Zweck
+
+Alle neu erstellten Pull Requests werden **automatisch als Draft markiert**. Dies ermöglicht:
+
+- ✅ **"Ready for Review"-Button** steht nach erfolgreichem CI-Durchlauf zur Verfügung
+- ✅ Einheitlicher Workflow für alle PRs (egal ob von Copilot oder manuell erstellt)
+- ✅ Reviewer werden erst benachrichtigt, wenn PR explizit als "Ready" markiert wird
+
+### Workflow
+
+1. **PR erstellen** (manuell oder via Copilot)
+2. **Automatisch**: PR wird als Draft markiert
+3. **CI-Pipeline** läuft automatisch
+4. **Nach erfolgreichem CI**: Button "Ready for Review" klicken
+5. **Reviewer werden benachrichtigt**
+
+### Workflow-Datei
+
+- **Pfad**: `.github/workflows/auto-draft-pr.yml`
+- **Trigger**: Bei Erstellung neuer PRs (`opened`, `reopened`)
+- **Permissions**: `pull-requests: write`
 
 ---
 

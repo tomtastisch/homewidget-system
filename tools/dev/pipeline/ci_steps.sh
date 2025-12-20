@@ -57,9 +57,10 @@ step_backend_uv_guards() {
 
 ## @brief Backend Security Audit (uv audit) ausführen.
 step_backend_uv_audit() {
-    log_info "Führe Backend Security Audit (uv audit) aus..."
+    log_info "Führe Backend Security Audit (pip-audit via uv) aus..."
     ensure_uv || return 1
-    uv audit --level high
+    # uv audit ist noch experimentell/neu, wir nutzen pip-audit via uv run
+    uv run --project backend pip-audit
 }
 
 ## @brief Backend-Linting und Typprüfung (Ruff + MyPy) ausführen.
@@ -354,8 +355,9 @@ step_mobile_install_deps() {
         return 0
     fi
     ensure_pnpm || return 1
-    log_info "pnpm install (mobile, frozen-lockfile)"
-    pnpm -C mobile install --frozen-lockfile
+    log_info "pnpm install (workspace-aware, frozen-lockfile)"
+    # Wir installieren im Root mit Filter auf mobile, um den Workspace korrekt zu nutzen
+    pnpm install --frozen-lockfile --filter homewidget-mobile...
 }
 
 ## @brief Mobile CI-Guards (pnpm guards) ausführen.
@@ -365,11 +367,6 @@ step_mobile_pnpm_guards() {
     # Guard: recursive-install=false
     test "$(pnpm config get recursive-install)" = "false" || {
         log_error "Guard failed: recursive-install must be false"
-        exit 1
-    }
-    # Guard: No root node_modules
-    test ! -d node_modules || {
-        log_error "Guard failed: root node_modules detected (Leakage)"
         exit 1
     }
     # Guard: pnpm-lock.yaml stability

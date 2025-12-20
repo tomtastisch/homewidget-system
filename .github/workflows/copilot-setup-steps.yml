@@ -56,8 +56,7 @@ jobs:
             ${{ runner.os }}-playwright-v1.57.0-
 
       - name: Install Dependencies (pnpm install)
-        working-directory: tests/e2e/browseri/playwright
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install --frozen-lockfile --prefer-offline --filter homewidget-e2e-playwright...
 
       - name: Install/Verify Playwright Browsers & Deps
         working-directory: tests/e2e/browseri/playwright

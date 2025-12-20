@@ -86,10 +86,8 @@ export default function HomeScreen({ navigation }: Props) {
 	}, [error, showError]);
 	
 	const onPressWidget = useCallback((widgetId: number) => {
-		// Placeholder für Navigation zu Widget-Detail
-		Alert.alert('Widget', `Widget ${widgetId} angeklickt`);
-		console.log('Widget pressed', widgetId);
-	}, []);
+		navigation.navigate('WidgetDetail', { widgetId });
+	}, [navigation]);
 	
 	const handleLoadMore = useCallback(() => {
 		if (!isAuthed && demoFeedQuery.hasNextPage && !demoFeedQuery.isFetchingNextPage) {

@@ -20,6 +20,9 @@ export const TID = {
 		mainContent: 'home.mainContent',
 		mainContentSlot: (index: number) => `home.mainContent.slot.${index}`,
 	},
+	widgetDetail: {
+		screen: 'widgetDetail.screen',
+	},
 } as const;
 
 export type TestIds = typeof TID;

@@ -5,6 +5,7 @@ import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import AccountScreen from './screens/AccountScreen';
+import WidgetDetailScreen from './screens/WidgetDetailScreen';
 import {AuthProvider, useAuth} from './auth/AuthContext';
 import {ToastProvider} from './ui/ToastContext';
 import {OfflineIndicator} from './ui/OfflineIndicator';
@@ -14,7 +15,8 @@ import {QueryProvider} from './query/QueryProvider';
  * Param-Liste für React-Navigation (Native Stack).
  *
  * Hinweis
- * - Alle Screens erwarten aktuell keine Route-Parameter (`undefined`).
+ * - Alle Screens erwarten aktuell keine Route-Parameter (`undefined`),
+ *   außer WidgetDetail, das eine widgetId benötigt.
  */
 export type RootStackParamList = {
 	// Unauth-Stack
@@ -23,6 +25,7 @@ export type RootStackParamList = {
 	// Auth-Stack
 	Home: undefined;
 	Account: undefined;
+	WidgetDetail: { widgetId: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -44,6 +47,7 @@ function Router() {
       <Stack.Navigator>
 	      {/* Home is accessible for both demo (guest) and authenticated users */}
 	      <Stack.Screen name="Home" component={HomeScreen} options={{title: 'Home'}}/>
+	      <Stack.Screen name="WidgetDetail" component={WidgetDetailScreen} options={{title: 'Widget Detail'}}/>
 	      {isAuthed ? (
 		      <Stack.Screen name="Account" component={AccountScreen} options={{title: 'Account'}}/>
 	      ) : (

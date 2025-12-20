@@ -23,3 +23,17 @@ Begründung: Dieser Schritt war notwendig, um die neuen Tools und die Migration 
 
 Schritt 3.2: Verifizierung der Umgebung (pnpm install & playwright test --list)
 Begründung: Vor dem Abschluss der Arbeiten muss sichergestellt werden, dass die neue pnpm-Struktur funktioniert. Der Test-Listing-Befehl bestätigt, dass die Playwright-Integration trotz Paketmanager-Wechsel voll einsatzbereit ist.
+
+Vorgang 4: Iterative CI-Verifizierung ("Push-to-Green")
+------------------------------------------------------
+Schritt 4.1: Deterministische Root-Cause-Analyse der CI-Failures
+Begründung: Nach dem initialen Push traten Regressions in der Backend- und Mobile-Pipeline auf. Diese wurden mittels gh run view logs systematisch analysiert, um gezielte Fixes abzuleiten.
+
+Schritt 4.2: Umsetzung der CI-Fixes (Backend Venv, pnpm Workspace Linkage, Gitleaks)
+Begründung: Die Fixes wurden implementiert, um die Backend-Sicherheitsprüfungen zu korrigieren, die pnpm-Workspace-Struktur für alle CI-Jobs zu stabilisieren und False-Positives im Security-Audit zu maskieren.
+
+Schritt 4.3: Finaler Push und Monitoring bis zum Status "SUCCESS"
+Begründung: Gemäß der "Push-to-Green" Methodik wurde die Pipeline überwacht, bis alle Checks grün waren, um die vollständige Funktionsfähigkeit der Änderungen im Remote-Repository nachzuweisen.
+
+Schritt 4.4: Verankerung der Methodik in .junie/instructions.md
+Begründung: Die Anforderung für iterative Pipeline-Prüfungen wurde fest in den Projektrichtlinien hinterlegt, um zukünftig eine konsistente Arbeitsweise sicherzustellen.

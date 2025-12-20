@@ -92,14 +92,15 @@ gh pr review --comment --body "@copilot Ist die Implementierung vollständig?"
 
 ### Option 3: Automatische Workflows (fortgeschritten)
 
-Erstelle einen GitHub Actions Workflow, der bei bestimmten Commits Copilot automatisch taggt:
+Erstelle einen GitHub Actions Workflow, der bei PR-Updates automatisch Copilot taggt:
 
 ```yaml
 # .github/workflows/copilot-review-request.yml
 name: Copilot Review Request
 
 on:
-  push:
+  pull_request:
+    types: [opened, synchronize]
     branches:
       - 'feature/**'
       - 'bugfix/**'
@@ -112,15 +113,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const pr = context.payload.pull_request;
-            if (pr) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pr.number,
-                body: '@copilot Bitte überprüfe die letzten Änderungen'
-              });
-            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '@copilot Bitte überprüfe die letzten Änderungen'
+            });
 ```
 
 ---

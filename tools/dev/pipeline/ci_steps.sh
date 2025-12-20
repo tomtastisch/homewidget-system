@@ -40,7 +40,9 @@ step_backend_setup_env() {
     fi
     log_info "Initialisiere Backend-Entwicklungsumgebung über uv sync"
     ensure_uv || return 1
-    uv sync --project backend --locked
+    # uv sync erstellt standardmäßig .venv im Projektordner, wenn --project genutzt wird.
+    # Da ci_lib.sh backend/.venv erwartet, erzwingen wir den Pfad.
+    UV_PROJECT_ENVIRONMENT="${BACKEND_DIR}/.venv" uv sync --project backend --locked
 }
 
 ## @brief Backend CI-Guards (uv.lock diff) ausführen.

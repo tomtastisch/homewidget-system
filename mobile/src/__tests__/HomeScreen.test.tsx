@@ -17,7 +17,7 @@ const mockGetDemoFeedPage = jest.fn(async ({cursor, limit}) => {
 	];
 	
 	const start = cursor ?? 0;
-	const pageLimit = limit ?? 20;
+	const pageLimit = limit ?? DEFAULT_FEED_PAGE_LIMIT;
 	const end = Math.min(start + pageLimit, allItems.length);
 	const pageItems = allItems.slice(start, end);
 	const hasMore = end < allItems.length;
@@ -36,6 +36,9 @@ jest.mock('../api/demoFeedV1', () => ({
 jest.mock('../auth/AuthContext', () => ({
 	useAuth: () => ({status: 'unauthenticated', role: null}),
 }));
+
+// Konstante für Default-Seitenlimit im Demo-Feed (entspricht useHomeFeedInfinite-Default)
+const DEFAULT_FEED_PAGE_LIMIT = 20;
 
 describe('HomeScreen', () => {
 	let queryClient: QueryClient;
@@ -126,7 +129,7 @@ describe('HomeScreen', () => {
 		}, {timeout: 8000});
 		
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(2);
-		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: 20});
+		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: DEFAULT_FEED_PAGE_LIMIT});
 	}, 15000);
 	
 	it('refreshes feed when pull-to-refresh is triggered', async () => {

@@ -1,4 +1,5 @@
 import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef, useState} from 'react';
+import {useQueryClient} from '@tanstack/react-query';
 import {api, authLogin, authRegister, authRefresh, authMe, authLogout, ApiError, Role, UserRead} from '../api/client';
 import {clearTokens, getRefreshToken} from '../storage/tokens';
 import {createLogger} from '../logging/logger';
@@ -29,12 +30,28 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({children}: { children: React.ReactNode }) {
 	const LOG = createLogger('mobile.auth');
+	const queryClient = useQueryClient();
 	const [status, setStatus] = useState<AuthStatus>('checking');
 	const [accessToken, setAccessToken] = useState<string | null>(null);
 	const [user, setUser] = useState<UserRead | null>(null);
 	const [role, setRole] = useState<Role | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	
+	/**
+	 * Entfernt alle geschützten Daten aus dem Query-Cache.
+	 */
+	const purgeProtectedCache = useCallback(() => {
+		LOG.info('purging_protected_cache');
+		// Alle Queries, die nicht explizit 'demo' im Key haben, werden entfernt.
+		// Alternativ: Gezielte Listen wie 'home', 'user', 'account'.
+		queryClient.removeQueries({
+			predicate: (query) => {
+				const key = query.queryKey;
+				return !key.includes('demo');
+			}
+		});
+	}, [queryClient, LOG]);
+
 	// Keep the latest token in a ref for api client getter to avoid stale closures
 	const accessRef = useRef<string | null>(null);
 	useEffect(() => {
@@ -75,6 +92,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 						setUser(null);
 						setRole(null);
 						setStatus('unauthenticated');
+						purgeProtectedCache();
 						notifySessionExpired();
 						break;
 					}
@@ -84,7 +102,58 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 				}
 			},
 		});
-	}, []);
+	}, [purgeProtectedCache]);
+
+	// Token-Expiry Check (Offline)
+	useEffect(() => {
+		if (accessToken) {
+			try {
+				// JWT besteht aus Header.Payload.Signature
+				const parts = accessToken.split('.');
+				if (parts.length !== 3) return;
+				
+				const payloadBase64 = parts[1];
+				const payload = JSON.parse(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')));
+				
+				if (payload.exp) {
+					const expiryTime = payload.exp * 1000;
+					const now = Date.now();
+					const timeLeft = expiryTime - now;
+					
+					if (timeLeft <= 0) {
+						LOG.info('token_expired_offline');
+						// Direkter Übergang zu Unauthenticated
+						(async () => {
+							await clearTokens();
+							setAccessToken(null);
+							setUser(null);
+							setRole(null);
+							setStatus('unauthenticated');
+							purgeProtectedCache();
+							notifySessionExpired();
+						})();
+					} else {
+						// Timer für automatischen Logout wenn App offen bleibt
+						const timer = setTimeout(() => {
+							LOG.info('token_expired_timer');
+							(async () => {
+								await clearTokens();
+								setAccessToken(null);
+								setUser(null);
+								setRole(null);
+								setStatus('unauthenticated');
+								purgeProtectedCache();
+								notifySessionExpired();
+							})();
+						}, timeLeft);
+						return () => clearTimeout(timer);
+					}
+				}
+			} catch (e) {
+				LOG.error('token_expiry_check_failed', {error: String(e)});
+			}
+		}
+	}, [accessToken, purgeProtectedCache]);
 	
 	const loadMe = useCallback(async () => {
 		try {
@@ -179,12 +248,14 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 		try {
 			await authLogout();
 		} finally {
+			await clearTokens();
 			setAccessToken(null);
 			setUser(null);
 			setRole(null);
 			setStatus('unauthenticated');
+			purgeProtectedCache();
 		}
-	}, []);
+	}, [purgeProtectedCache]);
 	
 	const value: AuthContextValue = useMemo(
 		() => ({

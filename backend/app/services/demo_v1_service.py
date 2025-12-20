@@ -12,7 +12,7 @@ from typing import Optional
 from . import demo_feed_real_source as real_src
 from ..core.logging_config import get_logger
 from ..fixtures.v1 import get_detail, get_feed_page, is_fixture_id
-from ..schemas.v1.widget_contracts import FeedPageV1, WidgetDetailV1
+from ..homewidget.contracts.v1.widget_contracts import FeedPageV1, WidgetDetailV1
 
 LOG = get_logger("service.demo_v1")
 

@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 from fastapi.testclient import TestClient
 
-from app.schemas.v1.widget_contracts import FeedPageV1, WidgetContractV1
+from app.homewidget.contracts.v1.widget_contracts import FeedPageV1, WidgetContractV1
 from tests.utils import auth as auth_utils
 
 pytestmark = pytest.mark.integration

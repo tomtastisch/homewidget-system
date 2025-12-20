@@ -144,7 +144,7 @@ def test_auth_detail_v1_owned_widget_can_return_real_when_available(client: Test
     widget_id = created["id"]
 
     # Patch Real-Quelle für genau diese ID
-    from app.schemas.v1.widget_contracts import WidgetDetailV1, ContentSpecV1, ContentBlockV1
+    from app.homewidget.contracts.v1.widget_contracts import WidgetDetailV1, ContentSpecV1, ContentBlockV1
 
     def fake_real_detail(wid: int) -> WidgetDetailV1 | None:  # type: ignore[override]
         if wid != widget_id:

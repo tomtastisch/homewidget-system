@@ -10,7 +10,7 @@ from ...config.timing_server_loader import get_feed_rate_rule
 from ...core.database import get_session
 from ...core.logging_config import get_logger
 from ...fixtures.v1 import get_feed_page
-from ...schemas.v1.widget_contracts import FeedPageV1
+from ...homewidget.contracts.v1.widget_contracts import FeedPageV1
 from ...schemas.widget import WidgetRead
 from ...services import demo_feed_real_source as real_src
 from ...services.home_feed_service import HomeFeedService

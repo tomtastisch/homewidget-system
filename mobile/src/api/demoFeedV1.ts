@@ -1,12 +1,12 @@
 import {api} from './client';
 import {createLogger} from '../logging/logger';
-import type {FeedPageV1 as FeedPageV1Type, WidgetDetailV1 as WidgetDetailV1Type} from './schemas/v1';
-import {FeedPageV1, WidgetDetailV1} from './schemas/v1';
+import type {FeedPageV1 as FeedPageV1Type, WidgetDetailV1 as WidgetDetailV1Type} from '../homewidget/contracts/v1/schemas';
+import {FeedPageV1, WidgetDetailV1} from '../homewidget/contracts/v1/schemas';
 
 const LOG = createLogger('mobile.api.demo');
 
 // Re-export types for consumers without pulling in schema values
-export type {FeedPageV1 as FeedPageV1, WidgetDetailV1 as WidgetDetailV1} from './schemas/v1';
+export type {FeedPageV1 as FeedPageV1, WidgetDetailV1 as WidgetDetailV1} from '../homewidget/contracts/v1/schemas';
 
 const EMPTY_FEED_PAGE: FeedPageV1Type = {items: [], next_cursor: null};
 

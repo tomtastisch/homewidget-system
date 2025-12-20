@@ -1,6 +1,6 @@
 import React from 'react';
 import {render} from '@testing-library/react-native';
-import {BlocksRenderer} from '../components/renderers/BlocksRenderer';
+import {BlocksRenderer} from '../homewidget/contracts/v1/renderers/BlocksRenderer';
 
 // Mock navigation
 const mockedNavigate = jest.fn();

@@ -12,7 +12,7 @@ import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../App';
 import {useDemoDetail} from '../hooks/useDemoDetail';
 import {TID} from '../testing/testids';
-import {BlocksRenderer} from '../components/renderers/BlocksRenderer';
+import {BlocksRenderer} from '../homewidget/contracts/v1/renderers/BlocksRenderer';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WidgetDetail'>;
 

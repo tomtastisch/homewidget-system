@@ -1,7 +1,7 @@
 import {getDemoFeedPage} from '../api/demoFeedV1';
 import {getTimingPublic} from '../config/timingPublic';
 import {useInfiniteFeedBase, type CursorFeedPage} from './base/useInfiniteFeedBase';
-import type {WidgetContractV1} from '../api/schemas/v1';
+import type {WidgetContractV1} from '../homewidget/contracts/v1/schemas';
 
 /**
  * Basis-Query-Key für den Home-Feed (v1, InfiniteQuery).

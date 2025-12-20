@@ -4,7 +4,7 @@ from datetime import datetime, timezone, timedelta
 from typing import List
 
 from .base import ProviderBase
-from ...schemas.v1.widget_contracts import WidgetContractV1
+from ..contracts.v1.widget_contracts import WidgetContractV1
 
 
 class FurnitureProvider(ProviderBase):

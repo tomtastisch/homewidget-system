@@ -42,7 +42,8 @@ step_backend_setup_env() {
     ensure_uv || return 1
     # uv sync erstellt standardmäßig .venv im Projektordner, wenn --project genutzt wird.
     # Da ci_lib.sh backend/.venv erwartet, erzwingen wir den Pfad.
-    UV_PROJECT_ENVIRONMENT="${BACKEND_DIR}/.venv" uv sync --project backend --locked
+    # Wir installieren alle Extras (dev), damit pip-audit verfügbar ist.
+    UV_PROJECT_ENVIRONMENT="${BACKEND_DIR}/.venv" uv sync --project backend --locked --all-extras
 }
 
 ## @brief Backend CI-Guards (uv.lock diff) ausführen.
@@ -355,9 +356,9 @@ step_mobile_install_deps() {
         return 0
     fi
     ensure_pnpm || return 1
-    log_info "pnpm install (workspace-aware, frozen-lockfile)"
-    # Wir installieren im Root mit Filter auf mobile, um den Workspace korrekt zu nutzen
-    pnpm install --frozen-lockfile --filter homewidget-mobile...
+    log_info "pnpm install (full workspace, frozen-lockfile)"
+    # Wir installieren im Root für den gesamten Workspace, um Symlinks korrekt zu setzen
+    pnpm install --frozen-lockfile
 }
 
 ## @brief Mobile CI-Guards (pnpm guards) ausführen.
@@ -378,9 +379,9 @@ step_mobile_pnpm_guards() {
 
 ## @brief Mobile Lockfile-Check (pnpm dedupe --check).
 step_mobile_pnpm_dedupe() {
-    log_info "Führe pnpm dedupe --check aus..."
+    log_info "Führe pnpm dedupe --check (Workspace-weit) aus..."
     ensure_pnpm || return 1
-    pnpm -C mobile dedupe --check
+    pnpm dedupe --check
 }
 
 ## @brief Mobile Security Audit (pnpm audit).

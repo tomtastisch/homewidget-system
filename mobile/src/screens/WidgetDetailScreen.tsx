@@ -30,7 +30,7 @@ export default function WidgetDetailScreen({ route }: Props) {
 
 	if (isLoading) {
 		return (
-			<View style={styles.center}>
+			<View style={styles.center} testID={TID.widgetDetail.loading}>
 				<ActivityIndicator size="large" color="#0066cc" />
 			</View>
 		);
@@ -38,7 +38,7 @@ export default function WidgetDetailScreen({ route }: Props) {
 
 	if (isError || !detail) {
 		return (
-			<View style={styles.center}>
+			<View style={styles.center} testID={TID.widgetDetail.error}>
 				<Text style={styles.errorTitle}>
 					{isOffline ? 'Offline' : 'Fehler'}
 				</Text>

@@ -22,6 +22,8 @@ export const TID = {
 	},
 	widgetDetail: {
 		screen: 'widgetDetail.screen',
+		loading: 'widgetDetail.loading',
+		error: 'widgetDetail.error',
 	},
 	offers: {
 		screen: 'offers.screen',

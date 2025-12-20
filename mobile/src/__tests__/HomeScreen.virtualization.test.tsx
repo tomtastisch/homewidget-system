@@ -1,6 +1,6 @@
 import React from 'react';
 import {afterEach, describe, expect, it, jest} from '@jest/globals';
-import {render} from '@testing-library/react-native';
+import {render, waitFor} from '@testing-library/react-native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
@@ -58,11 +58,11 @@ describe('HomeScreen – FlatList Virtualisierung (HW-NEXT-03B)', () => {
 		mockGetDemoFeedPage.mockClear();
 	});
 	
-	it('konfiguriert FlatList mit Virtualisierungs-Props für Performance', () => {
+	it('konfiguriert FlatList mit Virtualisierungs-Props für Performance', async () => {
 		queryClient = new QueryClient({
 			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
-		const {getByTestId} = render(
+		const {getByTestId, getByText} = render(
 			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
@@ -73,6 +73,11 @@ describe('HomeScreen – FlatList Virtualisierung (HW-NEXT-03B)', () => {
 			</QueryClientProvider>
 		);
 		
+		// Warte bis Daten geladen sind (reduziert act-Warnungen)
+		await waitFor(() => {
+			expect(getByText('Widget 1')).toBeTruthy();
+		});
+
 		const flatList = getByTestId('home.widgets.list');
 		
 		// Verifiziere Virtualisierungs-Props
@@ -82,11 +87,11 @@ describe('HomeScreen – FlatList Virtualisierung (HW-NEXT-03B)', () => {
 		expect(flatList.props.removeClippedSubviews).toBe(true);
 	});
 	
-	it('konfiguriert onEndReachedThreshold für frühzeitiges Paging (0.3)', () => {
+	it('konfiguriert onEndReachedThreshold für frühzeitiges Paging (0.3)', async () => {
 		queryClient = new QueryClient({
 			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
-		const {getByTestId} = render(
+		const {getByTestId, getByText} = render(
 			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
@@ -97,17 +102,21 @@ describe('HomeScreen – FlatList Virtualisierung (HW-NEXT-03B)', () => {
 			</QueryClientProvider>
 		);
 		
+		await waitFor(() => {
+			expect(getByText('Widget 1')).toBeTruthy();
+		});
+
 		const flatList = getByTestId('home.widgets.list');
 		
 		// onEndReachedThreshold sollte 0.3 sein (30% vor Ende triggert Paging)
 		expect(flatList.props.onEndReachedThreshold).toBe(0.3);
 	});
 	
-	it('verwendet stabilen keyExtractor basierend auf Widget-ID', () => {
+	it('verwendet stabilen keyExtractor basierend auf Widget-ID', async () => {
 		queryClient = new QueryClient({
 			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
-		const {getByTestId} = render(
+		const {getByTestId, getByText} = render(
 			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
@@ -118,6 +127,10 @@ describe('HomeScreen – FlatList Virtualisierung (HW-NEXT-03B)', () => {
 			</QueryClientProvider>
 		);
 		
+		await waitFor(() => {
+			expect(getByText('Widget 1')).toBeTruthy();
+		});
+
 		const flatList = getByTestId('home.widgets.list');
 		
 		// keyExtractor sollte eine Funktion sein

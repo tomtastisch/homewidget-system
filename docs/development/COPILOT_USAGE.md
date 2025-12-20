@@ -365,8 +365,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // workflow_run hat eine pull_requests Array
-            const pullRequests = github.event.workflow_run.pull_requests;
+            // workflow_run hat eine pull_requests Array im context.payload
+            const pullRequests = context.payload.workflow_run.pull_requests;
             
             if (pullRequests && pullRequests.length > 0) {
               // Kommentar für jeden assoziierten PR

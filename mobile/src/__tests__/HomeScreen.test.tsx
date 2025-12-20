@@ -82,12 +82,13 @@ describe('HomeScreen', () => {
 	
 	it('loads next page when onEndReached is triggered', async () => {
 		// Mock API mit kleinerem Limit forcieren
+		const FIRST_PAGE_SIZE = 2;
 		mockGetDemoFeedPage.mockImplementationOnce(async () => ({
 			items: [
 				{id: 1001, name: 'News', priority: 5, created_at: '2024-01-01T08:00:00Z'},
 				{id: 1002, name: 'Welcome', priority: 10, created_at: '2024-01-02T08:00:00Z'},
 			],
-			next_cursor: 2,
+			next_cursor: FIRST_PAGE_SIZE,
 		}));
 		mockGetDemoFeedPage.mockImplementationOnce(async () => ({
 			items: [
@@ -130,6 +131,7 @@ describe('HomeScreen', () => {
 		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(2);
+		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: FIRST_PAGE_SIZE, limit: 20});
 		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: DEFAULT_FEED_PAGE_LIMIT});
 	}, 15000);
 	

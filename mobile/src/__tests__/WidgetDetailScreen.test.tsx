@@ -4,17 +4,18 @@ import {render, waitFor} from '@testing-library/react-native';
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import WidgetDetailScreen from '../screens/WidgetDetailScreen';
 import {TID} from '../testing/testids';
+import type {WidgetDetailV1} from '../api/demoFeedV1';
 
 const WAIT_FOR_TIMEOUT_MS = 5000;
 
-// Mock API
-const mockGetDemoWidgetDetail = jest.fn();
+// Mock der API-Funktion für Widget-Details
+const mockGetDemoWidgetDetail = jest.fn<(id: number) => Promise<WidgetDetailV1 | null>>();
 
 jest.mock('../api/demoFeedV1', () => ({
 	getDemoWidgetDetail: (id: number) => mockGetDemoWidgetDetail(id),
 }));
 
-// Mock NetInfo
+// Mock für Netzwerk-Status
 const mockNetInfo = {
 	isConnected: true,
 };
@@ -50,7 +51,7 @@ describe('WidgetDetailScreen', () => {
 	});
 
 	it('zeigt einen ActivityIndicator während des Ladens an', async () => {
-		mockGetDemoWidgetDetail.mockReturnValue(new Promise(() => {})); // Hängt im Ladezustand
+		mockGetDemoWidgetDetail.mockReturnValue(new Promise(() => {})); // Simuliert unendliches Laden
 
 		queryClient = new QueryClient({
 			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
@@ -66,13 +67,14 @@ describe('WidgetDetailScreen', () => {
 	});
 
 	it('rendert Widget-Details bei erfolgreichem Laden', async () => {
-		const mockData = {
+		const mockData: WidgetDetailV1 = {
 			id: 123,
 			container: {
 				title: 'Test Widget',
 				description: 'Dies ist ein Test-Widget'
 			},
 			content_spec: {
+				kind: 'blocks',
 				blocks: []
 			}
 		};
@@ -141,13 +143,14 @@ describe('WidgetDetailScreen', () => {
 
 	it('zeigt Offline-Banner wenn Daten aus dem Cache kommen (Offline)', async () => {
 		mockNetInfo.isConnected = false;
-		const mockData = {
+		const mockData: WidgetDetailV1 = {
 			id: 123,
 			container: {
 				title: 'Cached Widget',
 				description: 'Aus Cache'
 			},
 			content_spec: {
+				kind: 'blocks',
 				blocks: []
 			}
 		};

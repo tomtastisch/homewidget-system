@@ -1,8 +1,7 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {render, act} from '@testing-library/react-native';
 import {AuthProvider, useAuth} from '../auth/AuthContext';
 import {QueryClient, QueryClientProvider, useQuery} from '@tanstack/react-query';
-import {clearTokens} from '../storage/tokens';
 import {Text, View} from 'react-native';
 
 // Mocks
@@ -49,7 +48,7 @@ describe('AuthContext Cache Purge', () => {
 	});
 
 	it('should purge only protected cache on logout', async () => {
-		const {getByTestId, queryByTestId} = render(
+		const {getByTestId} = render(
 			<QueryClientProvider client={queryClient}>
 				<AuthProvider>
 					<CacheTestComponent />

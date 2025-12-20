@@ -1,7 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {
 	ActivityIndicator,
-	Alert,
 	Button,
 	FlatList,
 	RefreshControl,

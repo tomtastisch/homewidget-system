@@ -34,6 +34,7 @@ Danach:
 - **[GUIDELINES.md](development/GUIDELINES.md)** – Code-Standards, Type-Hints, Architektur-Vorgaben
 - **[development/TESTING.md](development/TESTING.md)** – Test-Strategie (Unit, Integration, E2E)
 - **[development/TOOLS.md](development/TOOLS.md)** – Tools, CLI-Commands, Workflows
+- **[development/COPILOT_USAGE.md](development/COPILOT_USAGE.md)** – GitHub Copilot für Reviews & Automatisierung
 - **[development/TROUBLESHOOTING.md](development/TROUBLESHOOTING.md)** – Häufige Probleme & Lösungen
 
 ### 🔐 **Domänen & Features**
@@ -74,6 +75,7 @@ docs/
 │   ├── GUIDELINES.md
 │   ├── TESTING.md
 │   ├── TESTING_SECURITY.md
+│   ├── COPILOT_USAGE.md
 │   ├── TOOLS.md
 │   └── TROUBLESHOOTING.md
 │

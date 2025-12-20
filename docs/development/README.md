@@ -36,6 +36,12 @@ Security-spezifische Tests, Pentesting, Vulnerability-Scanning.
 
 **Lies dies wenn**: Du Security-Tests schreibst oder Code-Audits machst.
 
+### [COPILOT_USAGE.md](COPILOT_USAGE.md) *(vorhanden)*
+
+Anleitung zur Nutzung von GitHub Copilot: Reviews, Task-Verifikation, PR-Beschreibungen.
+
+**Lies dies wenn**: Du GitHub Copilot für Reviews oder Automatisierung nutzen möchtest.
+
 ---
 
 ## 🏗️ Beziehung zu anderen Docs

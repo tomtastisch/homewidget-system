@@ -3,11 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@9.15.0",
-  "workspaces": [
-    "mobile",
-    "tests/e2e/browseri",
-    "tests/e2e/browseri/playwright"
-  ],
   "engines": {
     "node": ">=20.x"
   }

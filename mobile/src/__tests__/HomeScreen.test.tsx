@@ -5,6 +5,8 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
 
+// Standard-Seitenlimit im Demo-Feed (entspricht useHomeFeedInfinite-Default)
+const DEFAULT_FEED_PAGE_LIMIT = 20;
 const WAIT_FOR_TIMEOUT_MS = 10000;
 
 // Mock feed_v1 API mit erweiterten Pagination-Daten
@@ -19,7 +21,7 @@ const mockGetDemoFeedPage = jest.fn(async ({cursor, limit}) => {
 	];
 	
 	const start = cursor ?? 0;
-	const pageLimit = limit ?? 20;
+	const pageLimit = limit ?? DEFAULT_FEED_PAGE_LIMIT;
 	const end = Math.min(start + pageLimit, allItems.length);
 	const pageItems = allItems.slice(start, end);
 	const hasMore = end < allItems.length;
@@ -128,7 +130,7 @@ describe('HomeScreen', () => {
 		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(2);
-		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: 20});
+		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: DEFAULT_FEED_PAGE_LIMIT});
 	}, 15000);
 	
 	it('refreshes feed when pull-to-refresh is triggered', async () => {

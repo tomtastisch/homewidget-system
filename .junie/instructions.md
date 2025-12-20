@@ -3,6 +3,13 @@
 Ziel: Produktiv nutzbarer, wartbarer Code mit stabilen Schnittstellen, klarer Schichtentrennung und konsistenter
 In-Code-Dokumentation.
 
+## Arbeitsmethodik: Push-to-Green
+
+- Eine Phase gilt erst als abgeschlossen, wenn die Änderungen auf den Remote-Branch gepusht wurden UND die CI-Pipeline (GitHub Actions) erfolgreich ("grün") durchgelaufen ist.
+- Der Fortschritt ist mittels `tools/ci/hw-ci` (oder gleichwertigen Tools) zu überwachen.
+- Bei CI-Fehlern ist eine deterministische Ursachenanalyse anhand der Logs durchzuführen und der Fehler iterativ zu beheben, bevor die Phase beendet wird.
+- Blocker (z.B. Git-Konflikte, die manuelles Eingreifen erfordern) müssen sofort gemeldet werden; die Arbeit wird erst nach Bestätigung fortgesetzt.
+
 ## Architektur und Design
 
 - Produktiv nutzbarer, klar strukturierter Code; kein Demo-/Script-Stil.

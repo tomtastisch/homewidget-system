@@ -67,8 +67,8 @@ latest_run_id_for_ref() {
 
 run_status_line() {
   local id="$1"
-  gh run view "$id" --json status,conclusion,htmlURL,displayTitle \
-    | jq -r '"status=\(.status) conclusion=\(.conclusion // "null") title=\(.displayTitle) url=\(.htmlURL)"'
+  gh run view "$id" --json status,conclusion,url,displayTitle \
+    | jq -r '"status=\(.status) conclusion=\(.conclusion // "null") title=\(.displayTitle) url=\(.url)"'
 }
 
 wait_for_run_completion() {

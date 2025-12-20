@@ -27,7 +27,7 @@ export default function WidgetDetailScreen({ route }: Props) {
 	if (isLoading) {
 		return (
 			<View style={styles.center}>
-				<ActivityIndicator size="large" color="#0000ff" />
+				<ActivityIndicator size="large" color="#0066cc" />
 			</View>
 		);
 	}

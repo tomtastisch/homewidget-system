@@ -77,10 +77,25 @@ describe('HomeScreen', () => {
 	}, 15000);
 	
 	it('loads next page when onEndReached is triggered', async () => {
+		// Mock API mit kleinerem Limit forcieren
+		mockGetDemoFeedPage.mockImplementationOnce(async () => ({
+			items: [
+				{id: 1001, name: 'News', priority: 5, created_at: '2024-01-01T08:00:00Z'},
+				{id: 1002, name: 'Welcome', priority: 10, created_at: '2024-01-02T08:00:00Z'},
+			],
+			next_cursor: 2,
+		}));
+		mockGetDemoFeedPage.mockImplementationOnce(async () => ({
+			items: [
+				{id: 1003, name: 'Offers', priority: 10, created_at: '2024-01-03T08:00:00Z'},
+			],
+			next_cursor: null,
+		}));
+
 		queryClient = new QueryClient({
 			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
-		const {getByText} = render(
+		const {getByText, getByTestId} = render(
 			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
@@ -91,17 +106,27 @@ describe('HomeScreen', () => {
 			</QueryClientProvider>
 		);
 		
-		// Warte auf initiales Laden (limit wird vom Hook gesetzt auf 20)
+		// Warte auf initiales Laden
 		await waitFor(() => {
 			expect(getByText('News')).toBeTruthy();
+			expect(getByText('Welcome')).toBeTruthy();
 		}, {timeout: 8000});
 		
-		// Erste Seite geladen (mit limit=20, sollte alle Items laden)
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(1);
-		expect(mockGetDemoFeedPage).toHaveBeenCalledWith({cursor: null, limit: 20});
 		
-		// Verifiziere dass hasNextPage false ist (alle 5 Items passen in eine Seite von 20)
-		// Test ist erfolgreich wenn keine zweite Seite geladen wird
+		// Trigger onEndReached
+		const flatList = getByTestId('home.widgets.list');
+		if (flatList.props.onEndReached) {
+			flatList.props.onEndReached();
+		}
+		
+		// Warte auf Laden der zweiten Seite
+		await waitFor(() => {
+			expect(getByText('Offers')).toBeTruthy();
+		}, {timeout: 8000});
+		
+		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(2);
+		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: 20});
 	}, 15000);
 	
 	it('refreshes feed when pull-to-refresh is triggered', async () => {

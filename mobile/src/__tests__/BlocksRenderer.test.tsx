@@ -2,7 +2,22 @@ import React from 'react';
 import {render} from '@testing-library/react-native';
 import {BlocksRenderer} from '../components/renderers/BlocksRenderer';
 
+// Mock navigation
+const mockedNavigate = jest.fn();
+jest.mock('@react-navigation/native', () => {
+	const actualNav = jest.requireActual('@react-navigation/native');
+	return {
+		...actualNav,
+		useNavigation: () => ({
+			navigate: mockedNavigate,
+		}),
+	};
+});
+
 describe('BlocksRenderer', () => {
+	beforeEach(() => {
+		mockedNavigate.mockClear();
+	});
 	it('renders HeroBlock correctly', () => {
 		const blocks = [
 			{

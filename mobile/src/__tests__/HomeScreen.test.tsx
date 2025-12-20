@@ -7,6 +7,7 @@ import {ToastProvider} from '../ui/ToastContext';
 
 // Standard-Seitenlimit im Demo-Feed (entspricht useHomeFeedInfinite-Default)
 const DEFAULT_FEED_PAGE_LIMIT = 20;
+const WAIT_FOR_TIMEOUT_MS = 10000;
 
 // Mock feed_v1 API mit erweiterten Pagination-Daten
 const mockGetDemoFeedPage = jest.fn(async ({cursor, limit}) => {
@@ -74,7 +75,7 @@ describe('HomeScreen', () => {
 			expect(getByText('News')).toBeTruthy();
 			expect(getByText('Welcome')).toBeTruthy();
 			expect(getByText('Offers')).toBeTruthy();
-		}, {timeout: 8000});
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		expect(queryByText('PREMIUM')).toBeNull();
 	}, 15000);
@@ -113,7 +114,7 @@ describe('HomeScreen', () => {
 		await waitFor(() => {
 			expect(getByText('News')).toBeTruthy();
 			expect(getByText('Welcome')).toBeTruthy();
-		}, {timeout: 8000});
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(1);
 		
@@ -126,7 +127,7 @@ describe('HomeScreen', () => {
 		// Warte auf Laden der zweiten Seite
 		await waitFor(() => {
 			expect(getByText('Offers')).toBeTruthy();
-		}, {timeout: 8000});
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(2);
 		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: DEFAULT_FEED_PAGE_LIMIT});
@@ -150,7 +151,7 @@ describe('HomeScreen', () => {
 		// Warte auf initiales Laden
 		await waitFor(() => {
 			expect(getByText('News')).toBeTruthy();
-		}, {timeout: 8000});
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		const initialCallCount = mockGetDemoFeedPage.mock.calls.length;
 		
@@ -164,7 +165,7 @@ describe('HomeScreen', () => {
 			// Warte auf Refresh
 			await waitFor(() => {
 				expect(mockGetDemoFeedPage.mock.calls.length).toBeGreaterThan(initialCallCount);
-			}, {timeout: 8000});
+			}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		}
 	}, 15000);
 });

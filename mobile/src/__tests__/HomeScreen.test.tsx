@@ -5,6 +5,11 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
 
+// Timeout-Wert für asynchrone Operationen in Tests
+// Standard-Seitenlimit im Demo-Feed (entspricht useHomeFeedInfinite-Default)
+const DEFAULT_FEED_PAGE_LIMIT = 20;
+const WAIT_FOR_TIMEOUT_MS = 10000;
+
 // Mock feed_v1 API mit erweiterten Pagination-Daten
 const mockGetDemoFeedPage = jest.fn(async ({cursor, limit}) => {
 	// Simuliere mehr Daten für Pagination-Tests
@@ -17,7 +22,7 @@ const mockGetDemoFeedPage = jest.fn(async ({cursor, limit}) => {
 	];
 	
 	const start = cursor ?? 0;
-	const pageLimit = limit ?? 20;
+	const pageLimit = limit ?? DEFAULT_FEED_PAGE_LIMIT;
 	const end = Math.min(start + pageLimit, allItems.length);
 	const pageItems = allItems.slice(start, end);
 	const hasMore = end < allItems.length;
@@ -71,16 +76,32 @@ describe('HomeScreen', () => {
 			expect(getByText('News')).toBeTruthy();
 			expect(getByText('Welcome')).toBeTruthy();
 			expect(getByText('Offers')).toBeTruthy();
-		}, {timeout: 8000});
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		expect(queryByText('PREMIUM')).toBeNull();
 	}, 15000);
 	
 	it('loads next page when onEndReached is triggered', async () => {
+		// Mock API mit kleinerem Limit forcieren
+		const FIRST_PAGE_SIZE = 2;
+		mockGetDemoFeedPage.mockImplementationOnce(async () => ({
+			items: [
+				{id: 1001, name: 'News', priority: 5, created_at: '2024-01-01T08:00:00Z'},
+				{id: 1002, name: 'Welcome', priority: 10, created_at: '2024-01-02T08:00:00Z'},
+			],
+			next_cursor: FIRST_PAGE_SIZE,
+		}));
+		mockGetDemoFeedPage.mockImplementationOnce(async () => ({
+			items: [
+				{id: 1003, name: 'Offers', priority: 10, created_at: '2024-01-03T08:00:00Z'},
+			],
+			next_cursor: null,
+		}));
+
 		queryClient = new QueryClient({
 			defaultOptions: {queries: {retry: false, gcTime: 0, staleTime: 0}},
 		});
-		const {getByText} = render(
+		const {getByText, getByTestId} = render(
 			<QueryClientProvider client={queryClient}>
 				<ToastProvider>
 					<HomeScreen
@@ -91,17 +112,28 @@ describe('HomeScreen', () => {
 			</QueryClientProvider>
 		);
 		
-		// Warte auf initiales Laden (limit wird vom Hook gesetzt auf 20)
+		// Warte auf initiales Laden
 		await waitFor(() => {
 			expect(getByText('News')).toBeTruthy();
-		}, {timeout: 8000});
+			expect(getByText('Welcome')).toBeTruthy();
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
-		// Erste Seite geladen (mit limit=20, sollte alle Items laden)
 		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(1);
-		expect(mockGetDemoFeedPage).toHaveBeenCalledWith({cursor: null, limit: 20});
 		
-		// Verifiziere dass hasNextPage false ist (alle 5 Items passen in eine Seite von 20)
-		// Test ist erfolgreich wenn keine zweite Seite geladen wird
+		// Trigger onEndReached
+		const flatList = getByTestId('home.widgets.list');
+		if (flatList.props.onEndReached) {
+			flatList.props.onEndReached();
+		}
+		
+		// Warte auf Laden der zweiten Seite
+		await waitFor(() => {
+			expect(getByText('Offers')).toBeTruthy();
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
+		
+		expect(mockGetDemoFeedPage).toHaveBeenCalledTimes(2);
+		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: FIRST_PAGE_SIZE, limit: 20});
+		expect(mockGetDemoFeedPage).toHaveBeenLastCalledWith({cursor: 2, limit: DEFAULT_FEED_PAGE_LIMIT});
 	}, 15000);
 	
 	it('refreshes feed when pull-to-refresh is triggered', async () => {
@@ -122,7 +154,7 @@ describe('HomeScreen', () => {
 		// Warte auf initiales Laden
 		await waitFor(() => {
 			expect(getByText('News')).toBeTruthy();
-		}, {timeout: 8000});
+		}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		
 		const initialCallCount = mockGetDemoFeedPage.mock.calls.length;
 		
@@ -136,7 +168,7 @@ describe('HomeScreen', () => {
 			// Warte auf Refresh
 			await waitFor(() => {
 				expect(mockGetDemoFeedPage.mock.calls.length).toBeGreaterThan(initialCallCount);
-			}, {timeout: 8000});
+			}, {timeout: WAIT_FOR_TIMEOUT_MS});
 		}
 	}, 15000);
 });

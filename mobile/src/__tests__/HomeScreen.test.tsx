@@ -5,6 +5,9 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
 
+// Standard-Seitenlimit im Demo-Feed (entspricht useHomeFeedInfinite-Default)
+const DEFAULT_FEED_PAGE_LIMIT = 20;
+
 // Mock feed_v1 API mit erweiterten Pagination-Daten
 const mockGetDemoFeedPage = jest.fn(async ({cursor, limit}) => {
 	// Simuliere mehr Daten für Pagination-Tests
@@ -36,9 +39,6 @@ jest.mock('../api/demoFeedV1', () => ({
 jest.mock('../auth/AuthContext', () => ({
 	useAuth: () => ({status: 'unauthenticated', role: null}),
 }));
-
-// Konstante für Default-Seitenlimit im Demo-Feed (entspricht useHomeFeedInfinite-Default)
-const DEFAULT_FEED_PAGE_LIMIT = 20;
 
 describe('HomeScreen', () => {
 	let queryClient: QueryClient;

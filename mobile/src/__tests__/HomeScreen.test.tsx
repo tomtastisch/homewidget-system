@@ -5,6 +5,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import HomeScreen from '../screens/HomeScreen';
 import {ToastProvider} from '../ui/ToastContext';
 
+// Timeout-Wert für asynchrone Operationen in Tests
 // Standard-Seitenlimit im Demo-Feed (entspricht useHomeFeedInfinite-Default)
 const DEFAULT_FEED_PAGE_LIMIT = 20;
 const WAIT_FOR_TIMEOUT_MS = 10000;

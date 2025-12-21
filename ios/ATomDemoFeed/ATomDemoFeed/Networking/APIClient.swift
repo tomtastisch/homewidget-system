@@ -1,6 +1,11 @@
 import Foundation
 
+/// Ein minimalistischer API-Client für den Zugriff auf Backend-Endpoints.
+/// Die Basis-URL wird über die zentrale Konfiguration aufgelöst.
 class APIClient {
+    /// Ruft die aktuelle Seite des Demo-Feeds ab.
+    /// - Returns: Eine Liste von Feed-Items bei Erfolg.
+    /// - Throws: `APIError` bei Netzwerk-, Server- oder Dekodierungsfehlern.
     func fetchDemoFeed() async throws -> [FeedItem] {
         let baseURL = try Config.getApiBaseURL()
         let url = baseURL.appendingPathComponent("demo-feed")

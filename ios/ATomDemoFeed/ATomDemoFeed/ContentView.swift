@@ -4,9 +4,10 @@ struct ContentView: View {
     @StateObject private var viewModel = FeedViewModel()
     
     // MARK: - UI Konstanten
-    private let priorityPadding: CGFloat = 6
-    private let priorityCornerRadius: CGFloat = 8
-    private let priorityBackgroundOpacity: Double = 0.1
+    /// Styling für Badges und Hervorhebungen
+    private let badgePadding: CGFloat = 6
+    private let badgeCornerRadius: CGFloat = 8
+    private let badgeOpacity: Double = 0.1
 
     var body: some View {
         NavigationView {
@@ -47,9 +48,9 @@ struct ContentView: View {
                             Spacer()
                             Text("Prio: \(item.priority)")
                                 .font(.subheadline)
-                                .padding(priorityPadding)
-                                .background(Color.blue.opacity(priorityBackgroundOpacity))
-                                .cornerRadius(priorityCornerRadius)
+                                .padding(badgePadding)
+                                .background(Color.blue.opacity(badgeOpacity))
+                                .cornerRadius(badgeCornerRadius)
                         }
                     }
                 }

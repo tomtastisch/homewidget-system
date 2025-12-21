@@ -13,6 +13,7 @@
 		D3A1B2C9294E5B0A00123456 /* FeedItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2C8294E5B0A00123456 /* FeedItem.swift */; };
 		D3A1B2CB294E5B0A00123456 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2CA294E5B0A00123456 /* Config.swift */; };
 		D3A1B2CD294E5B0A00123456 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2CC294E5B0A00123456 /* APIClient.swift */; };
+		D3A1B2DA294E5B0A00123456 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2D9294E5B0A00123456 /* APIError.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		D3A1B2C8294E5B0A00123456 /* FeedItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/FeedItem.swift; sourceTree = "<group>"; };
 		D3A1B2CA294E5B0A00123456 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/Config.swift; sourceTree = "<group>"; };
 		D3A1B2CC294E5B0A00123456 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/APIClient.swift; sourceTree = "<group>"; };
+		D3A1B2D9294E5B0A00123456 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/APIError.swift; sourceTree = "<group>"; };
 		D3A1B2CE294E5B0A00123456 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D3A1B2CF294E5B0A00123456 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -81,6 +83,7 @@
 			children = (
 				D3A1B2CA294E5B0A00123456 /* Config.swift */,
 				D3A1B2CC294E5B0A00123456 /* APIClient.swift */,
+				D3A1B2D9294E5B0A00123456 /* APIError.swift */,
 			);
 			name = Networking;
 			sourceTree = "<group>";
@@ -158,6 +161,7 @@
 				D3A1B2C9294E5B0A00123456 /* FeedItem.swift in Sources */,
 				D3A1B2CB294E5B0A00123456 /* Config.swift in Sources */,
 				D3A1B2CD294E5B0A00123456 /* APIClient.swift in Sources */,
+				D3A1B2DA294E5B0A00123456 /* APIError.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

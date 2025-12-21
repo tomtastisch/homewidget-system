@@ -31,9 +31,13 @@ struct ContentView: View {
                             VStack(alignment: .leading) {
                                 Text(item.name)
                                     .font(.headline)
-                                Text("ID: \(item.id)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                                HStack {
+                                    Text("ID: \(item.id)")
+                                    Text("•")
+                                    Text(item.createdAt)
+                                }
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                             }
                             Spacer()
                             Text("Prio: \(item.priority)")

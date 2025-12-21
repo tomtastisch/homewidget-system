@@ -14,6 +14,14 @@ struct FeedItem: Identifiable, Codable {
     let id: Int
     let name: String
     let priority: Int
+    let createdAt: String
     
-    var title: String { name } // Alias für Abwärtskompatibilität in der UI
+    var title: String { name }
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case priority
+        case createdAt = "created_at"
+    }
 }

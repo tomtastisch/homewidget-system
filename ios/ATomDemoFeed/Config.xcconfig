@@ -1,0 +1,6 @@
+// Konfiguration für den ATom Demo Feed iOS Client
+
+// Die Basis-URL der API. 
+// Muss für lokale Entwicklung oder Deployment angepasst werden.
+// Beispiel: http://localhost:8000/api/v1
+API_BASE_URL = http://localhost:8000/api/v1

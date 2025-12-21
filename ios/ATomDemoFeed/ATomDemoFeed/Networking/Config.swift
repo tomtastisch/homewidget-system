@@ -1,12 +1,13 @@
 import Foundation
 
 enum Config {
-    static var apiBaseURL: URL {
+    /// Liefert die API-Basis-URL aus der Info.plist.
+    /// - Throws: `APIError.invalidURL`, wenn die Konfiguration fehlt oder ungültig ist.
+    static func getApiBaseURL() throws -> URL {
         guard let urlString = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
-              let url = URL(string: urlString) else {
-            // Wir werfen hier keinen fatalError, sondern geben eine Dummy-URL zurück oder behandeln es im Client
-            // Da das Ticket "kein magisches Defaulting" verlangt, sollte hier klar sein, dass es konfiguriert werden muss.
-            return URL(string: "http://konfiguration-fehlt.local")!
+              let url = URL(string: urlString),
+              url.host != nil else {
+            throw APIError.invalidURL
         }
         return url
     }

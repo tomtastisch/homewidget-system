@@ -16,7 +16,7 @@ struct FeedItem: Identifiable, Codable {
     let priority: Int
     let createdAt: String
     
-    var title: String { name }
+    var title: String { name } // Alias-Property für UI-Bindings; fachlich maßgeblich ist 'name'
     
     enum CodingKeys: String, CodingKey {
         case id

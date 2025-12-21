@@ -2,6 +2,11 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = FeedViewModel()
+    
+    // MARK: - UI Konstanten
+    private let priorityPadding: CGFloat = 6
+    private let priorityCornerRadius: CGFloat = 8
+    private let priorityBackgroundOpacity: Double = 0.1
 
     var body: some View {
         NavigationView {
@@ -42,9 +47,9 @@ struct ContentView: View {
                             Spacer()
                             Text("Prio: \(item.priority)")
                                 .font(.subheadline)
-                                .padding(6)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(8)
+                                .padding(priorityPadding)
+                                .background(Color.blue.opacity(priorityBackgroundOpacity))
+                                .cornerRadius(priorityCornerRadius)
                         }
                     }
                 }

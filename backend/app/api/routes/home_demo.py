@@ -11,7 +11,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request, status
 
 from ...core.logging_config import get_logger
-from ...schemas.v1.widget_contracts import FeedPageV1, WidgetDetailV1
+from ...homewidget.contracts.v1.widget_contracts import FeedPageV1, WidgetDetailV1
 from ...services.demo_v1_service import build_demo_feed_page_v1, resolve_demo_detail_v1
 
 router = APIRouter(prefix="/api/home/demo", tags=["home-demo"])

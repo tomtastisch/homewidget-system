@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 from fastapi.testclient import TestClient
 
-from app.schemas.v1.widget_contracts import (
+from app.homewidget.contracts.v1.widget_contracts import (
     ContentBlockV1,
     ContentSpecV1,
     FeedPageV1,

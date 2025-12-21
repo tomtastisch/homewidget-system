@@ -11,7 +11,7 @@ from typing import Optional
 from ..homewidget.providers.aggregator import ProvidersAggregator
 from ..homewidget.providers.furniture_provider import FurnitureProvider
 from ..homewidget.providers.mobile_plans_provider import MobilePlansProvider
-from ..schemas.v1.widget_contracts import FeedPageV1, WidgetDetailV1
+from ..homewidget.contracts.v1.widget_contracts import FeedPageV1, WidgetDetailV1
 
 
 def load_real_demo_feed_v1(cursor: int = 0, limit: int = 20) -> FeedPageV1:

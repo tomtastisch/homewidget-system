@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List
 
-from ...schemas.v1.widget_contracts import WidgetContractV1
+from ..contracts.v1.widget_contracts import WidgetContractV1
 
 
 class ProviderBase(ABC):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from ..schemas.v1.widget_contracts import (
+from ..homewidget.contracts.v1.widget_contracts import (
     ContentBlockV1,
     ContentSpecV1,
     FeedPageV1,

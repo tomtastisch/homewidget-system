@@ -9,7 +9,7 @@ from ...core.database import get_session
 from ...core.logging_config import get_logger
 from ...fixtures.v1 import is_fixture_id
 from ...models.widget import Widget
-from ...schemas.v1.widget_contracts import WidgetDetailV1
+from ...homewidget.contracts.v1.widget_contracts import WidgetDetailV1
 from ...schemas.widget import WidgetCreate, WidgetRead
 from ...services import demo_feed_real_source as real_src
 

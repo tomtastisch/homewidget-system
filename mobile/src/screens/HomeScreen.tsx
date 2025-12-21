@@ -1,15 +1,16 @@
-import React, {useCallback, useEffect, useMemo} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef} from 'react';
 import {
 	ActivityIndicator,
-	Alert,
 	Button,
 	FlatList,
 	RefreshControl,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
-	View
+	View,
+	ViewToken
 } from 'react-native';
+import {useQueryClient} from '@tanstack/react-query';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {RootStackParamList} from '../App';
 import {useAuth} from '../auth/AuthContext';
@@ -18,6 +19,8 @@ import {MainContentContainer} from '../components/MainContentContainer';
 import {useToast} from '../ui/ToastContext';
 import {useHomeFeedInfinite} from '../hooks/useHomeFeedInfinite';
 import {useHomeFeed} from '../hooks/useHomeFeed';
+import {getDemoWidgetDetail} from '../api/demoFeedV1';
+import {getTimingPublic} from '../config/timingPublic';
 import {TID} from '../testing/testids';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -86,10 +89,8 @@ export default function HomeScreen({ navigation }: Props) {
 	}, [error, showError]);
 	
 	const onPressWidget = useCallback((widgetId: number) => {
-		// Placeholder für Navigation zu Widget-Detail
-		Alert.alert('Widget', `Widget ${widgetId} angeklickt`);
-		console.log('Widget pressed', widgetId);
-	}, []);
+		navigation.navigate('WidgetDetail', { widgetId });
+	}, [navigation]);
 	
 	const handleLoadMore = useCallback(() => {
 		if (!isAuthed && demoFeedQuery.hasNextPage && !demoFeedQuery.isFetchingNextPage) {
@@ -104,7 +105,53 @@ export default function HomeScreen({ navigation }: Props) {
 			demoFeedQuery.refetch();
 		}
 	}, [isAuthed, authFeedQuery.refetch, demoFeedQuery.refetch]);
-	
+
+	const queryClient = useQueryClient();
+	const prefetchCount = getTimingPublic().prefetch.visiblePlusN;
+
+	/**
+	 * Prefetching für Widget-Details
+	 * 
+	 * Zweck:
+	 * - Lädt Details für sichtbare Widgets im Hintergrund vor, um Ladezeiten beim
+	 *   Navigieren zum WidgetDetailScreen zu minimieren.
+	 * - Nutzt Viewability, um nur relevante Daten zu laden.
+	 */
+	const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+		if (isAuthed) return; // Prefetching aktuell nur für Demo-Flow
+
+		const timing = getTimingPublic();
+		const staleTime = timing.query.staleTimeMs;
+
+		viewableItems.forEach((item, index) => {
+			if (item.isViewable && item.item.id) {
+				// Prefetch das aktuelle Item
+				queryClient.prefetchQuery({
+					queryKey: ['demo', 'detail_v1', item.item.id],
+					queryFn: () => getDemoWidgetDetail(item.item.id),
+					staleTime,
+				});
+
+				// Prefetch die nächsten N Items (Look-ahead)
+				if (index === viewableItems.length - 1) {
+					const lastIndex = widgets.findIndex(w => w.id === item.item.id);
+					if (lastIndex !== -1) {
+						for (let i = 1; i <= prefetchCount; i++) {
+							const nextWidget = widgets[lastIndex + i];
+							if (nextWidget) {
+								queryClient.prefetchQuery({
+									queryKey: ['demo', 'detail_v1', nextWidget.id],
+									queryFn: () => getDemoWidgetDetail(nextWidget.id),
+									staleTime,
+								});
+							}
+						}
+					}
+				}
+			}
+		});
+	}).current;
+
 	return (
 		<View style={styles.container} testID={TID.home.screen}>
 			<View style={styles.header}>
@@ -161,6 +208,10 @@ export default function HomeScreen({ navigation }: Props) {
 				refreshControl={<RefreshControl refreshing={loading} onRefresh={handleRefresh}/>} 
 				onEndReached={handleLoadMore}
 				onEndReachedThreshold={0.3}
+				onViewableItemsChanged={onViewableItemsChanged}
+				viewabilityConfig={{
+					itemVisiblePercentThreshold: 50
+				}}
 				initialNumToRender={10}
 				maxToRenderPerBatch={5}
 				windowSize={5}

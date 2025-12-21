@@ -5,7 +5,7 @@ from typing import List
 
 from .base import ProviderBase
 from ...core.logging_config import get_logger
-from ...schemas.v1.widget_contracts import FeedPageV1, WidgetContractV1
+from ..contracts.v1.widget_contracts import FeedPageV1, WidgetContractV1
 
 LOG = get_logger("providers.aggregator")
 
@@ -26,9 +26,17 @@ class ProvidersAggregator:
         all_items: list[WidgetContractV1] = []
         for p in self.providers:
             try:
-                items = p.load_items()
-                LOG.info("provider_ok", extra={"provider": p.name, "count": len(items)})
-                all_items.extend(items)
+                raw_items = p.load_items()
+                # Strenge Validierung gegen den Contract: Ungültige Widgets droppen
+                valid_items = []
+                for raw in raw_items:
+                    try:
+                        valid_items.append(WidgetContractV1.model_validate(raw))
+                    except Exception as ve:
+                        LOG.error("widget_validation_failed", extra={"provider": p.name, "error": str(ve)})
+
+                LOG.info("provider_ok", extra={"provider": p.name, "count": len(valid_items), "dropped": len(raw_items) - len(valid_items)})
+                all_items.extend(valid_items)
             except Exception as exc:  # noqa: BLE001
                 LOG.warning("provider_failed", extra={"provider": p.name, "error": str(exc)})
 

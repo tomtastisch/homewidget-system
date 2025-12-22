@@ -16,6 +16,9 @@ RUN npm install
 COPY mobile/ ./
 COPY config/ /app/config/
 
+# Stelle timing.public.json bereit, die sonst im Repository-Root liegt
+ARG TIMING_PUBLIC_JSON='{}'
+RUN mkdir -p /config && printf '%s' "$TIMING_PUBLIC_JSON" > /config/timing.public.json
 # Web-Build erstellen
 RUN npm run build
 

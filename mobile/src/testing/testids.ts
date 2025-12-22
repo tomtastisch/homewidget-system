@@ -19,6 +19,9 @@ export const TID = {
 		demoBanner: 'home.demoBanner',
 		mainContent: 'home.mainContent',
 		mainContentSlot: (index: number) => `home.mainContent.slot.${index}`,
+		cta: {
+			offers: 'home.cta.offers',
+		},
 	},
 	widgetDetail: {
 		screen: 'widgetDetail.screen',

@@ -252,6 +252,51 @@ step_e2e_playwright_minimal_tests() {
     )
 }
 
+## @brief Playwright Gate-Tests ausführen (HW-NEXT-06B).
+step_e2e_playwright_gate_tests() {
+    local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
+    if [[ ! -d "${playwright_dir}" ]]; then
+        log_error "Playwright-Verzeichnis fehlt – Tests können nicht ausgeführt werden."
+        return 1
+    fi
+    
+    log_info "Führe Playwright Gate-Tests aus..."
+    (
+        cd "${playwright_dir}" || exit 1
+        ensure_npm || exit 1
+        export PLAYWRIGHT_WEB_BASE_URL="${PLAYWRIGHT_WEB_BASE_URL:-http://localhost:19006}"
+        export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+        export PLAYWRIGHT_NO_AUTO_START="true"
+        npx playwright test specs/gate.spec.ts
+    )
+}
+
+## @brief Systemweite Gate-Checks (Health + Demo-Feed).
+step_e2e_gate_checks() {
+    log_info "Führe Gate-Checks aus (Health + Demo-Feed)..."
+    local api_url="${E2E_API_BASE_URL:-http://127.0.0.1:8100}"
+    
+    # 1. Health check
+    log_info "Prüfe Backend Health an ${api_url}/health ..."
+    local health_resp
+    health_resp=$(curl -s -o /dev/null -w "%{http_code}" "${api_url}/health")
+    if [[ "${health_resp}" != "200" ]]; then
+        log_error "Backend Health Check fehlgeschlagen (HTTP ${health_resp})"
+        return 1
+    fi
+    log_info "Backend Health OK."
+
+    # 2. Demo feed nicht leer
+    log_info "Prüfe Demo-Feed..."
+    local feed_count
+    feed_count=$(curl -s "${api_url}/api/home/demo/feed_v1" | jq '.items | length')
+    if [[ "${feed_count}" == "0" ]]; then
+        log_error "Demo-Feed ist leer!"
+        return 1
+    fi
+    log_info "Demo-Feed OK (Items: ${feed_count})."
+}
+
 ## @brief Playwright Standard-Tests ausführen (Minimal + Standard).
 step_e2e_playwright_standard_tests() {
     local playwright_dir="${PROJECT_ROOT}/tests/e2e/browseri/playwright"
@@ -413,7 +458,9 @@ Verfügbare Kommandos:
 
   e2e_backend_start               Backend im E2E-Modus starten (Port 8100)
   e2e_expo_web_start              Expo-Web im E2E-Modus starten (Port 19006)
+  e2e_gate_checks                 System-Gate (Health + Demo-Feed)
   e2e_playwright_install          Playwright-Dependencies installieren
+  e2e_playwright_gate_tests       Playwright Gate-Tests ausführen
   e2e_playwright_minimal_tests    Playwright Minimal-Tests ausführen
   e2e_playwright_standard_tests   Playwright Standard-Tests ausführen (Minimal + Standard)
   e2e_playwright_all_tests        Playwright alle Tests ausführen (inkl. Advanced)
@@ -461,8 +508,14 @@ main() {
         e2e_expo_web_start)
             step_e2e_expo_web_start
             ;;
+        e2e_gate_checks)
+            step_e2e_gate_checks
+            ;;
         e2e_playwright_install)
             step_e2e_playwright_install
+            ;;
+        e2e_playwright_gate_tests)
+            step_e2e_playwright_gate_tests
             ;;
         e2e_playwright_minimal_tests)
             step_e2e_playwright_minimal_tests

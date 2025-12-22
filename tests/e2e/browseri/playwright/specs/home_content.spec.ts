@@ -20,8 +20,8 @@ test.describe('@minimal Home Content', () => {
 		const firstSlot = page.getByTestId('home.mainContent.slot.0');
 		await expect(firstSlot).toBeVisible({timeout: budgets.feedLoadMs});
 		
-		// Optional: Prüfe Text im Platzhalter (Default-Text aus MainContentContainer.tsx)
-		await expect(firstSlot.getByText(/Slot 1/i)).toBeVisible();
+		// Optional: Prüfe, ob Slot Inhalt hat (entweder Platzhalter "Slot 1" oder CTA "Angebote")
+		await expect(firstSlot.locator('text=/Slot 1|Angebote/i')).toBeVisible();
 		
 		await page.screenshot({path: 'test-results/home-01-main-content.png'});
 	});

@@ -2,14 +2,14 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-# System-Abhängigkeiten (falls nötig)
+# System-Abhängigkeiten installieren, Requirements installieren und aufräumen
+COPY requirements.txt .
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
+    && pip install --no-cache-dir -r requirements.txt \
+    && apt-get purge -y --auto-remove build-essential \
     && rm -rf /var/lib/apt/lists/*
-
-# Requirements kopieren und installieren
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Anwendungscode kopieren
 COPY . .
@@ -17,7 +17,7 @@ COPY . .
 # Umgebungsvariablen
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
-ENV DATABASE_URL=sqlite:///./homewidget.db
+ENV DATABASE_URL=sqlite:////app/data/homewidget.db
 
 # Port exponieren
 EXPOSE 8000

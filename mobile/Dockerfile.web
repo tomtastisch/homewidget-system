@@ -4,16 +4,17 @@ FROM node:20-slim AS build
 ARG EXPO_PUBLIC_API_BASE_URL
 ENV EXPO_PUBLIC_API_BASE_URL=$EXPO_PUBLIC_API_BASE_URL
 
-WORKDIR /app
+WORKDIR /app/mobile
 
-# Abhängigkeiten kopieren
-COPY package*.json ./
+# Abhängigkeiten kopieren (aus mobile-Verzeichnis)
+COPY mobile/package*.json ./
 
 # Installiere Abhängigkeiten
 RUN npm install
 
-# Restlichen Code kopieren
-COPY . .
+# Quellcode und globale Config kopieren
+COPY mobile/ ./
+COPY config/ /app/config/
 
 # Web-Build erstellen
 RUN npm run build
@@ -22,7 +23,7 @@ RUN npm run build
 FROM nginx:stable-alpine
 
 # Kopiere gebaute Dateien aus Stage 1
-COPY --from=build /app/web-build /usr/share/nginx/html
+COPY --from=build /app/mobile/web-build /usr/share/nginx/html
 
 # Port 80 exponieren
 EXPOSE 80

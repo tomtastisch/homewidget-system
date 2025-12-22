@@ -476,7 +476,100 @@ Verfügbare Kommandos:
   pipeline_mobile                 Mobile-Pipeline (Deps + expo-doctor + Lint + TS + Tests + Build)
   pipeline_all                    Vollständige Pipeline (Backend + E2E-Contracts + Mobile)
   pipeline_tests                  Nur Test-Pipeline (Backend-Tests + E2E + Mobile-Tests)
+
+  ios_resolve_deps                iOS-Abhängigkeiten auflösen
+  ios_build                       iOS-App bauen (Simulator)
+  ios_unit_tests                  iOS Unit-Tests ausführen
+  ios_integration_tests           iOS Integrationstests ausführen
+  ios_contract_compare            iOS vs Mobile Contract Vergleich
 USAGE
+}
+
+# =============================================================
+# iOS-SPEZIFISCHE STEPS (HW-NEXT-07)
+# =============================================================
+
+step_ios_resolve_deps() {
+    log_info "iOS: Resolve Dependencies..."
+    cd ios/HomeWidgetDemoFeed || exit 1
+    xcodebuild -resolvePackageDependencies -project HomeWidgetDemoFeed.xcodeproj
+}
+
+step_ios_build() {
+    log_info "iOS: Building for Simulator..."
+    cd ios/HomeWidgetDemoFeed || exit 1
+    xcodebuild build \
+        -project HomeWidgetDemoFeed.xcodeproj \
+        -scheme HomeWidgetDemoFeed \
+        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -configuration Debug \
+        -derivedDataPath .build/derivedData
+}
+
+step_ios_unit_tests() {
+    log_info "iOS: Running Unit Tests..."
+    cd ios/HomeWidgetDemoFeed || exit 1
+    xcodebuild test \
+        -project HomeWidgetDemoFeed.xcodeproj \
+        -scheme HomeWidgetDemoFeed \
+        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -only-testing:HomeWidgetDemoFeedUnitTests \
+        -derivedDataPath .build/derivedData
+}
+
+step_ios_integration_tests() {
+    log_info "iOS: Running Integration Tests..."
+    # Sicherstellen, dass Backend URL gesetzt ist
+    export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://localhost:8000}"
+    
+    cd ios/HomeWidgetDemoFeed || exit 1
+    xcodebuild test \
+        -project HomeWidgetDemoFeed.xcodeproj \
+        -scheme HomeWidgetDemoFeed \
+        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -only-testing:HomeWidgetDemoFeedIntegrationTests \
+        -derivedDataPath .build/derivedData
+}
+
+step_ios_contract_compare() {
+    log_info "iOS: Contract Compare (Mobile vs iOS)..."
+    export E2E_API_BASE_URL="${E2E_API_BASE_URL:-http://localhost:8000}"
+
+    # 1. Mobile-Seite (Node)
+    log_info "Fetching canonical feed from Mobile/Node side..."
+    node tools/dev/contract/fetch_feed_canonical.js
+    
+    # 2. iOS-Seite
+    log_info "Fetching canonical feed from iOS side..."
+    cd ios/HomeWidgetDemoFeed || exit 1
+    
+    # Wir führen nur den einen Contract Test aus und fangen stdout
+    xcodebuild test \
+        -project HomeWidgetDemoFeed.xcodeproj \
+        -scheme HomeWidgetDemoFeed \
+        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -only-testing:HomeWidgetDemoFeedIntegrationTests/ContractIntegrationTests/testContractIdentity \
+        -derivedDataPath .build/derivedData > xcodebuild_contract.log 2>&1
+    
+    # Extrahiere JSON zwischen den Markern
+    sed -n '/---BEGIN CANONICAL FEED (iOS)---/,/---END CANONICAL FEED (iOS)---/p' xcodebuild_contract.log \
+        | grep -v "---" > ../../feed_canonical_ios.json
+    
+    cd ../..
+    
+    # 3. Vergleich
+    if [ ! -s feed_canonical_ios.json ]; then
+        log_error "feed_canonical_ios.json ist leer oder wurde nicht erstellt. Check xcodebuild_contract.log"
+        exit 1
+    fi
+    
+    log_info "Comparing canonical JSON files..."
+    if diff -u feed_canonical_mobile.json feed_canonical_ios.json; then
+        log_success "Contract Identität bestätigt: Mobile == iOS"
+    else
+        log_error "Contract mismatch! Mobile und iOS Payloads unterscheiden sich."
+        exit 1
+    fi
 }
 
 main() {
@@ -543,6 +636,21 @@ main() {
             ;;
         mobile_build)
             step_mobile_build
+            ;;
+        ios_resolve_deps)
+            step_ios_resolve_deps
+            ;;
+        ios_build)
+            step_ios_build
+            ;;
+        ios_unit_tests)
+            step_ios_unit_tests
+            ;;
+        ios_integration_tests)
+            step_ios_integration_tests
+            ;;
+        ios_contract_compare)
+            step_ios_contract_compare
             ;;
         pipeline_backend)
             step_pipeline_backend

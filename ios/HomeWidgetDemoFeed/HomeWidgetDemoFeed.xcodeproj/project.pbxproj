@@ -14,7 +14,27 @@
 		D3A1B2CB294E5B0A00123456 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2CA294E5B0A00123456 /* Config.swift */; };
 		D3A1B2CD294E5B0A00123456 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2CC294E5B0A00123456 /* APIClient.swift */; };
 		D3A1B2DA294E5B0A00123456 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2D9294E5B0A00123456 /* APIError.swift */; };
+		D3A1B2E7294E5B0A00123456 /* ConfigUnitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2E1294E5B0A00123456 /* ConfigUnitTests.swift */; };
+		D3A1B2F7294E5B0A00123456 /* ConnectivityIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2F1294E5B0A00123456 /* ConnectivityIntegrationTests.swift */; };
+		D3A1B2FB294E5B0A00123456 /* ContractIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3A1B2FA294E5B0A00123456 /* ContractIntegrationTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D3A1B2E8294E5B0A00123456 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D3A1B2B9294E5B0A00123456 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D3A1B2C0294E5B0A00123456;
+			remoteInfo = HomeWidgetDemoFeed;
+		};
+		D3A1B2F8294E5B0A00123456 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D3A1B2B9294E5B0A00123456 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D3A1B2C0294E5B0A00123456;
+			remoteInfo = HomeWidgetDemoFeed;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		D3A1B2C1294E5B0A00123456 /* HomeWidgetDemoFeed.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeWidgetDemoFeed.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -25,12 +45,31 @@
 		D3A1B2CA294E5B0A00123456 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/Config.swift; sourceTree = "<group>"; };
 		D3A1B2CC294E5B0A00123456 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/APIClient.swift; sourceTree = "<group>"; };
 		D3A1B2D9294E5B0A00123456 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/APIError.swift; sourceTree = "<group>"; };
+		D3A1B2E1294E5B0A00123456 /* ConfigUnitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeedUnitTests/ConfigUnitTests.swift; sourceTree = "<group>"; };
+		D3A1B2F1294E5B0A00123456 /* ConnectivityIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeedIntegrationTests/ConnectivityIntegrationTests.swift; sourceTree = "<group>"; };
+		D3A1B2FA294E5B0A00123456 /* ContractIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeedIntegrationTests/ContractIntegrationTests.swift; sourceTree = "<group>"; };
+		D3A1B2E2294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeWidgetDemoFeedUnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3A1B2F2294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = HomeWidgetDemoFeedIntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D3A1B2CE294E5B0A00123456 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D3A1B2CF294E5B0A00123456 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = ../Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		D3A1B2BE294E5B0A00123456 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D3A1B2E5294E5B0A00123456 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D3A1B2F5294E5B0A00123456 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -44,6 +83,8 @@
 			isa = PBXGroup;
 			children = (
 				D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */,
+				D3A1B2E0294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */,
+				D3A1B2F0294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */,
 				D3A1B2BF294E5B0A00123456 /* Products */,
 				D3A1B2CF294E5B0A00123456 /* Config.xcconfig */,
 			);
@@ -53,6 +94,8 @@
 			isa = PBXGroup;
 			children = (
 				D3A1B2C1294E5B0A00123456 /* HomeWidgetDemoFeed.app */,
+				D3A1B2E2294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests.xctest */,
+				D3A1B2F2294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -88,6 +131,23 @@
 			name = Networking;
 			sourceTree = "<group>";
 		};
+		D3A1B2E0294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */ = {
+			isa = PBXGroup;
+			children = (
+				D3A1B2E1294E5B0A00123456 /* ConfigUnitTests.swift */,
+			);
+			path = HomeWidgetDemoFeedUnitTests;
+			sourceTree = "<group>";
+		};
+		D3A1B2F0294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */ = {
+			isa = PBXGroup;
+			children = (
+				D3A1B2F1294E5B0A00123456 /* ConnectivityIntegrationTests.swift */,
+				D3A1B2FA294E5B0A00123456 /* ContractIntegrationTests.swift */,
+			);
+			path = HomeWidgetDemoFeedIntegrationTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -107,6 +167,40 @@
 			productName = HomeWidgetDemoFeed;
 			productReference = D3A1B2C1294E5B0A00123456 /* HomeWidgetDemoFeed.app */;
 			productType = "com.apple.product-type.application";
+		};
+		D3A1B2E3294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D3A1B2E6294E5B0A00123456 /* Build configuration list for PBXNativeTarget "HomeWidgetDemoFeedUnitTests" */;
+			buildPhases = (
+				D3A1B2E4294E5B0A00123456 /* Sources */,
+				D3A1B2E5294E5B0A00123456 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D3A1B2E9294E5B0A00123456 /* PBXTargetDependency */,
+			);
+			name = HomeWidgetDemoFeedUnitTests;
+			productName = HomeWidgetDemoFeedUnitTests;
+			productReference = D3A1B2E2294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		D3A1B2F3294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D3A1B2F6294E5B0A00123456 /* Build configuration list for PBXNativeTarget "HomeWidgetDemoFeedIntegrationTests" */;
+			buildPhases = (
+				D3A1B2F4294E5B0A00123456 /* Sources */,
+				D3A1B2F5294E5B0A00123456 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D3A1B2F9294E5B0A00123456 /* PBXTargetDependency */,
+			);
+			name = HomeWidgetDemoFeedIntegrationTests;
+			productName = HomeWidgetDemoFeedIntegrationTests;
+			productReference = D3A1B2F2294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -136,6 +230,8 @@
 			projectRoot = "";
 			targets = (
 				D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */,
+				D3A1B2E3294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */,
+				D3A1B2F3294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */,
 			);
 		};
 /* End PBXProject section */
@@ -165,7 +261,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D3A1B2E4294E5B0A00123456 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D3A1B2E7294E5B0A00123456 /* ConfigUnitTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D3A1B2F4294E5B0A00123456 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D3A1B2F7294E5B0A00123456 /* ConnectivityIntegrationTests.swift in Sources */,
+				D3A1B2FB294E5B0A00123456 /* ContractIntegrationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D3A1B2E9294E5B0A00123456 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */;
+			targetProxy = D3A1B2E8294E5B0A00123456 /* PBXContainerItemProxy */;
+		};
+		D3A1B2F9294E5B0A00123456 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */;
+			targetProxy = D3A1B2F8294E5B0A00123456 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		D3A1B2D3294E5B0A00123456 /* Debug */ = {
@@ -336,6 +462,74 @@
 			};
 			name = Release;
 		};
+		D3A1B2E7294E5B0A00123456 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tomtastisch.HomeWidgetDemoFeedUnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HomeWidgetDemoFeed.app/HomeWidgetDemoFeed";
+			};
+			name = Debug;
+		};
+		D3A1B2E8294E5B0A00123456 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tomtastisch.HomeWidgetDemoFeedUnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HomeWidgetDemoFeed.app/HomeWidgetDemoFeed";
+			};
+			name = Release;
+		};
+		D3A1B2F7294E5B0A00123456 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tomtastisch.HomeWidgetDemoFeedIntegrationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HomeWidgetDemoFeed.app/HomeWidgetDemoFeed";
+			};
+			name = Debug;
+		};
+		D3A1B2F8294E5B0A00123456 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.tomtastisch.HomeWidgetDemoFeedIntegrationTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HomeWidgetDemoFeed.app/HomeWidgetDemoFeed";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -353,6 +547,24 @@
 			buildConfigurations = (
 				D3A1B2D5294E5B0A00123456 /* Debug */,
 				D3A1B2D6294E5B0A00123456 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D3A1B2E6294E5B0A00123456 /* Build configuration list for PBXNativeTarget "HomeWidgetDemoFeedUnitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D3A1B2E7294E5B0A00123456 /* Debug */,
+				D3A1B2E8294E5B0A00123456 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D3A1B2F6294E5B0A00123456 /* Build configuration list for PBXNativeTarget "HomeWidgetDemoFeedIntegrationTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D3A1B2F7294E5B0A00123456 /* Debug */,
+				D3A1B2F8294E5B0A00123456 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

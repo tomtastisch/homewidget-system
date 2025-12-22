@@ -193,7 +193,22 @@ export default function HomeScreen({ navigation }: Props) {
 					<Text style={styles.loadingText}>Laden...</Text>
 				</View>
 			)}
-			<MainContentContainer slotCount={3} />
+			<MainContentContainer 
+				slots={[
+					{
+						content: (
+							<TouchableOpacity 
+								onPress={() => navigation.navigate('Offers')} 
+								style={styles.ctaSlot}
+								testID={TID.home.cta.offers}
+							>
+								<Text style={styles.ctaText}>Angebote</Text>
+							</TouchableOpacity>
+						)
+					}
+				]}
+				slotCount={3} 
+			/>
 			{/* FlatList mit Virtualisierungs-Optimierungen (HW-NEXT-03B):
 			    - initialNumToRender: 10 Items initial für schnellen Start
 			    - maxToRenderPerBatch: 5 Items pro Batch für inkrementelles Rendering
@@ -274,5 +289,18 @@ const styles = StyleSheet.create({
 	loadingText: {
 		marginTop: 8,
 		color: '#666',
+	},
+	ctaSlot: {
+		flex: 1,
+		backgroundColor: '#0066cc',
+		borderRadius: 8,
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: 8,
+	},
+	ctaText: {
+		color: '#fff',
+		fontWeight: 'bold',
+		fontSize: 14,
 	},
 });

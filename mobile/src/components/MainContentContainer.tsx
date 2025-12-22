@@ -18,9 +18,12 @@ interface MainContentContainerProps {
 	slotCount?: number;
 }
 
-export function MainContentContainer({slots, slotCount = 3}: MainContentContainerProps) {
-	// Verwende entweder die übergebenen Slots oder erstelle Platzhalter-Slots
-	const displaySlots: MainContentSlot[] = slots || Array.from({length: slotCount}, () => ({}));
+export function MainContentContainer({slots = [], slotCount = 3}: MainContentContainerProps) {
+	// Fülle mit Platzhaltern auf, falls weniger Slots übergeben wurden
+	const displaySlots: MainContentSlot[] = [...slots];
+	while (displaySlots.length < slotCount) {
+		displaySlots.push({});
+	}
 	
 	return (
 		<View style={styles.container} testID={TID.home.mainContent}>

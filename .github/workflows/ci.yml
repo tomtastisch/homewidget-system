@@ -117,12 +117,81 @@ jobs:
                     echo "::notice::Alle CI-Prüfungen wurden erfolgreich abgeschlossen."
 
     # =============================================================
+    # CI GATE: Health + Demo-Feed + Playwright Gate Spec (HW-NEXT-06B)
+    # =============================================================
+
+    e2e-ci-gate:
+        runs-on: ubuntu-latest
+        needs: [ build-and-check ]
+        permissions:
+            contents: read
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+
+            -   name: 🐍 Python 3.13 einrichten (für Backend)
+                uses: actions/setup-python@v5
+                with:
+                    python-version: '3.13'
+                    cache: 'pip'
+                    cache-dependency-path: |
+                        backend/pyproject.toml
+                        backend/setup.py
+                        backend/requirements*.txt
+
+            -   name: 📦 Backend-Setup
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh backend_setup_env
+
+            -   name: 🚀 Backend im E2E-Modus starten
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_backend_start
+
+            -   name: 📱 Node 20 einrichten
+                uses: actions/setup-node@v4
+                with:
+                    node-version: '20.19.4'
+                    cache: 'npm'
+                    cache-dependency-path: |
+                        mobile/package-lock.json
+                        tests/e2e/browseri/playwright/package-lock.json
+
+            -   name: 📦 Mobile-Dependencies installieren
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh mobile_install_deps
+
+            -   name: 🚀 Expo-Web im E2E-Modus starten
+                env:
+                    EXPO_PUBLIC_API_BASE_URL: http://127.0.0.1:8100
+                    HW_PROFILE: e2e
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
+
+            -   name: 🩺 System Gate Checks (Health + Demo-Feed)
+                env:
+                    E2E_API_BASE_URL: http://127.0.0.1:8100
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_gate_checks
+
+            -   name: 🎭 Playwright-Dependencies installieren
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
+
+            -   name: 🌐 Playwright Gate Spec
+                env:
+                    PLAYWRIGHT_WEB_BASE_URL: http://localhost:19006
+                    E2E_API_BASE_URL: http://127.0.0.1:8100
+                    HW_PROFILE: e2e
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_gate_tests
+
+    # =============================================================
     # BROWSER E2E (Playwright – Minimal)
     # =============================================================
 
     e2e-core-minimal:
         runs-on: ubuntu-latest
-        needs: [ build-and-check ]
+        needs: [ e2e-ci-gate ]
         permissions:
             contents: read
         steps:
@@ -185,7 +254,7 @@ jobs:
 
     e2e-core-standard:
         runs-on: ubuntu-latest
-        needs: [ build-and-check ]
+        needs: [ e2e-ci-gate ]
         permissions:
             contents: read
         steps:

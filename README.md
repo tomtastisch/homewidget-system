@@ -31,6 +31,17 @@ Dann öffne: **http://localhost:19006**
 2. Öffne Browser: http://localhost:19006
 3. Erkunde die App oder lese [docs/QUICKSTART.md](docs/QUICKSTART.md) für Details
 
+## 🚀 Deployment (Docker Compose)
+
+Für einen schnellen Start in einer produktionsnahen Umgebung:
+
+```bash
+docker compose -f deploy/docker-compose.yml up -d --build
+```
+
+- **Backend:** http://localhost:8000 (Health: `/health`)
+- **Web:** http://localhost:8080
+
 ## 🔗 Wichtige Links
 
 - Backend: http://127.0.0.1:8000

@@ -55,7 +55,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("ATom Demo Feed")
+            .navigationTitle("HomeWidget Demo Feed")
             .task {
                 await viewModel.fetchFeed()
             }

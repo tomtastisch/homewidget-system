@@ -91,13 +91,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */ = {
+		D3A1B2C0294E5B0A00EE0002 /* HomeWidgetDemoFeed */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D3A1B2D2294E5B0A00123456 /* Build configuration list for PBXNativeTarget "HomeWidgetDemoFeed" */;
 			buildPhases = (
 				D3A1B2BD294E5B0A00123456 /* Sources */,
 				D3A1B2BE294E5B0A00123456 /* Frameworks */,
-				D3A1B2BF294E5B0A00123456 /* Resources */,
+				D3A1B2BF294E5B0A00EE0001 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -117,7 +117,7 @@
 				LastSwiftUpdateCheck = 1400;
 				LastUpgradeCheck = 1400;
 				TargetAttributes = {
-					D3A1B2C0294E5B0A00123456 = {
+					D3A1B2C0294E5B0A00EE0002 = {
 						CreatedOnToolsVersion = 14.0;
 					};
 				};
@@ -135,13 +135,13 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */,
+				D3A1B2C0294E5B0A00EE0002 /* HomeWidgetDemoFeed */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		D3A1B2BF294E5B0A00123456 /* Resources */ = {
+		D3A1B2BF294E5B0A00EE0001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (

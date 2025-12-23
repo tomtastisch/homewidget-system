@@ -498,12 +498,14 @@ step_ios_resolve_deps() {
 step_ios_build() {
     log_info "iOS: Building for Simulator..."
     cd ios/HomeWidgetDemoFeed || exit 1
+    # Xcode build ohne DerivedData im Projektverzeichnis, um Konflikte zu vermeiden
     xcodebuild build \
         -project HomeWidgetDemoFeed.xcodeproj \
         -scheme HomeWidgetDemoFeed \
-        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -configuration Debug \
-        -derivedDataPath .build/derivedData
+        -derivedDataPath .build/derivedData \
+        CODE_SIGNING_ALLOWED=NO
 }
 
 step_ios_unit_tests() {
@@ -512,9 +514,10 @@ step_ios_unit_tests() {
     xcodebuild test \
         -project HomeWidgetDemoFeed.xcodeproj \
         -scheme HomeWidgetDemoFeed \
-        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -only-testing:HomeWidgetDemoFeedUnitTests \
-        -derivedDataPath .build/derivedData
+        -derivedDataPath .build/derivedData \
+        CODE_SIGNING_ALLOWED=NO
 }
 
 step_ios_integration_tests() {
@@ -526,9 +529,10 @@ step_ios_integration_tests() {
     xcodebuild test \
         -project HomeWidgetDemoFeed.xcodeproj \
         -scheme HomeWidgetDemoFeed \
-        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -only-testing:HomeWidgetDemoFeedIntegrationTests \
-        -derivedDataPath .build/derivedData
+        -derivedDataPath .build/derivedData \
+        CODE_SIGNING_ALLOWED=NO
 }
 
 step_ios_contract_compare() {
@@ -547,9 +551,10 @@ step_ios_contract_compare() {
     xcodebuild test \
         -project HomeWidgetDemoFeed.xcodeproj \
         -scheme HomeWidgetDemoFeed \
-        -destination 'platform=iOS Simulator,name=iPhone 14,OS=latest' \
+        -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -only-testing:HomeWidgetDemoFeedIntegrationTests/ContractIntegrationTests/testContractIdentity \
-        -derivedDataPath .build/derivedData > xcodebuild_contract.log 2>&1
+        -derivedDataPath .build/derivedData \
+        CODE_SIGNING_ALLOWED=NO > xcodebuild_contract.log 2>&1
     
     # Extrahiere JSON zwischen den Markern
     sed -n '/---BEGIN CANONICAL FEED (iOS)---/,/---END CANONICAL FEED (iOS)---/p' xcodebuild_contract.log \

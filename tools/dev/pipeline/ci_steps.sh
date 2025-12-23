@@ -405,6 +405,52 @@ step_mobile_build() {
 }
 
 # -----------------------------------------------------------------------------
+# iOS-Schritte
+# -----------------------------------------------------------------------------
+
+## @brief iOS-Projekt auf Korruption prüfen (Sanity Gate).
+step_ios_project_sanity() {
+    local project_path="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj"
+    if [[ ! -d "${project_path}" ]]; then
+        log_warn "iOS-Projekt nicht gefunden: ${project_path} – Sanity übersprungen."
+        return 0
+    fi
+
+    log_info "Führe iOS Sanity Check aus (xcodebuild -list)..."
+    if ! xcodebuild -list -project "${project_path}" > /dev/null 2>&1; then
+        log_error "Xcode project file damaged / pbxproj parse failure"
+        return 1
+    fi
+    log_info "iOS Sanity Check erfolgreich."
+}
+
+## @brief iOS-Abhängigkeiten auflösen.
+step_ios_resolve_deps() {
+    local project_path="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj"
+    run_ios_cmd "xcodebuild -resolvePackageDependencies" \
+        "xcodebuild -resolvePackageDependencies -project ${project_path}"
+}
+
+## @brief iOS-Build ausführen (Debug).
+step_ios_build() {
+    local project_path="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj"
+    # Scheme-Name muss ggf. angepasst werden, falls er abweicht. 
+    # Wir nehmen HomeWidgetDemoFeed als Standard an.
+    local scheme="HomeWidgetDemoFeed"
+    run_ios_cmd "xcodebuild build (iOS)" \
+        "xcodebuild -scheme ${scheme} -configuration Debug -destination 'generic/platform=iOS' build"
+}
+
+## @brief iOS-Tests auflisten oder ausführen.
+step_ios_tests() {
+    local project_path="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj"
+    local scheme="HomeWidgetDemoFeed"
+    # Vorläufig nur Auflistung der Tests, um Suite-Erkennung zu prüfen.
+    run_ios_cmd "xcodebuild test-without-building (iOS list tests)" \
+        "xcodebuild -scheme ${scheme} -destination 'platform=iOS Simulator,name=iPhone 16' -showBuildSettings test -listTests || echo 'Test-Auflistung fehlgeschlagen oder keine Tests vorhanden.'"
+}
+
+# -----------------------------------------------------------------------------
 # Aggregierte Pipeline-Schritte
 # -----------------------------------------------------------------------------
 
@@ -471,6 +517,11 @@ Verfügbare Kommandos:
   mobile_typescript_check         Mobile TypeScript-Check
   mobile_jest_tests               Mobile Jest-Tests (falls definiert)
   mobile_build                    Mobile Build (falls definiert)
+
+  ios_project_sanity              iOS-Projekt auf Korruption prüfen (Sanity)
+  ios_resolve_deps                iOS-Abhängigkeiten auflösen
+  ios_build                       iOS-Build (Debug)
+  ios_tests                       iOS-Tests (Auflistung)
 
   pipeline_backend                Backend-Pipeline (Setup + Qualität + Unit/Integrationstests)
   pipeline_mobile                 Mobile-Pipeline (Deps + expo-doctor + Lint + TS + Tests + Build)
@@ -543,6 +594,18 @@ main() {
             ;;
         mobile_build)
             step_mobile_build
+            ;;
+        ios_project_sanity)
+            step_ios_project_sanity
+            ;;
+        ios_resolve_deps)
+            step_ios_resolve_deps
+            ;;
+        ios_build)
+            step_ios_build
+            ;;
+        ios_tests)
+            step_ios_tests
             ;;
         pipeline_backend)
             step_pipeline_backend

@@ -180,6 +180,21 @@ run_mobile_cmd() {
     fi
 }
 
+## @brief Führt einen Shell-Befehl für iOS auf dem Host aus.
+## @param $1 Beschreibung (für Logging)
+## @param $2... Befehl
+run_ios_cmd() {
+    local desc="$1"
+    shift
+
+    log_info "iOS-Host-Befehl: ${desc}"
+    (
+        cd "${PROJECT_ROOT}" || exit 1
+        local cmd="$*"
+        bash -lc "${cmd}"
+    )
+}
+
 # -----------------------------------------------------------------------------
 # PMCD – Python Method Commander Distribution
 # -----------------------------------------------------------------------------

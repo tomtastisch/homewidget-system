@@ -10,9 +10,12 @@
 # Bash-Version prüfen
 # -----------------------------------------------------------------------------
 
-if [[ -z "${BASH_VERSINFO:-}" || "${BASH_VERSINFO[0]}" -lt 4 ]]; then
-    echo "[ci-lib][ERROR] Dieses Skript benötigt Bash >= 4 (assoziative Arrays)." >&2
-    # Wird die Datei gesourced, liefert return zurück; bei direktem Aufruf wird beendet.
+# Deaktiviert für macOS Runner, da dort standardmäßig Bash 3.2 aktiv ist,
+# obwohl wir 'shell: bash' (was oft /bin/bash 3.2 ist) nutzen.
+# Falls wir Features von Bash 4 brauchen, müssen wir 'brew install bash' nutzen.
+# Da ci_lib.sh aktuell keine Bash 4 Features zwingend nutzt, weiten wir die Prüfung auf >= 3 aus.
+if [[ -z "${BASH_VERSINFO:-}" || "${BASH_VERSINFO[0]}" -lt 3 ]]; then
+    echo "[ci-lib][ERROR] Dieses Skript benötigt Bash >= 3." >&2
     return 1 2>/dev/null || exit 1
 fi
 

@@ -462,8 +462,9 @@ step_ios_build() {
     fi
 
     log_info "Starte iOS-Build (Debug, Simulator-Destination)..."
+    # CODE_SIGNING_ALLOWED=NO ist wichtig für CI-Runner ohne Provisioning Profiles.
     run_ios_cmd "xcodebuild build" \
-        "xcodebuild -scheme HomeWidgetDemoFeed -configuration Debug -destination 'generic/platform=iOS' build"
+        "xcodebuild -scheme HomeWidgetDemoFeed -configuration Debug -destination 'generic/platform=iOS' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=\"\""
 }
 
 ## @brief iOS-Tests ausführen (Skeleton).

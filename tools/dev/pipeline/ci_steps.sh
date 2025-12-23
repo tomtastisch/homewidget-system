@@ -505,7 +505,9 @@ step_ios_build() {
         -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -configuration Debug \
         -derivedDataPath .build/derivedData \
-        CODE_SIGNING_ALLOWED=NO
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGNING_REQUIRED=NO \
+        AD_HOC_CODE_SIGNING_ALLOWED=YES
 }
 
 step_ios_unit_tests() {
@@ -517,7 +519,9 @@ step_ios_unit_tests() {
         -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -only-testing:HomeWidgetDemoFeedUnitTests \
         -derivedDataPath .build/derivedData \
-        CODE_SIGNING_ALLOWED=NO
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGNING_REQUIRED=NO \
+        AD_HOC_CODE_SIGNING_ALLOWED=YES
 }
 
 step_ios_integration_tests() {
@@ -532,7 +536,9 @@ step_ios_integration_tests() {
         -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -only-testing:HomeWidgetDemoFeedIntegrationTests \
         -derivedDataPath .build/derivedData \
-        CODE_SIGNING_ALLOWED=NO
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGNING_REQUIRED=NO \
+        AD_HOC_CODE_SIGNING_ALLOWED=YES
 }
 
 step_ios_contract_compare() {
@@ -554,7 +560,9 @@ step_ios_contract_compare() {
         -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
         -only-testing:HomeWidgetDemoFeedIntegrationTests/ContractIntegrationTests/testContractIdentity \
         -derivedDataPath .build/derivedData \
-        CODE_SIGNING_ALLOWED=NO > xcodebuild_contract.log 2>&1
+        CODE_SIGNING_ALLOWED=NO \
+        CODE_SIGNING_REQUIRED=NO \
+        AD_HOC_CODE_SIGNING_ALLOWED=YES > xcodebuild_contract.log 2>&1
     
     # Extrahiere JSON zwischen den Markern
     sed -n '/---BEGIN CANONICAL FEED (iOS)---/,/---END CANONICAL FEED (iOS)---/p' xcodebuild_contract.log \

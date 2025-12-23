@@ -405,6 +405,81 @@ step_mobile_build() {
 }
 
 # -----------------------------------------------------------------------------
+# iOS-Schritte
+# -----------------------------------------------------------------------------
+
+## @brief Xcode-Projekt auf Korruption prüfen (Sanity Gate).
+step_ios_project_sanity() {
+    if [[ ! -d "${IOS_DIR}" ]]; then
+        log_warn "iOS-Verzeichnis fehlt – Schritt 'iOS-Sanity' wird übersprungen."
+        return 0
+    fi
+
+    log_info "Starte iOS Project Sanity Check..."
+    
+    # xcodebuild -list liefert einen Fehlercode != 0, wenn das Projekt beschädigt ist.
+    # Wir fangen den Output ab, um spezifische Fehlermeldungen zu generieren.
+    local output
+    local exit_code=0
+    
+    output=$(run_ios_cmd "xcodebuild -list" "xcodebuild -list -project HomeWidgetDemoFeed.xcodeproj 2>&1") || exit_code=$?
+    
+    if [[ ${exit_code} -ne 0 ]]; then
+        if echo "${output}" | grep -qE "damaged|could not be opened|pbxproj parse failure"; then
+            log_error "CRITICAL: Xcode project file damaged / pbxproj parse failure"
+            echo "${output}" >&2
+            return 1
+        else
+            log_error "iOS Sanity Check fehlgeschlagen (Exit Code: ${exit_code})"
+            echo "${output}" >&2
+            return 1
+        fi
+    fi
+    
+    log_info "iOS Project Sanity Check SUCCESS."
+}
+
+## @brief iOS-Abhängigkeiten auflösen (SPM).
+step_ios_resolve_deps() {
+    if [[ ! -d "${IOS_DIR}" ]]; then
+        log_warn "iOS-Verzeichnis fehlt – Schritt 'iOS-Resolve' wird übersprungen."
+        return 0
+    fi
+
+    log_info "Löse iOS-Abhängigkeiten auf (SPM)..."
+    # In Phase 1 & 2 lassen wir das Skelett noch einfach durchlaufen oder 
+    # implementieren es schon, falls es für die Diagnose hilfreich ist.
+    # Der CI-Fehler soll aber beim Sanity-Check (xcodebuild -list) auftreten.
+    run_ios_cmd "xcodebuild -resolvePackageDependencies" \
+        "xcodebuild -resolvePackageDependencies -project HomeWidgetDemoFeed.xcodeproj -scheme HomeWidgetDemoFeed"
+}
+
+## @brief iOS-Build ausführen.
+step_ios_build() {
+    if [[ ! -d "${IOS_DIR}" ]]; then
+        log_warn "iOS-Verzeichnis fehlt – Schritt 'iOS-Build' wird übersprungen."
+        return 0
+    fi
+
+    log_info "Starte iOS-Build (Debug, Simulator-Destination)..."
+    run_ios_cmd "xcodebuild build" \
+        "xcodebuild -scheme HomeWidgetDemoFeed -configuration Debug -destination 'generic/platform=iOS' build"
+}
+
+## @brief iOS-Tests ausführen (Skeleton).
+step_ios_tests() {
+    if [[ ! -d "${IOS_DIR}" ]]; then
+        log_warn "iOS-Verzeichnis fehlt – Schritt 'iOS-Tests' wird übersprungen."
+        return 0
+    fi
+
+    log_info "Führe iOS-Tests aus (Skeleton)..."
+    # Zunächst nur Test-Listing oder minimaler Lauf.
+    run_ios_cmd "xcodebuild test-without-building" \
+        "echo 'iOS Test-Skeleton: skipping real execution for now'"
+}
+
+# -----------------------------------------------------------------------------
 # Aggregierte Pipeline-Schritte
 # -----------------------------------------------------------------------------
 
@@ -471,6 +546,11 @@ Verfügbare Kommandos:
   mobile_typescript_check         Mobile TypeScript-Check
   mobile_jest_tests               Mobile Jest-Tests (falls definiert)
   mobile_build                    Mobile Build (falls definiert)
+
+  ios_project_sanity              Xcode-Projekt auf Korruption prüfen (Sanity Gate)
+  ios_resolve_deps               iOS-Abhängigkeiten auflösen (SPM)
+  ios_build                      iOS-Build ausführen
+  ios_tests                      iOS-Tests ausführen (Skeleton)
 
   pipeline_backend                Backend-Pipeline (Setup + Qualität + Unit/Integrationstests)
   pipeline_mobile                 Mobile-Pipeline (Deps + expo-doctor + Lint + TS + Tests + Build)
@@ -543,6 +623,18 @@ main() {
             ;;
         mobile_build)
             step_mobile_build
+            ;;
+        ios_project_sanity)
+            step_ios_project_sanity
+            ;;
+        ios_resolve_deps)
+            step_ios_resolve_deps
+            ;;
+        ios_build)
+            step_ios_build
+            ;;
+        ios_tests)
+            step_ios_tests
             ;;
         pipeline_backend)
             step_pipeline_backend

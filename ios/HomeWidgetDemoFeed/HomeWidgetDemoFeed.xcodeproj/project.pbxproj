@@ -82,7 +82,7 @@
 		D3A1B2B8294E5B0A00123456 = {
 			isa = PBXGroup;
 			children = (
-				D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */,
+				31AF280001F18484E49E353B,
 				D3A1B306294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */,
 				D3A1B307294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */,
 				D3A1B2BF294E5B0A00123456 /* Products */,
@@ -100,7 +100,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */ = {
+		31AF280001F18484E49E353B = {
 			isa = PBXGroup;
 			children = (
 				D3A1B2C2294E5B0A00123456 /* HomeWidgetDemoFeedApp.swift */,
@@ -151,13 +151,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */ = {
+		31AF280001F18484E49E353B = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D3A1B2D2294E5B0A00123456 /* Build configuration list for PBXNativeTarget "HomeWidgetDemoFeed" */;
 			buildPhases = (
 				D3A1B2BD294E5B0A00123456 /* Sources */,
 				D3A1B2BE294E5B0A00123456 /* Frameworks */,
-				D3A1B2BF294E5B0A00123456 /* Resources */,
+				6B02EA8095331507C030A2C0,
 			);
 			buildRules = (
 			);
@@ -229,7 +229,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */,
+				31AF280001F18484E49E353B,
 				D3A1B308294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */,
 				D3A1B309294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */,
 			);
@@ -237,7 +237,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		D3A1B2BF294E5B0A00123456 /* Resources */ = {
+		6B02EA8095331507C030A2C0 = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -283,12 +283,12 @@
 /* Begin PBXTargetDependency section */
 		D3A1B311294E5B0A00123456 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */;
+			target = 31AF280001F18484E49E353B;
 			targetProxy = D3A1B310294E5B0A00123456 /* PBXContainerItemProxy */;
 		};
 		D3A1B313294E5B0A00123456 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */;
+			target = 31AF280001F18484E49E353B;
 			targetProxy = D3A1B312294E5B0A00123456 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */

@@ -128,6 +128,11 @@ jobs:
             -   name: Checkout
                 uses: actions/checkout@v4
 
+            -   name: 🛠️ Install Bash 5 (macOS)
+                run: |
+                    brew install bash
+                    echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
             # =============================================================
             # IOS-UMGEBUNG
             # =============================================================

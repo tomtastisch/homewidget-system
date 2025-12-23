@@ -425,7 +425,7 @@ step_ios_project_sanity() {
     output=$(run_ios_cmd "xcodebuild -list" "xcodebuild -list -project HomeWidgetDemoFeed.xcodeproj 2>&1") || exit_code=$?
     
     if [[ ${exit_code} -ne 0 ]]; then
-        if echo "${output}" | grep -qE "damaged|could not be opened|pbxproj parse failure"; then
+        if echo "${output}" | grep -qE "damaged|could not be opened|unable to parse|project parsing failed|pbxproj parse failure"; then
             log_error "CRITICAL: Xcode project file damaged / pbxproj parse failure"
             echo "${output}" >&2
             return 1

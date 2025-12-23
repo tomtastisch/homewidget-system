@@ -50,12 +50,12 @@ def fix_pbxproj(file_path):
         
         # 1. PBXResourcesBuildPhase Definition anpassen
         if current_section == "PBXResourcesBuildPhase" and ID_RESOURCES_OLD in line:
-            print(f"Patsche PBXResourcesBuildPhase Definition in Zeile: {line.strip()}")
+            print(f"Patche PBXResourcesBuildPhase Definition in Zeile: {line.strip()}")
             modified_line = line.replace(ID_RESOURCES_OLD, ID_RESOURCES_NEW)
             
         # 2. PBXNativeTarget Definition anpassen
         elif current_section == "PBXNativeTarget" and ID_TARGET_OLD in line:
-            print(f"Patsche PBXNativeTarget Definition in Zeile: {line.strip()}")
+            print(f"Patche PBXNativeTarget Definition in Zeile: {line.strip()}")
             modified_line = line.replace(ID_TARGET_OLD, ID_TARGET_NEW)
             
         # 3. Referenzen in anderen Sektionen anpassen
@@ -63,22 +63,17 @@ def fix_pbxproj(file_path):
             # Referenz auf Resources Build Phase in buildPhases
             if ID_RESOURCES_OLD in line and "/* Resources */" in line:
                 if current_section != "PBXGroup": # Groups behalten die alte ID für Products
-                    print(f"Patsche Resources Referenz in Zeile: {line.strip()}")
+                    print(f"Patche Resources Referenz in Zeile: {line.strip()}")
                     modified_line = line.replace(ID_RESOURCES_OLD, ID_RESOURCES_NEW)
             
             # Referenz auf Native Target in targets oder TargetAttributes
             if ID_TARGET_OLD in line:
                 # In der Project Sektion sind targets referenziert
                 if current_section == "PBXProject":
-                    print(f"Patsche Target Referenz (Project) in Zeile: {line.strip()}")
+                    print(f"Patche Target Referenz (Project) in Zeile: {line.strip()}")
                     modified_line = line.replace(ID_TARGET_OLD, ID_TARGET_NEW)
-                # In TargetAttributes
-                elif "CreatedOnToolsVersion" in line or "TargetAttributes" in line:
-                    # Das ist knifflig, da TargetAttributes ein Block ist.
-                    # Wir prüfen die Einrückung (3 Tabs für die ID)
-                    pass
                 elif line.strip().startswith(ID_TARGET_OLD + " = {"):
-                    print(f"Patsche TargetAttributes Key in Zeile: {line.strip()}")
+                    print(f"Patche TargetAttributes Key in Zeile: {line.strip()}")
                     modified_line = line.replace(ID_TARGET_OLD, ID_TARGET_NEW)
 
         new_lines.append(modified_line)

@@ -82,9 +82,9 @@
 		D3A1B2B8294E5B0A00123456 = {
 			isa = PBXGroup;
 			children = (
-				D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */,
-				D3A1B2E0294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */,
-				D3A1B2F0294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */,
+				D3A1B2C0294E5B0A00123457 /* HomeWidgetDemoFeed */,
+				D3A1B2E0294E5B0A00123457 /* HomeWidgetDemoFeedUnitTests */,
+				D3A1B2F0294E5B0A00123457 /* HomeWidgetDemoFeedIntegrationTests */,
 				D3A1B2BF294E5B0A00123456 /* Products */,
 				D3A1B2CF294E5B0A00123456 /* Config.xcconfig */,
 			);
@@ -100,7 +100,7 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		D3A1B2C0294E5B0A00123456 /* HomeWidgetDemoFeed */ = {
+		D3A1B2C0294E5B0A00123457 /* HomeWidgetDemoFeed */ = {
 			isa = PBXGroup;
 			children = (
 				D3A1B2C2294E5B0A00123456 /* HomeWidgetDemoFeedApp.swift */,
@@ -131,7 +131,7 @@
 			name = Networking;
 			sourceTree = "<group>";
 		};
-		D3A1B2E0294E5B0A00123456 /* HomeWidgetDemoFeedUnitTests */ = {
+		D3A1B2E0294E5B0A00123457 /* HomeWidgetDemoFeedUnitTests */ = {
 			isa = PBXGroup;
 			children = (
 				D3A1B2E1294E5B0A00123456 /* ConfigUnitTests.swift */,
@@ -139,7 +139,7 @@
 			path = HomeWidgetDemoFeedUnitTests;
 			sourceTree = "<group>";
 		};
-		D3A1B2F0294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */ = {
+		D3A1B2F0294E5B0A00123457 /* HomeWidgetDemoFeedIntegrationTests */ = {
 			isa = PBXGroup;
 			children = (
 				D3A1B2F1294E5B0A00123456 /* ConnectivityIntegrationTests.swift */,

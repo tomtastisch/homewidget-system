@@ -38,13 +38,13 @@
 
 /* Begin PBXFileReference section */
 		D3A1B2C1294E5B0A00123456 /* HomeWidgetDemoFeed.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = HomeWidgetDemoFeed.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D3A1B2C2294E5B0A00123456 /* HomeWidgetDemoFeedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeedApp.swift; sourceTree = "<group>"; };
-		D3A1B2C4294E5B0A00123456 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		D3A1B2C6294E5B0A00123456 /* FeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedViewModel.swift; sourceTree = "<group>"; };
-		D3A1B2C8294E5B0A00123456 /* FeedItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/FeedItem.swift; sourceTree = "<group>"; };
-		D3A1B2CA294E5B0A00123456 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/Config.swift; sourceTree = "<group>"; };
-		D3A1B2CC294E5B0A00123456 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/APIClient.swift; sourceTree = "<group>"; };
-		D3A1B2D9294E5B0A00123456 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Networking/APIError.swift; sourceTree = "<group>"; };
+		D3A1B2C2294E5B0A00123456 /* HomeWidgetDemoFeedApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeed/HomeWidgetDemoFeedApp.swift; sourceTree = "<group>"; };
+		D3A1B2C4294E5B0A00123456 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeed/ContentView.swift; sourceTree = "<group>"; };
+		D3A1B2C6294E5B0A00123456 /* FeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeed/FeedViewModel.swift; sourceTree = "<group>"; };
+		D3A1B2C8294E5B0A00123456 /* FeedItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeed/Models/FeedItem.swift; sourceTree = "<group>"; };
+		D3A1B2CA294E5B0A00123456 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeed/Networking/Config.swift; sourceTree = "<group>"; };
+		D3A1B2CC294E5B0A00123456 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeed/Networking/APIClient.swift; sourceTree = "<group>"; };
+		D3A1B2D9294E5B0A00123456 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeed/Networking/APIError.swift; sourceTree = "<group>"; };
 		D3A1B2E1294E5B0A00123456 /* ConfigUnitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeedUnitTests/ConfigUnitTests.swift; sourceTree = "<group>"; };
 		D3A1B2F1294E5B0A00123456 /* ConnectivityIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeedIntegrationTests/ConnectivityIntegrationTests.swift; sourceTree = "<group>"; };
 		D3A1B2FA294E5B0A00123456 /* ContractIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWidgetDemoFeedIntegrationTests/ContractIntegrationTests.swift; sourceTree = "<group>"; };
@@ -110,7 +110,7 @@
 				D3A1B2D1294E5B0A00123456 /* Networking */,
 				D3A1B2CE294E5B0A00123456 /* Info.plist */,
 			);
-			path = HomeWidgetDemoFeed;
+			name = HomeWidgetDemoFeed;
 			sourceTree = "<group>";
 		};
 		D3A1B2D0294E5B0A00123456 /* Models */ = {
@@ -136,7 +136,7 @@
 			children = (
 				D3A1B2E1294E5B0A00123456 /* ConfigUnitTests.swift */,
 			);
-			path = HomeWidgetDemoFeedUnitTests;
+			name = HomeWidgetDemoFeedUnitTests;
 			sourceTree = "<group>";
 		};
 		D3A1B2F0294E5B0A00123456 /* HomeWidgetDemoFeedIntegrationTests */ = {
@@ -145,7 +145,7 @@
 				D3A1B2F1294E5B0A00123456 /* ConnectivityIntegrationTests.swift */,
 				D3A1B2FA294E5B0A00123456 /* ContractIntegrationTests.swift */,
 			);
-			path = HomeWidgetDemoFeedIntegrationTests;
+			name = HomeWidgetDemoFeedIntegrationTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

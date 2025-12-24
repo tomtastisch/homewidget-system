@@ -14,7 +14,7 @@ Um das Xcode-Projekt auf Korruption zu prüfen (z. B. doppelte Objekt-IDs), kann
 bash tools/dev/pipeline/ci_steps.sh ios_project_sanity
 ```
 
-*Hinweis: Erfordert installierte Xcode Command Line Tools.*
+*Erfordert installierte Xcode Command Line Tools.*
 
 ### Build
 

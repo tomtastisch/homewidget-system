@@ -139,8 +139,14 @@ setup_mobile() {
 
   # Lockfile aktuell halten → bewusst npm install, nicht npm ci,
   # damit Versionsfixes (@types/react-native etc.) sauber übernommen werden.
-  log "[Mobile] npm install (aktualisiert package-lock.json)"
-  npm install --no-fund --no-audit
+  # In der CI bevorzugen wir jedoch 'npm ci' für Stabilität und Schnelligkeit.
+  if [[ "${CI:-}" == "true" ]]; then
+    log "[Mobile] CI-Umgebung erkannt: verwende npm ci"
+    npm ci --no-fund --no-audit
+  else
+    log "[Mobile] npm install (aktualisiert package-lock.json)"
+    npm install --no-fund --no-audit
+  fi
 
   log "[Mobile] Mobile-Environment OK (Dependencies installiert)."
   popd >/dev/null

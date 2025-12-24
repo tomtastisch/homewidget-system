@@ -6,11 +6,24 @@ Repariert eine korrupte Xcode project.pbxproj Datei durch Auflösung von ID-Koll
 In-Code-Dokumentation: Deutsch.
 """
 
+from __future__ import annotations
 import os
 import shutil
 import re
 
-def fix_pbxproj(file_path):
+def fix_pbxproj(file_path: str) -> bool:
+    """
+    Repariert ID-Kollisionen in einer project.pbxproj Datei.
+
+    Erstellt ein Backup der Originaldatei und ersetzt bekannte kollidierende
+    IDs deterministisch durch neue Werte. Verifiziert anschließend die Referenzen.
+
+    Args:
+        file_path: Absoluter oder relativer Pfad zur project.pbxproj.
+
+    Returns:
+        True bei erfolgreicher Reparatur, sonst False.
+    """
     if not os.path.exists(file_path):
         print(f"Fehler: Datei nicht gefunden: {file_path}")
         return False

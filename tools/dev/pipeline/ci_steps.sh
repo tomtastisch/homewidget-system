@@ -418,7 +418,7 @@ step_ios_project_sanity() {
     log_info "Starte iOS Project Sanity Check..."
     
     # xcodebuild -list liefert einen Fehlercode != 0, wenn das Projekt beschädigt ist.
-    # Wir fangen den Output ab, um spezifische Fehlermeldungen zu generieren.
+    # Output wird abgefangen, um spezifische Fehlermeldungen zu generieren.
     local output
     local exit_code=0
     
@@ -447,8 +447,8 @@ step_ios_resolve_deps() {
     fi
 
     log_info "Löse iOS-Abhängigkeiten auf (SPM)..."
-    # In Phase 1 & 2 lassen wir das Skelett noch einfach durchlaufen oder 
-    # implementieren es schon, falls es für die Diagnose hilfreich ist.
+    # Das Skelett wird in Phase 1 & 2 durchlaufen oder 
+    # bei Bedarf für die Diagnose implementiert.
     # Der CI-Fehler soll aber beim Sanity-Check (xcodebuild -list) auftreten.
     run_ios_cmd "xcodebuild -resolvePackageDependencies" \
         "xcodebuild -resolvePackageDependencies -project HomeWidgetDemoFeed.xcodeproj -scheme HomeWidgetDemoFeed"

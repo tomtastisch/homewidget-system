@@ -198,7 +198,7 @@ run_ios_cmd() {
         # Auf macOS Runnern ist xcodebuild i.d.R. im Path.
         # Lokal prüfen wir nur die Existenz des Kommandos.
         if ! command -v xcodebuild >/dev/null 2>&1; then
-            log_warn "xcodebuild nicht gefunden. Der Befehl wird wahrscheinlich fehlschlagen, falls nicht im CI-Runner."
+            log_warn "xcodebuild nicht gefunden. Der Befehl schlägt fehl, sofern keine Xcode-Umgebung (z. B. CI-Runner) vorliegt."
         fi
 
         local cmd="$*"

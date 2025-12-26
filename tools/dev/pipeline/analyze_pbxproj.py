@@ -4,7 +4,7 @@ import re
 from collections import Counter
 import os
 
-def find_duplicate_ids(file_path):
+def find_duplicate_ids(file_path: str) -> None:
     if not os.path.exists(file_path):
         print(f"Datei nicht gefunden: {file_path}")
         return

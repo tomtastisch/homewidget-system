@@ -35,7 +35,7 @@ def fix_pbxproj(file_path: str) -> bool:
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    # Wir definieren die neuen IDs für die Kollisionen
+    # Neue IDs für die ID-Kollisionen
     # PBXResourcesBuildPhase Kollision
     ID_RESOURCES_OLD = "D3A1B2BF294E5B0A00123456"
     ID_RESOURCES_NEW = "D3A1B2BF294E5B0A00EE0001"

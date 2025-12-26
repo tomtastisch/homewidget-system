@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from collections import Counter
@@ -54,8 +55,6 @@ def find_duplicate_ids(file_path: str) -> None:
                     logger.warning(f"  Zeile {line_number}: {line.strip()}")
 
 if __name__ == "__main__":
-    import argparse
-    
     parser = argparse.ArgumentParser(
         description="Analysiert eine Xcode project.pbxproj Datei auf doppelte Object-IDs"
     )

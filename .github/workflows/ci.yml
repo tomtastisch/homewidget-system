@@ -333,11 +333,16 @@ jobs:
                   e2e-core-minimal=${{ needs.e2e-core-minimal.result }}
                   e2e-core-standard=${{ needs.e2e-core-standard.result }}
               run: |
+                set +e
+                echo "--- CI RESULTS ---"
+                echo "$RESULTS"
+                echo "------------------"
+                
                 FAILED_JOBS=""
                 SUCCESS_COUNT=0
                 TOTAL_COUNT=0
                 
-                while IFS='=' read -r job result; do
+                while IFS='=' read -r job result || [[ -n "$job" ]]; do
                   [[ -z "$job" ]] && continue
                   ((TOTAL_COUNT++))
                   if [[ "$result" == "success" || "$result" == "skipped" ]]; then
@@ -347,8 +352,10 @@ jobs:
                   fi
                 done <<< "$RESULTS"
                 
-                if [[ $SUCCESS_COUNT -eq $TOTAL_COUNT ]]; then
-                  echo "::notice::CI-Pipeline erfolgreich: Alle $TOTAL_COUNT Jobs abgeschlossen oder übersprungen."
+                echo "Summary: $SUCCESS_COUNT/$TOTAL_COUNT jobs passed or skipped."
+                
+                if [[ $SUCCESS_COUNT -eq $TOTAL_COUNT ]] && [[ $TOTAL_COUNT -gt 0 ]]; then
+                  echo "::notice title=CI Success::Alle $TOTAL_COUNT relevanten CI-Jobs wurden erfolgreich abgeschlossen (oder übersprungen)."
                 else
                   echo "::error title=CI Failure::Folgende Jobs sind fehlgeschlagen oder wurden abgebrochen:$FAILED_JOBS"
                   exit 1

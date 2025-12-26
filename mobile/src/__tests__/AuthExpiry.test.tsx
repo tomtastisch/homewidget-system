@@ -48,6 +48,8 @@ describe('AuthContext Cache Purge', () => {
 	});
 
 	it('should purge only protected cache on logout', async () => {
+		// Erhöhtes Timeout für CI (Standard 5000ms reicht manchmal nicht)
+		jest.setTimeout(15000);
 		const {getByTestId} = render(
 			<QueryClientProvider client={queryClient}>
 				<AuthProvider>

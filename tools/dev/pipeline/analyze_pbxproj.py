@@ -16,7 +16,7 @@ except ModuleNotFoundError:
         sys.path.insert(0, str(repo_root))
     from tools.core.logging_setup import get_logger
 
-# Module-spezifischer Logger für bessere Log-Kategorisierung
+# Modul-spezifischer Logger für bessere Log-Kategorisierung
 logger = get_logger(__name__)
 
 def find_duplicate_ids(file_path):

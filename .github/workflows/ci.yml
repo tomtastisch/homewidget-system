@@ -184,7 +184,7 @@ jobs:
         name: 🩺 E2E System Gate
         needs: [ changes, backend-check, mobile-check ]
         if: |
-            always() && 
+            always() &&
             needs.changes.outputs.e2e == 'true' &&
             (needs.backend-check.result == 'success' || needs.backend-check.result == 'skipped') &&
             (needs.mobile-check.result == 'success' || needs.mobile-check.result == 'skipped')
@@ -322,24 +322,34 @@ jobs:
         needs: [ changes, backend-check, mobile-check, ios-check, e2e-ci-gate, e2e-core-minimal, e2e-core-standard ]
         if: always()
         steps:
-            - name: Verify all jobs success or skipped
-              if: >
-                (needs.backend-check.result == 'success' || needs.backend-check.result == 'skipped') &&
-                (needs.mobile-check.result == 'success' || needs.mobile-check.result == 'skipped') &&
-                (needs.ios-check.result == 'success' || needs.ios-check.result == 'skipped') &&
-                (needs.e2e-ci-gate.result == 'success' || needs.e2e-ci-gate.result == 'skipped') &&
-                (needs.e2e-core-minimal.result == 'success' || needs.e2e-core-minimal.result == 'skipped') &&
-                (needs.e2e-core-standard.result == 'success' || needs.e2e-core-standard.result == 'skipped')
+            - name: 🏁 Ergebnisse auswerten
+              env:
+                RESULTS: |
+                  changes=${{ needs.changes.result }}
+                  backend-check=${{ needs.backend-check.result }}
+                  mobile-check=${{ needs.mobile-check.result }}
+                  ios-check=${{ needs.ios-check.result }}
+                  e2e-ci-gate=${{ needs.e2e-ci-gate.result }}
+                  e2e-core-minimal=${{ needs.e2e-core-minimal.result }}
+                  e2e-core-standard=${{ needs.e2e-core-standard.result }}
               run: |
-                echo "::notice::Alle relevanten CI-Jobs wurden erfolgreich abgeschlossen (oder übersprungen)."
-            - name: Fail if any job failed
-              if: >
-                needs.backend-check.result == 'failure' ||
-                needs.mobile-check.result == 'failure' ||
-                needs.ios-check.result == 'failure' ||
-                needs.e2e-ci-gate.result == 'failure' ||
-                needs.e2e-core-minimal.result == 'failure' ||
-                needs.e2e-core-standard.result == 'failure'
-              run: |
-                echo "Mindestens ein Job ist fehlgeschlagen."
-                exit 1
+                FAILED_JOBS=""
+                SUCCESS_COUNT=0
+                TOTAL_COUNT=0
+                
+                while IFS='=' read -r job result; do
+                  [[ -z "$job" ]] && continue
+                  ((TOTAL_COUNT++))
+                  if [[ "$result" == "success" || "$result" == "skipped" ]]; then
+                    ((SUCCESS_COUNT++))
+                  else
+                    FAILED_JOBS="$FAILED_JOBS $job($result)"
+                  fi
+                done <<< "$RESULTS"
+                
+                if [[ $SUCCESS_COUNT -eq $TOTAL_COUNT ]]; then
+                  echo "::notice::Alle relevanten CI-Jobs wurden erfolgreich abgeschlossen (oder übersprungen)."
+                else
+                  echo "::error::Folgende Jobs sind fehlgeschlagen oder wurden abgebrochen:$FAILED_JOBS"
+                  exit 1
+                fi

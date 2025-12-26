@@ -1,14 +1,16 @@
 name: 'Setup Mobile'
-description: 'Setzt Node ein und installiert Mobile-Abhängigkeiten'
+description: 'Setzt Node ein, konfiguriert npm-Caching und installiert Mobile-Abhängigkeiten'
 runs:
   using: "composite"
   steps:
     - name: 📱 Node 20 einrichten
       uses: actions/setup-node@v4
       with:
-        node-version: '20.x'
+        node-version: '20.19.4'
         cache: 'npm'
-        cache-dependency-path: 'mobile/package-lock.json'
+        cache-dependency-path: |
+          mobile/package-lock.json
+          tests/e2e/browseri/playwright/package-lock.json
 
     - name: 📦 Mobile-Abhängigkeiten
       shell: bash

@@ -1,5 +1,5 @@
 name: 'Setup Backend'
-description: 'Setzt Python ein, installiert Abhängigkeiten und bereitet die Backend-Umgebung vor'
+description: 'Setzt Python ein, installiert Abhängigkeiten, konfiguriert pip-Caching und bereitet die Backend-Umgebung vor'
 runs:
   using: "composite"
   steps:

@@ -12,7 +12,7 @@ test.describe('@minimal Infrastructure Health', () => {
 	});
 
 	// INFRA-02 – simulierter 500-Fehler → UI zeigt generische Fehlerseite/-Toast
-	// Hinweis: Da aktuell keine Web-UI vorhanden ist, simulieren wir nur den 500er-Rückweg.
+	// Da aktuell keine Web-UI vorhanden ist, wird nur der 500er-Rückweg simuliert.
 	// Sobald eine UI existiert, eine Seite aufrufen, die /health lädt, den 500er mocken und
 	// dann auf einen generischen Fehlerindikator (Toast/Seite) asserten.
 	test('@minimal INFRA-02: simulierter 500-Fehler (Backend-Route gemockt)', async ({page}: { page: Page }) => {

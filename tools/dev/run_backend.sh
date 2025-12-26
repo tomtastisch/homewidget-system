@@ -74,9 +74,9 @@ if port_in_use; then
       die "Port ${BACKEND_PORT} weiterhin belegt. Bitte manuell prüfen (lsof -iTCP:${BACKEND_PORT} -sTCP:LISTEN)."
     fi
   else
-    log "Hinweis: Du kannst einen alternativen Port setzen, z. B.: BACKEND_PORT=8001 bash tools/dev/run_backend.sh"
+    log "Alternativer Port möglich, z. B.: BACKEND_PORT=8001 bash tools/dev/run_backend.sh"
     log "Oder den belegenden Prozess anzeigen: lsof -iTCP:${BACKEND_PORT} -sTCP:LISTEN -n -P"
-    die "Port ${BACKEND_PORT} ist bereits belegt. Beende den Prozess oder starte mit anderem Port (BACKEND_PORT)."
+    die "Port ${BACKEND_PORT} ist bereits belegt. Prozess beenden oder mit anderem Port starten (BACKEND_PORT)."
   fi
 fi
 

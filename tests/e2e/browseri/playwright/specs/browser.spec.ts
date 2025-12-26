@@ -34,7 +34,7 @@ test.describe('@advanced Browser & UX', () => {
 		await expect(page.getByTestId('home.loginLink')).not.toBeVisible({timeout: budgets.navigationMs});
 		
 		// Token sollte noch vorhanden sein
-		// Hinweis: Backend kann einen neuen Token bei Refresh zurückgeben (Token-Rotation für Sicherheit)
+		// Backend kann einen neuen Token bei Refresh zurückgeben (Token-Rotation für Sicherheit)
 		// Daher prüfen wir nur auf Existenz und Struktur, nicht auf Identität
 		const tokenAfter = await page.evaluate(() => localStorage.getItem('hw_refresh_token'));
 		expect(tokenAfter).not.toBeNull();
@@ -83,7 +83,7 @@ test.describe('@advanced Browser & UX', () => {
 		test.skip(isCI, TRACKING.STORAGE_LIMITATION);
 		test.fixme(!isCI, TRACKING.STORAGE_LIMITATION);
 		
-		// Hinweis: Expo-Web auf Browser benötigt localStorage für Token-Speicherung.
+		// Hinweis: Expo-Web im Browser benötigt localStorage für Token-Speicherung.
 		// Dieser Test ist konzeptionell und wird übersprungen, da das Überschreiben von localStorage
 		// in modernen Browsern durch Security-Policies blockiert werden kann und zu Fehlern im Test-Setup führt.
 		// Ein robuster Test ist nur mit speziellen Browser-Flags oder alternativen Mechanismen möglich.

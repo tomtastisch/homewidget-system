@@ -6,8 +6,9 @@ import tempfile
 from fastapi.testclient import TestClient
 
 """
-Hinweis: `create_app` wird erst innerhalb des Tests importiert, nachdem
-`DATABASE_URL` gesetzt wurde, damit die DB-Engine die neue URL übernimmt.
+Dieses Modul testet den Home-Feed-Endpunkt mit isolierter SQLite-DB.
+`create_app` wird erst nach Setzen von `DATABASE_URL` importiert, damit die
+Engine die neue URL übernimmt.
 """
 
 

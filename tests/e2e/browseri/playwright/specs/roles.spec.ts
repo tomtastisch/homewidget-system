@@ -1,5 +1,5 @@
 import {expect, test} from '@playwright/test';
-import {loginAsRole, createUserWithRole} from '../helpers/auth';
+import {createUserWithRole, loginAsRole} from '../helpers/auth';
 import {newApiRequestContext} from '../helpers/api';
 
 /**
@@ -18,7 +18,7 @@ test.describe('@standard Roles', () => {
 		
 		// UI-Validierung: Rolle wird im Account-Screen angezeigt (testID: account.role)
 		// Navigiere zum Account-Screen (falls verfügbar)
-		// Hinweis: Wenn noch keine Navigation zu /account existiert, muss dies überprüft werden
+		// Hinweis: Wenn noch keine Navigation zu /account existiert, muss dies geprüft werden
 		// await page.goto('/account');
 		// await expect(page.getByTestId('account.role')).toBeVisible();
 		// await expect(page.getByText('demo')).toBeVisible();

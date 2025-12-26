@@ -119,9 +119,9 @@ async def logout(current_token: str = Depends(oauth2_scheme)):
     """
     Meldet die aktuelle Session ab durch Blacklisting des Access-Tokens.
 
-    Hinweis: Dies widerruft nur den präsentierten Access-Token. Refresh-Tokens bleiben
-    gültig, da sie in der Datenbank verwaltet werden (Source-of-Truth). Zukünftige Tickets
-    können dies erweitern, um Refresh-Tokens pro Session zu widerrufen/aufzuräumen.
+    Gilt nur für den präsentierten Access-Token. Refresh-Tokens bleiben gültig,
+    da sie in der Datenbank verwaltet werden. Künftige Anpassungen können den
+    Refresh-Token-Lifecycle pro Session erweitern.
     """
     payload = decode_jwt(current_token)
     if not payload or payload.get("type") != ACCESS:

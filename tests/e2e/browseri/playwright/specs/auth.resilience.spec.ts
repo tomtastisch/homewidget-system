@@ -126,11 +126,6 @@ test.describe('@standard Auth Resilience', () => {
 	test('@standard AUTH-08: Rate-Limit beim Login wird angezeigt', async ({page}) => {
 		test.skip(true, TRACKING.BACKEND_RATE_LIMIT + ' | UI-Handling vorhanden (testID: login.error.rateLimit)');
 		
-		// Hinweis: UI ist bereit (siehe LoginScreen.tsx:15,29-31,44)
-		// - testID="login.error.rateLimit" wird bei status === 429 gesetzt
-		// - Fehlermeldung: "Zu viele Anmeldeversuche. Bitte versuche es später erneut."
-		// Backend muss Rate-Limiting für /api/auth/login implementieren
-		
 		const email = uniqueEmail('auth08');
 		const password = DEFAULT_PASSWORD;
 		

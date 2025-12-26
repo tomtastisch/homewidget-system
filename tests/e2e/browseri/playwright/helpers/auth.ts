@@ -11,7 +11,7 @@ import {DEFAULT_PASSWORD, uniqueEmail} from './testdata';
 
 const routes = {
 	home: '/', // Expo-Web startet auf Home-Screen (auch für unauthentifizierte Nutzer im Demo-Modus)
-	// Hinweis: Expo-Web verwendet keine dedizierte '/login' oder '/register' URL-Route.
+	// Hinweis: Expo-Web nutzt keine dedizierte '/login' oder '/register' URL-Route.
 	// Navigation erfolgt über React Navigation State, nicht über URL-Pfade.
 };
 

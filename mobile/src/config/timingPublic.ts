@@ -3,9 +3,9 @@ import {clamp, TIMING_LIMITS as LIMITS} from './timingLimits';
 import {DEFAULT_TIMING_PUBLIC} from './timingDefaults';
 import {logger} from '../logging/logger';
 
-// Hinweis: Es werden ausschließlich PUBLIC‑Timings geladen.
+// Es werden ausschließlich PUBLIC‑Timings geladen.
 // Quelle: Wird im Prebuild aus ../../config/timing.public.json nach ./_generated.timing.public.json kopiert
-// Profilwahl: via ENV `HW_PROFILE` (Fallback: "dev").
+// Profilwahl via ENV `HW_PROFILE` (Fallback: "dev").
 // JSON statisch importieren (Build‑time) – kein Zugriff auf serverseitige Timings.
 // Der Pfad ist relativ vom mobilen Quellcode zum Monorepo‑Root.
 // resolveJsonModule ist in tsconfig aktiviert.
@@ -25,7 +25,7 @@ const RAW_TIMING = require('./_generated.timing.public.json');
  *
  * Profilwahl:
  * - Via ENV `HW_PROFILE` (zur Build/Runtime je nach Plattform verfügbar). Fallback: "dev".
- * - Hinweis: In React Native/Metro wird process.env typischerweise zur Buildzeit ersetzt.
+ * - In React Native/Metro wird process.env typischerweise zur Buildzeit ersetzt.
  *   Ein Profilwechsel zur Laufzeit erfordert daher in der Regel einen Rebuild der App.
  *
  * Validierung:

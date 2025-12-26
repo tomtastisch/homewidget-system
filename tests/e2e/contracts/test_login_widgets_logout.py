@@ -1,11 +1,8 @@
 """
-Full-Stack-Light Contract Tests (pytest + httpx)
-
-Flow: Login -> Home-Feed -> Logout
-
-BASE_URL wird aus der ENV `E2E_API_BASE_URL` gelesen, Default: http://127.0.0.1:8100
-Hinweis: Backend muss im E2E-Modus laufen (siehe backend/tools/start_test_backend_e2e.sh)
+E2E-Contract-Test für Login → Widgets → Logout.
+Backend muss im E2E-Modus laufen (siehe backend/tools/start_test_backend_e2e.sh).
 """
+
 from __future__ import annotations
 
 import os

@@ -145,8 +145,7 @@ class _LoguruAdapter:
         Optional: kompatibel zur stdlib-API, gibt neuen Adapter mit gebundenen Extras zurück.
         """
         new = _LoguruAdapter(self._name)
-        # Hier reicht es, die Extras bei jedem Log-Aufruf neu zu binden,
-        # daher speichern wir nur den Namen und nutzen `_logger`-Property.
+        # Binden der Extras erfolgt pro Log-Aufruf; der Adapter speichert nur den Namen.
         return new
 
 

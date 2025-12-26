@@ -59,8 +59,8 @@ log_error() {
 # Konstanten und Pfade
 # -----------------------------------------------------------------------------
 
-# Hinweis: BASH_SOURCE[0] verweist auf das aufrufende Skript (z. B. ci_steps.sh),
-# nicht auf diese Library – beide liegen jedoch im selben Verzeichnis.
+# BASH_SOURCE[0] verweist auf das aufrufende Skript (z. B. ci_steps.sh),
+# wodurch relative Pfade zu Tooling stabil aufgelöst werden.
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." &>/dev/null && pwd)"
 

@@ -19,11 +19,11 @@ class RefreshTokenLockManager:
     Thread-Safety: Diese Implementierung ist thread-safe und verwendet threading.Lock
     für die Synchronisation zwischen parallelen Requests im selben Prozess.
 
-    Hinweis: Bei Multi-Process-Deployments (z.B. mehrere Uvicorn-Worker) bietet dies
-    keinen prozessübergreifenden Schutz. Für solche Szenarien wäre ein verteilter Lock
-    (z.B. via Redis) notwendig. Da FastAPI-Anwendungen typischerweise mit einem Worker
-    pro Prozess laufen und async handling nutzen, ist thread-basierte Synchronisation
-    für die meisten Deployment-Szenarien ausreichend.
+    Bei Multi-Process-Deployments (z.B. mehrere Uvicorn-Worker) bietet dies
+    keinen prozessübergreifenden Schutz. Für solche Szenarien ist ein verteilter Lock
+    (z.B. via Redis) erforderlich. FastAPI-Deployments laufen typischerweise mit einem
+    Worker pro Prozess und asynchroner Verarbeitung, daher genügt thread-basierte
+    Synchronisation in den meisten Fällen.
     """
 
     def __init__(self) -> None:
@@ -36,10 +36,10 @@ class RefreshTokenLockManager:
         Context Manager zum Erwerben eines Locks für einen spezifischen Token-Digest.
 
         Args:
-            token_digest: Der Hash des Refresh-Tokens, für den der Lock erworben werden soll.
+            token_digest: Hash des Refresh-Tokens, für den der Lock erworben werden soll.
 
         Yields:
-            None - Der Lock ist erworben und wird beim Verlassen des Contexts freigegeben.
+            None – Lock ist erworben und wird beim Verlassen des Contexts freigegeben.
 
         Beispiel:
             ```python
@@ -69,8 +69,8 @@ class RefreshTokenLockManager:
 
             # Cleanup: Lock entfernen wenn er nicht mehr verwendet wird
             # Dies verhindert unbegrenztes Wachstum des Lock-Dictionaries
-            # Hinweis: Es besteht eine theoretische Race-Condition zwischen locked() und del,
-            # aber das ist akzeptabel - im schlimmsten Fall bleibt ein Lock länger im Dict.
+            # Es besteht eine theoretische Race-Condition zwischen locked() und del,
+            # im Worst Case bleibt ein Lock länger im Dictionary erhalten.
             with self._manager_lock:
                 # Double-check: Nur löschen wenn niemand darauf wartet und der Lock noch derselbe ist
                 if (

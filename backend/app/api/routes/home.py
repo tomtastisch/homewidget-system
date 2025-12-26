@@ -37,7 +37,7 @@ def _current_feed_rule() -> RateRule:
     """
     Liefert die aktuell gültige Rate-Rule.
 
-    Hinweis: bewusst „lazy“ pro Request, damit Timing-/Config-Updates sofort greifen.
+    Bewusst lazy pro Request, damit Timing-/Config-Updates sofort greifen.
     """
     # kleiner TTL-Cache, um häufige Aufrufe zu entlasten
     import time

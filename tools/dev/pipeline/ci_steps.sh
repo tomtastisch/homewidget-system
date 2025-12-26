@@ -447,9 +447,8 @@ step_ios_resolve_deps() {
     fi
 
     log_info "Löse iOS-Abhängigkeiten auf (SPM)..."
-    # Das Skelett wird in Phase 1 & 2 durchlaufen oder 
-    # bei Bedarf für die Diagnose implementiert.
-    # Der CI-Fehler soll aber beim Sanity-Check (xcodebuild -list) auftreten.
+    # Skeleton-Funktion für Phase 1 & 2 oder spätere Diagnose-Implementierung.
+    # Kritische Fehler werden bereits beim Sanity-Check (xcodebuild -list) erkannt.
     run_ios_cmd "xcodebuild -resolvePackageDependencies" \
         "xcodebuild -resolvePackageDependencies -project HomeWidgetDemoFeed.xcodeproj -scheme HomeWidgetDemoFeed"
 }

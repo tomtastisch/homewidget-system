@@ -67,8 +67,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "pbxproj_path",
         nargs="?",
-        default="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj",
-        help="Pfad zur project.pbxproj Datei (default: ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj)"
+        default=DEFAULT_PBXPROJ_PATH,
+        help=f"Pfad zur project.pbxproj Datei (Standard: {DEFAULT_PBXPROJ_PATH})"
     )
     
     args = parser.parse_args()

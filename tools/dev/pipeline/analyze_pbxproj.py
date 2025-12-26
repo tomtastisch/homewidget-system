@@ -62,14 +62,14 @@ def find_duplicate_ids(file_path: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Analysiert eine Xcode project.pbxproj Datei auf doppelte Object-IDs"
+        description="Analysiert eine project.pbxproj Datei auf doppelte IDs"
     )
     parser.add_argument(
-        "file_path",
+        "pbxproj_path",
         nargs="?",
         default=DEFAULT_PBXPROJ_PATH,
         help=f"Pfad zur project.pbxproj Datei (Standard: {DEFAULT_PBXPROJ_PATH})"
     )
     
     args = parser.parse_args()
-    find_duplicate_ids(args.file_path)
+    find_duplicate_ids(args.pbxproj_path)

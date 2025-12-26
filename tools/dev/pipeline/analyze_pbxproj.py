@@ -40,7 +40,7 @@ def find_duplicate_ids(file_path: str) -> None:
     with path.open("r", encoding="utf-8") as f:
         content = f.read()
     
-    # IDs sind 24-stellige Hex-Werte. Wir suchen sie am Zeilenanfang im "objects" Bereich.
+    # IDs sind 24-stellige Hex-Werte am Zeilenanfang im "objects" Bereich.
     # Normalerweise: <TAB><TAB>ID /* ... */ = { ... };
     ids = re.findall(r"^\t\t([0-9A-F]{24})", content, re.MULTILINE)
     counts = Counter(ids)

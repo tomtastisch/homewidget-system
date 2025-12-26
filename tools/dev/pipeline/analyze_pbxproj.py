@@ -6,7 +6,7 @@ import os
 import sys
 from pathlib import Path
 
-# Ermöglicht sowohl Modul- als auch Script-Ausführung
+# Ermöglicht sowohl Modul- als auch Skript-Ausführung
 # Bei direkter Ausführung: Repo-Root zum Path hinzufügen
 try:
     from tools.core.logging_setup import get_logger

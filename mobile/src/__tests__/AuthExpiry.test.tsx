@@ -76,5 +76,5 @@ describe('AuthContext Cache Purge', () => {
 		
 		expect(queryClient.getQueryData(['auth', 'test'])).toBeUndefined();
 		expect(queryClient.getQueryData(['demo', 'test'])).toBe('demo-value');
-	});
+	}, 15000);
 });

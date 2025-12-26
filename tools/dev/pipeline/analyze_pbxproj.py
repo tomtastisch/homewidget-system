@@ -4,16 +4,20 @@ import re
 from collections import Counter
 import os
 import sys
+from pathlib import Path
 
 # Ermöglicht sowohl Modul- als auch Script-Ausführung
-if __name__ == "__main__":
-    # Bei direkter Ausführung: tools-Root zum Path hinzufügen
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    tools_root = os.path.abspath(os.path.join(script_dir, "..", "..", ".."))
-    if tools_root not in sys.path:
-        sys.path.insert(0, tools_root)
+# Bei direkter Ausführung: Repo-Root zum Path hinzufügen
+try:
+    from tools.core.logging_setup import get_logger
+except ModuleNotFoundError:
+    repo_root = Path(__file__).parent.parent.parent.parent
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    from tools.core.logging_setup import get_logger
 
-from tools.core.logging_setup import logger
+# Module-spezifischer Logger für bessere Log-Kategorisierung
+logger = get_logger(__name__)
 
 def find_duplicate_ids(file_path):
     if not os.path.exists(file_path):

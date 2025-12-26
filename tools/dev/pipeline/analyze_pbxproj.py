@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import re
-from collections import Counter
-import os
 import sys
+from collections import Counter
 from pathlib import Path
 
 # Ermöglicht sowohl Modul- als auch Skript-Ausführung
@@ -19,12 +18,19 @@ except ModuleNotFoundError:
 # Modul-spezifischer Logger für bessere Log-Kategorisierung
 logger = get_logger(__name__)
 
-def find_duplicate_ids(file_path):
-    if not os.path.exists(file_path):
+def find_duplicate_ids(file_path: str) -> None:
+    """
+    Analysiert eine project.pbxproj Datei auf doppelte Object-IDs.
+    
+    Args:
+        file_path: Pfad zur project.pbxproj Datei
+    """
+    path = Path(file_path)
+    if not path.exists():
         logger.error(f"Datei nicht gefunden: {file_path}")
         return
 
-    with open(file_path, "r", encoding="utf-8") as f:
+    with path.open("r", encoding="utf-8") as f:
         content = f.read()
     
     # IDs sind 24-stellige Hex-Werte. Wir suchen sie am Zeilenanfang im "objects" Bereich.
@@ -43,7 +49,22 @@ def find_duplicate_ids(file_path):
             logger.warning(f"Doppelte ID: {id_val} (Vorkommen: {count})")
             for i, line in enumerate(lines):
                 if line.strip().startswith(id_val):
-                    logger.warning(f"  Zeile {i+1}: {line.strip()}")
+                    # enumerate() zählt ab 0, aber Zeilennummern in Editoren starten bei 1
+                    line_number = i + 1
+                    logger.warning(f"  Zeile {line_number}: {line.strip()}")
 
 if __name__ == "__main__":
-    find_duplicate_ids("ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj")
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="Analysiert eine Xcode project.pbxproj Datei auf doppelte Object-IDs"
+    )
+    parser.add_argument(
+        "file_path",
+        nargs="?",
+        default="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj",
+        help="Pfad zur project.pbxproj Datei (Standard: ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj)"
+    )
+    
+    args = parser.parse_args()
+    find_duplicate_ids(args.file_path)

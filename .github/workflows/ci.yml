@@ -348,8 +348,8 @@ jobs:
                 done <<< "$RESULTS"
                 
                 if [[ $SUCCESS_COUNT -eq $TOTAL_COUNT ]]; then
-                  echo "::notice::Alle relevanten CI-Jobs wurden erfolgreich abgeschlossen (oder übersprungen)."
+                  echo "::notice::CI-Pipeline erfolgreich: Alle $TOTAL_COUNT Jobs abgeschlossen oder übersprungen."
                 else
-                  echo "::error::Folgende Jobs sind fehlgeschlagen oder wurden abgebrochen:$FAILED_JOBS"
+                  echo "::error title=CI Failure::Folgende Jobs sind fehlgeschlagen oder wurden abgebrochen:$FAILED_JOBS"
                   exit 1
                 fi

@@ -66,6 +66,7 @@ PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." &>/dev/null && pwd)"
 
 BACKEND_DIR="${PROJECT_ROOT}/backend"
 MOBILE_DIR="${PROJECT_ROOT}/mobile"
+IOS_DIR="${PROJECT_ROOT}/ios/HomeWidgetDemoFeed"
 BACKEND_VENV_DIR="${BACKEND_DIR}/.venv"
 
 # Container-Konfiguration
@@ -178,6 +179,31 @@ run_mobile_cmd() {
             bash -lc "${cmd}"
         )
     fi
+}
+
+## @brief Führt einen Shell-Befehl im iOS-Kontext auf dem Host aus.
+## @param $1 Beschreibung (für Logging)
+## @param $2... Befehl
+run_ios_cmd() {
+    local desc="$1"
+    shift
+
+    log_info "iOS-Host-Befehl: ${desc}"
+    (
+        cd "${IOS_DIR}" || {
+            log_error "iOS-Verzeichnis nicht gefunden: ${IOS_DIR}"
+            exit 1
+        }
+        
+        # Auf macOS Runnern ist xcodebuild i.d.R. im Path.
+        # Lokal prüfen wir nur die Existenz des Kommandos.
+        if ! command -v xcodebuild >/dev/null 2>&1; then
+            log_warn "xcodebuild nicht gefunden. Der nachfolgende Befehl benötigt eine Xcode-Umgebung (z. B. macOS CI-Runner)."
+        fi
+
+        local cmd="$*"
+        bash -c "${cmd}"
+    )
 }
 
 # -----------------------------------------------------------------------------

@@ -117,6 +117,43 @@ jobs:
                     echo "::notice::Alle CI-Prüfungen wurden erfolgreich abgeschlossen."
 
     # =============================================================
+    # IOS-JOB (MacOS für Xcode)
+    # =============================================================
+
+    ios-check:
+        runs-on: macos-latest
+        permissions:
+            contents: read
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+
+            -   name: 🛠️ Install Bash 5 (macOS)
+                run: |
+                    brew install bash
+                    echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
+            # =============================================================
+            # IOS-UMGEBUNG
+            # =============================================================
+
+            -   name: 🔍 iOS Project Sanity Check
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh ios_project_sanity
+
+            -   name: 📦 iOS Resolve Dependencies
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh ios_resolve_deps
+
+            -   name: 📦 iOS Build
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh ios_build
+
+            -   name: 🧪 iOS Tests
+                run: |
+                    bash tools/dev/pipeline/ci_steps.sh ios_tests
+
+    # =============================================================
     # CI GATE: Health + Demo-Feed + Playwright Gate Spec (HW-NEXT-06B)
     # =============================================================
 

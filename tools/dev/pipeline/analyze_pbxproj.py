@@ -19,12 +19,18 @@ except ModuleNotFoundError:
 # Modul-spezifischer Logger für bessere Log-Kategorisierung
 logger = get_logger(__name__)
 
+# Standard-Pfad zur pbxproj Datei im Projekt
+DEFAULT_PBXPROJ_PATH = "ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj"
+
 def find_duplicate_ids(file_path: str) -> None:
     """
     Analysiert eine project.pbxproj Datei auf doppelte Object-IDs.
     
     Args:
         file_path: Pfad zur project.pbxproj Datei
+        
+    Returns:
+        None. Loggt Ergebnisse über den Logger.
     """
     path = Path(file_path)
     if not path.exists():
@@ -61,8 +67,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "file_path",
         nargs="?",
-        default="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj",
-        help="Pfad zur project.pbxproj Datei (Standard: ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj)"
+        default=DEFAULT_PBXPROJ_PATH,
+        help=f"Pfad zur project.pbxproj Datei (Standard: {DEFAULT_PBXPROJ_PATH})"
     )
     
     args = parser.parse_args()

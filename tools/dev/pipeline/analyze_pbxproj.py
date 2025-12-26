@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import re
 from collections import Counter
 import os
@@ -31,4 +32,15 @@ def find_duplicate_ids(file_path):
                     print(f"  Zeile {i+1}: {line.strip()}")
 
 if __name__ == "__main__":
-    find_duplicate_ids("ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj")
+    parser = argparse.ArgumentParser(
+        description="Analysiert eine project.pbxproj Datei auf doppelte IDs"
+    )
+    parser.add_argument(
+        "pbxproj_path",
+        nargs="?",
+        default="ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj",
+        help="Pfad zur project.pbxproj Datei (default: ios/HomeWidgetDemoFeed/HomeWidgetDemoFeed.xcodeproj/project.pbxproj)"
+    )
+    
+    args = parser.parse_args()
+    find_duplicate_ids(args.pbxproj_path)

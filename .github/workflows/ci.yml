@@ -218,9 +218,8 @@ jobs:
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_gate_checks
 
-            -   name: 🎭 Playwright-Dependencies installieren
-                run: |
-                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
+            -   name: Setup Playwright
+                uses: ./.github/actions/setup-playwright
 
             -   name: 🌐 Playwright Gate Spec
                 env:
@@ -261,9 +260,8 @@ jobs:
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
 
-            -   name: 🎭 Playwright-Dependencies installieren
-                run: |
-                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
+            -   name: Setup Playwright
+                uses: ./.github/actions/setup-playwright
 
             -   name: 🌐 E2E Browser Tests (Playwright – Minimal)
                 env:
@@ -304,9 +302,8 @@ jobs:
                 run: |
                     bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start
 
-            -   name: 🎭 Playwright-Dependencies installieren
-                run: |
-                    bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install
+            -   name: Setup Playwright
+                uses: ./.github/actions/setup-playwright
 
             -   name: 🌐 E2E Browser Tests (Playwright – Standard)
                 env:

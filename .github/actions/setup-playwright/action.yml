@@ -1,0 +1,22 @@
+name: 'Setup Playwright'
+description: 'Installiert Playwright-Abhängigkeiten und Browser mit Caching'
+runs:
+  using: "composite"
+  steps:
+    - name: ♻️ Cache Playwright node_modules
+      uses: actions/cache@v4
+      with:
+        path: tests/e2e/browseri/playwright/node_modules
+        key: playwright-node-modules-${{ runner.os }}-${{ hashFiles('tests/e2e/browseri/playwright/package-lock.json') }}
+
+    - name: ♻️ Cache Playwright Browsers
+      uses: actions/cache@v4
+      id: playwright-browser-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-browsers-${{ runner.os }}-${{ hashFiles('tests/e2e/browseri/playwright/package-lock.json') }}
+
+    - name: 🎭 Playwright-Dependencies installieren
+      shell: bash
+      run: |
+        bash tools/dev/pipeline/ci_steps.sh e2e_playwright_install

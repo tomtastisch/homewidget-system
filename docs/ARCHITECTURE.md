@@ -1,327 +1,217 @@
 # 🏗️ Systemarchitektur – Homewidget System
 
-Dieses Dokument beschreibt die Gesamtarchitektur des Homewidget Systems (PoC): Schichten, Module, Datenfluss und
-Designentscheidungen.
+Schichten, Module, und Datenfluss des Homewidget Systems (PoC).
 
 ---
 
 ## 📋 Überblick
 
-Das **Homewidget System** ist ein Proof-of-Concept für ein Widget-Management-System ähnlich CHECK24:
+Das **Homewidget System** ist ein Widget-Management-System mit JWT-Auth, Rollen-basierter Zugriffskontrolle und
+FastAPI-Backend + React Native (Expo)-Frontend.
 
-- **Kern**: Widget-Katalog, Home-Feed mit Personalisierung nach Nutzer-Rolle
-- **Auth**: E-Mail/Passwort-Login, JWT (Access/Refresh), Token-Blacklist
-- **Rollen**: `demo`, `common`, `premium` → unterschiedliche Widget-Sichtbarkeit
-- **Cache**: In-Memory (Dev), erweiterbar auf Redis/etc. (Prod)
-- **Frontend**: React Native (Expo) + Web-Build
-- **Testing**: Unit-, Integration-, E2E-Tests (Playwright)
+**Quelle**: `backend/app/main.py:L1-L30`, `mobile/package.json:L1-L30`
 
 ---
 
-## 🏛️ Architektur-Ebenen
+## 🏛️ Schichten-Architektur
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│           Frontend (Expo React Native)                │
-│         (Screens, API-Client, Auth-Flow)             │
+│           Frontend (React Native / Expo)              │
+│         (Screens, API-Client, Auth-Context)          │
 └────────────────────┬─────────────────────────────────┘
                      │ HTTP/REST
 ┌────────────────────▼─────────────────────────────────┐
-│              FastAPI Gateway/Router                   │
-│           (routes/, middleware/, CORS)               │
+│              FastAPI Router & Middleware              │
+│           (routes/, auth, CORS, logging)             │
 └────────────────────┬─────────────────────────────────┘
                      │
-     ┌───────────────┼───────────────┐
-     │               │               │
-┌────▼────┐  ┌──────▼──────┐  ┌─────▼────┐
-│   API   │  │ Middleware  │  │ Security │
-│ Routes  │  │ (Auth, CORS)│  │ (JWT/exp)│
-└────┬────┘  └──────┬──────┘  └─────┬────┘
-     │              │               │
-     └──────────────┼───────────────┘
-                    │
-     ┌──────────────▼──────────────┐
-     │   Domain / Business Logic   │
-     │ (users, widgets, feeds)     │
-     └──────────────┬──────────────┘
-                    │
-     ┌──────────────▼──────────────────┐
-     │  Infrastructure / Persistence   │
-     │ (Database, Cache, File Storage) │
-     └─────────────────────────────────┘
+     ┌───────────────┴───────────────┐
+     │                               │
+┌────▼──────────────┐   ┌────────────▼─────────────┐
+│  Domain/Services  │   │  Infrastructure/Core     │
+│  (Auth, Widgets,  │   │  (DB, Cache, Security,   │
+│   Feeds)          │   │   Logging)               │
+└────┬──────────────┘   └────────────┬─────────────┘
+     │                               │
+     └───────────────┬───────────────┘
+                     │
+        ┌────────────▼──────────────┐
+        │  Persistence Layer        │
+        │  (SQLite/PostgreSQL,      │
+        │   Redis/In-Memory Cache)  │
+        └───────────────────────────┘
 ```
+
+**Quelle**: `backend/app/main.py`, `backend/app/api/routes/`, `backend/app/core/`
 
 ---
 
-## 📦 Modul-Struktur
+## 📦 Backend-Modul-Struktur (`backend/app/`)
 
-### Backend (`backend/app/`)
+| Modul                   | Zweck                                                    | Quelle                 |
+|-------------------------|----------------------------------------------------------|------------------------|
+| `main.py`               | FastAPI-Instanz, Lifespan (DB Init, Cache Init, Seed)    | L1-L126                |
+| `core/config.py`        | Settings aus Env-Variablen (DB, JWT, Ports, Cache)       | L1-L76                 |
+| `core/security.py`      | JWT, Passwort-Hashing, Token-Blacklist, get_current_user | L1-L162                |
+| `core/database.py`      | SQLModel-Session, DB-Init, Migrationen                   | (ref. pyproject.toml)  |
+| `api/routes/auth.py`    | POST /login, /register, /logout, /refresh                | (ref. ci.yml)          |
+| `api/routes/home.py`    | GET /home (Widget-Feed, rollenbasiert gefiltert)         | (ref. ci.yml)          |
+| `api/routes/widgets.py` | GET /widgets (Admin), POST /widgets (Admin)              | (ref. ci.yml)          |
+| `models/user.py`        | User-Entität: id, email, password_hash, role, tokens     | L1-L60                 |
+| `models/widget.py`      | Widget-Entität: id, type, config, visibility_rules, ...  | (ref. ARCHITECTURE.md) |
 
-```
-app/
-├── main.py                         # FastAPI-Instanz, Startup, Routes
-├── core/
-│   ├── config.py                   # Settings (DB, JWT-Secret, Ports, etc.)
-│   ├── db.py                       # SQLModel-Session, Migrationen
-│   ├── security.py                 # JWT, Passwort-Hashing, Token-Blacklist
-│   └── cache.py                    # Cache-Backend (In-Memory/Redis)
-│
-├── api/
-│   ├── __init__.py
-│   ├── auth.py                     # POST /login, /register, /logout, /refresh
-│   ├── users.py                    # GET /users/{id}, PATCH /users/{id}
-│   ├── widgets.py                  # GET /widgets (Admin), POST /widgets (Admin)
-│   ├── home.py                     # GET /home (Widget-Feed für User)
-│   └── health.py                   # GET /health
-│
-├── domain/
-│   ├── users/
-│   │   ├── models.py               # User-Entität, Rollen
-│   │   ├── schemas.py              # Pydantic-Schémas (UserRead, UserCreate, etc.)
-│   │   └── service.py              # User-Logik (create, update, getByEmail)
-│   │
-│   ├── widgets/
-│   │   ├── models.py               # Widget-Entität
-│   │   ├── schemas.py              # WidgetRead, WidgetCreate, etc.
-│   │   └── service.py              # Widget-CRUD, Validierung
-│   │
-│   └── feeds/
-│       ├── models.py               # (optional) Feed-Entität
-│       ├── schemas.py              # FeedRead
-│       └── service.py              # Home-Feed-Logik (Filter, Sort, Cache)
-│
-├── middleware/
-│   ├── auth.py                     # JWT-Validation, User-Injection
-│   ├── cors.py                     # CORS-Handling
-│   ├── rate_limit.py               # Rate-Limiting (optional)
-│   └── logging.py                  # Request-/Response-Logging
-│
-├── models/
-│   └── (Alias für domain/models)   # Re-Export für einfachere Imports
-│
-├── schemas/
-│   └── (Alias für domain/schemas)  # Re-Export
-│
-├── services/
-│   └── (Alias für domain/service)  # Re-Export
-│
-└── __init__.py
-```
-
-### Frontend (`mobile/src/`)
-
-```
-src/
-├── App.tsx                         # Root-Component, Navigation
-├── api/
-│   ├── homeApi.ts                  # GET /home, Widget-Fetch
-│   ├── authApi.ts                  # Login, Register, Logout
-│   └── client.ts                   # HTTP-Client (Axios/Fetch), Token-Refresh
-│
-├── auth/
-│   ├── context.ts                  # AuthContext (User, Token)
-│   └── useAuth.ts                  # Hook für Auth-Status
-│
-├── screens/
-│   ├── LandingScreen.tsx           # Login/Register/Demo
-│   ├── HomeScreen.tsx              # Widget-Feed
-│   └── SettingsScreen.tsx          # User-Settings (optional)
-│
-├── components/
-│   ├── widgets/
-│   │   ├── WidgetCard.tsx          # Card-Layout Widget
-│   │   ├── WidgetBanner.tsx        # Banner-Layout Widget
-│   │   └── WidgetHero.tsx          # (optional) Hero-Layout
-│   │
-│   └── (UI-Komponenten)
-│
-├── types/
-│   ├── widgets.ts                  # WidgetType Union, Schemas
-│   ├── api.ts                      # API-Response-Types
-│   └── user.ts                     # UserRead, UserRole
-│
-├── storage/
-│   ├── secureStore.ts              # expo-secure-store Wrapper
-│   └── localStorage.ts             # Non-sensitive storage
-│
-└── logging/
-    └── logger.ts                   # Logging-Utility
-```
+**Quelle**: `backend/app/` (Verzeichnis-Struktur)
 
 ---
 
 ## 🔄 Datenfluss
 
-### 1. **Nutzer-Login**
+### 1. Login-Flow
 
 ```
-[Frontend: LoginScreen]
-  ↓ (POST /api/auth/login)
-[Backend: routes/auth.py → AuthService]
-  ↓ (Passwort-Validierung, JWT generieren)
-[Response: { access_token, refresh_token, user }]
-  ↓ (speichern in SecureStore)
-[Frontend: AuthContext updated]
+[Client] POST /api/auth/login (email, password)
+  ↓
+[Backend: routes/auth.py]
+  ├─ Validiere E-Mail-Format (Pydantic)
+  ├─ Finde User in DB
+  ├─ Verifiziere Passwort (Argon2id)
+  ├─ Generiere Access-Token (JWT, ~30 Min)
+  ├─ Generiere Refresh-Token (opaque, ~14 Tage, in DB)
+  ↓
+[Response] { access_token, refresh_token, user }
+  ↓
+[Client] Speichere Tokens in SecureStore
 ```
 
-### 2. **Home-Feed abrufen**
+**Quelle**: `backend/app/core/security.py:L54-L95`, `backend/app/models/user.py:L13-L18`
+
+### 2. Home-Feed abrufen
 
 ```
-[Frontend: HomeScreen]
-  ↓ (GET /api/home, mit Authorization-Header)
+[Client] GET /api/home (Header: Authorization: Bearer <access_token>)
+  ↓
+[Backend: middleware/auth.py → get_current_user()]
+  ├─ Extrahiere & dekodiere Token
+  ├─ Prüfe Ablauf (exp), Typ (access), Blacklist (jti)
+  ├─ Lade User aus DB
+  ↓
 [Backend: routes/home.py]
-  ↓ (JWT validieren + User aus Token)
-[Backend: FeedService.get_home_feed(user)]
-  ↓ (Widgets filtern nach Rolle, cachen)
-[Cache-Lookup/Hit oder DB-Abfrage]
-  ↓ (Response: [ WidgetRead, ... ])
-[Frontend: Render Widgets nach Type]
+  ├─ Query Widgets
+  ├─ Filtere nach visibility_rules ∩ user.role
+  ├─ Sortiere nach priority (DESC)
+  ├─ Cache Response (~5 Min)
+  ↓
+[Response] [ WidgetRead, ... ]
+  ↓
+[Client] Rendere Widgets nach Type (Card/Banner/Hero)
 ```
 
-### 3. **Token-Refresh**
+**Quelle**: `backend/app/core/security.py:L125-L162`, `tools/dev/pipeline/ci_steps.sh:L51-L73`
+
+### 3. Logout & Token-Revokation
 
 ```
-[Frontend: Access-Token abgelaufen]
-  ↓ (POST /api/auth/refresh mit Refresh-Token)
-[Backend: AuthService.refresh_access_token()]
-  ↓ (Neuen Access-Token generieren, in Blacklist prüfen)
-[Response: { access_token }]
-  ↓ (speichern in SecureStore, erneut versuchen)
-[Ursprünglicher Request erneut senden]
+[Client] POST /api/auth/logout (Header: Authorization: Bearer <access_token>)
+  ↓
+[Backend: routes/auth.py]
+  ├─ Extrahiere jti (JWT ID) aus Token
+  ├─ Schreibe (jti, TTL) in Token-Blacklist-Cache
+  ├─ (Optional) Invalidiere Refresh-Token in DB
+  ↓
+[Response] 204 No Content
+  ↓
+[Client] Lösche Tokens lokal
 ```
 
-### 4. **Logout**
-
-```
-[Frontend: Logout-Button]
-  ↓ (POST /api/auth/logout mit Authorization-Header)
-[Backend: TokenBlacklist.add(jti)]
-  ↓ (TTL = Token-Restlaufzeit)
-[Response: OK]
-  ↓ (Token lokal löschen)
-[Frontend: Redirect zu Landing]
-```
+**Quelle**: `backend/app/services/token/blacklist.py` (ref. core/AUTHENTICATION.md)
 
 ---
 
-## 🔐 Sicherheit
+## 🔐 Authentifizierung & Autorisierung
 
-### JWT-Aufbau
+### Rollen-Modell
 
-**Access-Token** (kurz gültig, ~15 Min):
+- **demo**: Unauthentifiziert, schreibgeschützt
+- **common**: Registriert, voller Zugriff
+- **premium**: Erweiterte Features (future)
 
-```json
-{
-  "sub": "user@example.com",
-  "type": "access",
-  "exp": 1735737600,
-  "jti": "550e8400-e29b-41d4-a716-446655440000"
-}
-```
+**Quelle**: `backend/app/models/user.py:L13-L18`
 
-**Refresh-Token** (lang gültig, in DB):
+### JWT-Tokens
 
-```
-opaque token stored in refresh_tokens table
-(nicht JWT, Schutz vor Token-Tampering)
-```
+| Token       | Typ         | TTL      | Übertragung                     |
+|-------------|-------------|----------|---------------------------------|
+| **Access**  | JWT (HS256) | ~30 Min  | `Authorization: Bearer <token>` |
+| **Refresh** | Opaque + DB | ~14 Tage | Response Body / Client Storage  |
+
+**Quelle**: `backend/app/core/security.py:L54-L95`
 
 ### Token-Blacklist
 
-- **Mechanismus**: In-Memory (Dev) oder Redis-Backend
-- **Zweck**: Token revozieren (Logout, vorzeitig)
-- **TTL**: Entspricht Token-Restlaufzeit
-- **Namespace**: `token_blacklist:{jti}`
+- **Mechanismus**: Cache (In-Memory Dev, Redis Prod)
+- **Zweck**: Tokens revozieren (Logout)
+- **TTL**: Token-Restlaufzeit
 
-### Passwort-Sicherheit
-
-- **Hashing**: Argon2id (via `argon2-cffi`)
-- **Validierung**: E-Mail-Format, Mindestlänge (>= 8 Zeichen)
+**Quelle**: `backend/app/services/token/blacklist.py`, `backend/app/main.py:L30-L35`
 
 ---
 
-## 💾 Datenmodell
+## 📊 Tech-Stack
 
-### Users
+| Schicht                | Technologie         | Version        | Quelle                      |
+|------------------------|---------------------|----------------|-----------------------------|
+| **Backend-Framework**  | FastAPI             | ≥0.124         | backend/pyproject.toml:L7   |
+| **ORM/Validation**     | SQLModel            | ≥0.0.27        | backend/pyproject.toml:L8   |
+| **ASGI-Server**        | Uvicorn             | ≥0.38          | backend/pyproject.toml:L9   |
+| **Passwort-Hash**      | Argon2-CFfi         | ≥23.1          | backend/pyproject.toml:L10  |
+| **JWT**                | python-jose         | ≥3.5.0         | backend/pyproject.toml:L11  |
+| **Cache**              | fastapi-cache2      | ≥0.2           | backend/pyproject.toml:L12  |
+| **Frontend-Framework** | React Native + Expo | 0.81.5 / ~54.0 | mobile/package.json:L32-L33 |
+| **Frontend-Language**  | TypeScript          | ^5.9.3         | mobile/package.json:L43     |
+| **E2E-Testing**        | Playwright          | 1.57.0         | mobile/package.json:L36     |
 
-- `id`: UUID
-- `email`: str (unique)
-- `password_hash`: str
-- `role`: Literal["demo", "common", "premium"]
-- `is_active`: bool
-- `created_at`, `updated_at`: datetime
-
-### Widgets
-
-- `id`: UUID
-- `product_key`: str (unique identifier)
-- `version`: int
-- `type`: Literal["card", "banner", "hero", ...]
-- `title`: str
-- `description`: str
-- `image_url`: str
-- `config_json`: str (JSON mit spezifischen Feldern je Typ)
-- `visibility_rules`: str (JSON: which roles see this)
-- `priority`: int (Sortierung)
-- `slot`: str (Desktop/Mobile/etc.)
-- `freshness_ttl`: int (Cache-Sekunden)
-- `enabled`: bool
-- `created_at`, `updated_at`: datetime
-
-### RefreshTokens
-
-- `id`: UUID
-- `user_id`: FK(User)
-- `token_hash`: str (Hash des opaque Tokens)
-- `expires_at`: datetime
-- `created_at`: datetime
+**Quelle**: `backend/pyproject.toml`, `mobile/package.json`
 
 ---
 
-## 🎯 Design-Entscheidungen
+## 🚀 Deployment-Profile
 
-| Aspekt              | Entscheidung                        | Grund                                               |
-|---------------------|-------------------------------------|-----------------------------------------------------|
-| **Framework**       | FastAPI                             | Modern, Type-Safe, schnell, Built-in OpenAPI        |
-| **ORM**             | SQLModel                            | Kombination von Pydantic + SQLAlchemy, saubere API  |
-| **Auth**            | JWT + Refresh-Token                 | Standard, Skalierbar, Stateless                     |
-| **Token-Blacklist** | Cache-Backend (nicht DB)            | Performance, TTL-Handling, einfache Invalidierung   |
-| **Cache**           | In-Memory (Dev), Redis-ready (Prod) | Schnell, Skalierbar, Pluggable Backend              |
-| **Frontend**        | React Native (Expo)                 | Cross-Platform, Live Reload, Hot Reload, TS-Support |
-| **Testing**         | pytest (Backend), Playwright (E2E)  | Robust, Community-Support, Good DevEx               |
+### Development (`ENV=dev`)
 
----
+- Backend: `uvicorn app.main:app --reload` (Port 8000)
+- Frontend: `expo start --web` (Port 19006)
+- Database: SQLite lokal (`homewidget.db`)
+- Cache: In-Memory
+- Secrets: Hardcoded Defaults (dev-secret-change-me)
 
-## 🚀 Deployment
+### Testing (`ENV=test`)
 
-### Development
+- Backend: uvicorn (Port 8100)
+- Database: SQLite `/tmp/` (readonly-sicher)
+- E2E-Seeds: Idempotentes Seeding (demo/common/premium User + Widgets)
 
-- **Backend**: `uvicorn app.main:app --reload` (Port 8000)
-- **Frontend**: `expo start` (Port 19006)
-- **Database**: SQLite (lokal)
-- **Cache**: In-Memory
+**Quelle**: `backend/app/core/config.py:L14-L54`, `backend/app/main.py:L40-L60`
 
-### Production (Konzept)
+### Production (`ENV=prod`)
 
-- **Backend**: Gunicorn + Uvicorn (mehrere Worker)
-- **Database**: PostgreSQL
-- **Cache**: Redis
-- **Frontend**: Expo Web-Build
-- **Hosting**: Docker + K8s (oder Cloud-Services)
+- Backend: Gunicorn + Uvicorn Workers
+- Database: PostgreSQL
+- Cache: Redis
+- Secrets: Env-Variablen (nicht hardcoded)
+- Frontend: Expo Web-Build + CDN
 
 ---
 
-## 📚 Weitere Dokumentation
+## 📚 Verwandter Dokumentation
 
-Für tiefere Details zu spezifischen Aspekten:
+Für Details siehe:
 
-- **Authentication**: [`core/AUTHENTICATION.md`](../core/AUTHENTICATION.md)
-- **Widget-Domain**: [`core/WIDGETS.md`](../core/WIDGETS.md)
-- **Freemium-System**: [`core/FREEMIUM.md`](../core/FREEMIUM.md)
-- **Sicherheit**: [`core/SECURITY.md`](../core/SECURITY.md)
-- **CI/CD**: [`infrastructure/CI-CD.md`](../infrastructure/CI-CD.md)
-- **Testing**: [`development/TESTING.md`](../development/TESTING.md)
-- **Code-Guidelines**: [`development/GUIDELINES.md`](../development/GUIDELINES.md)
+- **Konzepte** (Auth, Widgets, Freemium, Cache): [`TECHNICAL_CONCEPT.md`](TECHNICAL_CONCEPT.md)
+- **Setup & Run**: [`SETUP_AND_RUN.md`](SETUP_AND_RUN.md)
+- **Tests & CI**: [`CI_TESTING.md`](CI_TESTING.md)
+- **Sicherheit**: [`SECURITY.md`](SECURITY.md)
+- **Probleme**: [`TROUBLESHOOTING.md`](development/TROUBLESHOOTING.md)
 
 ---
 

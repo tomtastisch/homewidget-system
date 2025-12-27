@@ -1,6 +1,9 @@
 # 🏠 Homewidget System
 
-**Willkommen!** Dies ist die zentrale Einstiegshilfe. Alle Dokumentation findest du im `docs/` Verzeichnis.
+**Proof of Concept** für ein Widget-Management-System ähnlich CHECK24: Widget-Katalog, Home-Feed mit Personalisierung
+nach Nutzer-Rolle (demo/common/premium), JWT-basierte Authentifizierung, FastAPI-Backend + React Native (Expo)-Frontend.
+
+---
 
 ## ⚡ Quick-Start (30 Sekunden)
 
@@ -8,47 +11,55 @@
 bash tools/dev/orchestration/start.sh
 ```
 
-**Das war's!** Backend + Frontend starten **garantiert** zuverlässig.
+**Das war's!** Backend (Port 8000) + Frontend (Port 19006) starten und Health-Checks durchlaufen.
 
 Dann öffne: **http://localhost:19006**
 
 ---
 
-## 📚 Dokumentation
+## 📂 Deliverables (Submission Requirements)
 
-| Dokument                                                             | Für                        | Zeit   |
-|----------------------------------------------------------------------|----------------------------|--------|
-| **[docs/QUICKSTART.md](docs/QUICKSTART.md)** ⭐                       | Anfänger                   | 2 Min  |
-| **[docs/README.md](docs/README.md)**                                 | Vollständiger Guide        | 30 Min |
-| **[docs/development/CHEATSHEET.sh](docs/development/CHEATSHEET.sh)** | Commands nachschlagen      | 1 Min  |
-| **[docs/development/README.md](docs/development/README.md)**         | Entwicklung & Richtlinien  | varies |
-| **[docs/e2e/README.md](docs/e2e/README.md)**                         | E2E Testing mit Playwright | varies |
-| **[backend/README.md](backend/README.md)**                           | Backend-spezifisch         | varies |
+| Dokument                   | Link                                             | Beschreibung                     |
+|----------------------------|--------------------------------------------------|----------------------------------|
+| **CONCEPT.md**             | [CONCEPT.md](CONCEPT.md)                         | Fachliches Konzept & Architektur |
+| **DEVELOPER_GUIDELINE.md** | [DEVELOPER_GUIDELINE.md](DEVELOPER_GUIDELINE.md) | Leitfaden für Produktteams       |
+| **Application Video**      | [Platzhalter: Link zum Video einfügen]           | Demo der App-Funktionen          |
+| **Live PoC Deployment**    | [Platzhalter: Link zum Deployment einfügen]      | Live-Version des Systems         |
+
+---
+
+## 📚 Dokumentation (Details)
+
+| Dokument                                                                       | Für                                | Zeit   |
+|--------------------------------------------------------------------------------|------------------------------------|--------|
+| **[docs/SETUP_AND_RUN.md](docs/SETUP_AND_RUN.md)** ⭐                           | Setup, Start/Stop, Voraussetzungen | 5 Min  |
+| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**                               | Schichten, Module, Datenfluss      | 10 Min |
+| **[docs/TECHNICAL_CONCEPT.md](docs/TECHNICAL_CONCEPT.md)**                     | Auth, Widgets, Rollen, Datenmodell | 10 Min |
+| **[docs/CI_TESTING.md](docs/CI_TESTING.md)**                                   | CI-Pipeline, Tests, Local Repro    | 10 Min |
+| **[docs/SECURITY.md](docs/SECURITY.md)**                                       | JWT, Token, Secrets, Validierung   | 10 Min |
+| **[docs/development/TROUBLESHOOTING.md](docs/development/TROUBLESHOOTING.md)** | Fehler, Warnungen, Workarounds     | 5 Min  |
+
+---
 
 ## 🎯 Nächste Schritte
 
-1. **👉 Starte mit:** `bash tools/dev/orchestration/start.sh`
-2. Öffne Browser: http://localhost:19006
-3. Erkunde die App oder lese [docs/QUICKSTART.md](docs/QUICKSTART.md) für Details
+1. **Starte:** `bash tools/dev/orchestration/start.sh`
+2. **Browser:** http://localhost:19006
+3. **Dokumentation:** Wähle oben dein Thema
 
-## 🚀 Deployment (Docker Compose)
+---
 
-Für einen schnellen Start in einer produktionsnahen Umgebung:
+## 🔗 Wichtige URLs (lokal)
 
-```bash
-docker compose -f deploy/docker-compose.yml up -d --build
-```
+- **Frontend:** http://localhost:19006
+- **Backend:** http://127.0.0.1:8000
+- **API-Docs (Swagger):** http://127.0.0.1:8000/docs
+- **Health-Check:** http://127.0.0.1:8000/health
 
-- **Backend:** http://localhost:8000 (Health: `/health`)
-- **Web:** http://localhost:8080
+---
 
-## 🔗 Wichtige Links
+## 🛑 Probleme?
 
-- Backend: http://127.0.0.1:8000
-- Frontend: http://localhost:19006
-- Backend Docs (Swagger): http://127.0.0.1:8000/docs
-
-## 💡 Bei Fragen
-
-→ Siehe **[docs/development/TROUBLESHOOTING.md](docs/development/TROUBLESHOOTING.md)** für häufige Probleme
+→ Siehe **[docs/development/TROUBLESHOOTING.md](docs/development/TROUBLESHOOTING.md)** (Ports blockiert, Env-Fehler,
+etc.)
 

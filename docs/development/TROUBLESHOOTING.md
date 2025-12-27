@@ -1,204 +1,371 @@
-# Bekannte, akzeptierte Warnungen
+# 🛠️ Troubleshooting – Homewidget System
 
-Diese Datei dokumentiert Warnungen, die in der CI/Dev-Pipeline auftreten,
-technisch unkritisch sind und bewusst akzeptiert werden.
-
-**Stand:** 2025-12-11
-**Letzte Überprüfung:** Pipeline vollständig grün (Unit/Integration/E2E, Lint, Build)
+Häufige Fehler beim Start, Setup und Testing, sowie akzeptierte Warnungen.
 
 ---
 
-## Backend (Python/pytest)
+## 🔴 Setup & Start
 
-### 1. ResourceWarning: unclosed database (BEHOBEN)
+### ❌ „Ports already in use" (8000, 19006)
 
-**Status:** ✅ Größtenteils behoben (Stand: 2025-12-11)
+**Symptom**: Backend oder Frontend startet nicht, Port wird bereits verwendet.
 
-**Maßnahmen durchgeführt:**
+**Ursachen**: Prozess läuft noch vom letzten Start oder anderes Programm nutzt Port.
 
-- `backend/tests/conftest.py`: `engine.dispose()` in Fixture hinzugefügt
-- `backend/tests/db/test_db_init.py`: Explizites `engine.dispose()` im Test
-- Ergebnis: Von ~10 Warnungen auf 1-2 reduziert
+**Lösung**:
 
-**Verbleibende Warnungen (1-2):**
+```bash
+# Beende alle Homewidget-Prozesse
+bash tools/dev/orchestration/finalize_all.sh
 
+# Warte 2 Sekunden
+sleep 2
+
+# Versuche Neustart
+bash tools/dev/orchestration/start.sh
+```
+
+**Quelle**: `tools/dev/orchestration/finalize_all.sh:L1-L150`
+
+---
+
+### ❌ „venv not found" oder „python3: command not found"
+
+**Symptom**: Backend startet mit `ImportError: No module named 'app'` oder `uvicorn: command not found`.
+
+**Ursachen**: Backend-Setup nicht durchgeführt oder Python nicht im PATH.
+
+**Lösung**:
+
+```bash
+# Backend-Setup durchführen
+bash tools/dev/setup_dev_env.sh
+
+# Falls Python 3.13+ nicht gefunden:
+python3 --version
+# Falls < 3.13: Python upgraden oder setzen
+PYTHON_BIN=/usr/local/bin/python3.13 bash tools/dev/setup_dev_env.sh
+```
+
+**Quelle**: `tools/dev/setup_dev_env.sh:L20-L91`
+
+---
+
+### ❌ „node_modules not found" oder „npm: command not found"
+
+**Symptom**: Frontend startet nicht, `expo: command not found`.
+
+**Ursachen**: Mobile-Setup nicht durchgeführt oder Node/npm nicht im PATH.
+
+**Lösung**:
+
+```bash
+# Mobile-Setup durchführen
+cd mobile
+npm install
+
+# Falls Node 20.19.4 nicht verfügbar:
+node --version
+# Falls nvm verfügbar:
+nvm use 20.19.4  # oder nvm install 20.19.4
+npm install
+```
+
+**Quelle**: `tools/dev/setup_dev_env.sh:L96-L152`
+
+---
+
+### ❌ Backend-Import-Fehler („cannot import name 'FastAPI'")
+
+**Symptom**:
+
+```
+ModuleNotFoundError: No module named 'fastapi'
+```
+
+**Ursachen**: venv nicht aktiviert oder Dependencies nicht installiert.
+
+**Lösung**:
+
+```bash
+cd backend
+source .venv/bin/activate
+
+# Dependencies neu installieren
+pip install -e .[dev]
+
+# Oder von Grund auf:
+rm -rf .venv
+bash ../tools/dev/setup_dev_env.sh
+```
+
+**Quelle**: `tools/dev/setup_dev_env.sh:L46-L72`
+
+---
+
+## ⚠️ Akzeptierte Warnungen
+
+### 1. Python: ResourceWarning (unclosed database)
+
+**Warnung**:
 ```
 ResourceWarning: unclosed database in <sqlite3.Connection object at 0x...>
-  /Library/Frameworks/Python.framework/Versions/3.13/lib/python3.13/inspect.py:1814
-  /_pytest/unraisableexception.py:33
+  .../inspect.py:1814
+  .../_pytest/unraisableexception.py:33
 ```
 
-**Technische Bewertung:**
+**Status**: ✅ Akzeptiert (Stand: 2025-12-11)
 
-- ⚠️ Verbleibende Warnungen stammen aus **tiefen Innereien** von:
-    - SQLAlchemy's `inspect()` Funktion
-    - Pydantic's Schema-Generierung
-- ✅ Bekanntes Python 3.13 + SQLite-Interaktionsproblem
-- ✅ **Kein Memory-Leak** im Produktionscode (nur in Test-Teardown-Phase)
-- ✅ SQLAlchemy's Connection-Pooling funktioniert korrekt
+**Grund**:
 
-**Warum nicht weiter fixen?**
+- Tritt nur in Test-Teardown auf (Garbage Collection)
+- Stammt aus tiefen SQLAlchemy/Pydantic-Internals
+- **Kein Memory-Leak** (alle Sessions werden korrekt disposed)
+- Funktional keine Auswirkung (Tests bleiben grün)
 
-1. Die Warnungen treten nur bei Test-Teardown auf (Garbage Collection)
-2. Unser Code hat alle Engines/Sessions korrekt disposed
-3. Weitere Fixes würden tief in SQLAlchemy/Pydantic-Internals eingreifen (nicht empfohlen)
-4. Funktional keine Auswirkung (alle Tests grün, keine echten Leaks)
+**Maßnahmen durchgeführt**:
 
-**Monitoring:**
+- `backend/tests/conftest.py`: `engine.dispose()` hinzugefügt
+- `backend/tests/db/test_db_init.py`: Explizites `engine.dispose()`
+- Resultat: Von ~10 Warnungen auf 1-2 reduziert
 
-- Bei SQLAlchemy-Updates (>2.0.x) prüfen, ob behoben
-- Bei Python 3.14 erneut testen
+**Monitoring**: Bei Python 3.14+ oder SQLAlchemy 2.1+ erneut testen.
+
+**Quelle**: `backend/tests/conftest.py` (expected)
 
 ---
 
-### 2. PytestAssertRewriteWarning: anyio
+### 2. pytest: PytestAssertRewriteWarning (anyio)
 
-**Status:** ✅ Behoben durch gezielten Filter (Stand: 2025-12-11)
-
-**Warnung (vor Behebung):**
-
+**Warnung**:
 ```
 PytestAssertRewriteWarning: Module already imported so cannot be rewritten: anyio
 ```
 
-**Ursache:**
-Das pytest-Plugin `pytest-anyio` importiert das `anyio`-Modul, bevor pytest's
-Assert-Rewriting-Mechanismus greifen kann. Dies tritt nur bei E2E-Contracttests auf,
-da dort pytest vom Projekt-Root aus läuft.
+**Status**: ✅ Behoben durch gezielten Filter (Stand: 2025-12-11)
 
-**Technische Bewertung:**
+**Grund**: `pytest-anyio` importiert `anyio` vor pytest's Assert-Rewriting. Funktional unkritisch.
 
-- ✅ Funktional unkritisch: anyio-Code funktioniert vollständig
-- ✅ Nur Assertion-Introspection für anyio-interne Asserts betroffen (die es nicht gibt)
-- ✅ Unsere Tests nutzen anyio nur minimal (1 Test mit `@pytest.mark.anyio`)
+**Maßnahme**:
 
-**Maßnahme:**
+```ini
+# backend/pytest.ini
+filterwarnings =
+    ignore:Module already imported so cannot be rewritten.*anyio:pytest.PytestAssertRewriteWarning
+```
 
-- ✅ Gezielter Filter in `pytest.ini` (Projekt-Root):
-  ```ini
-  filterwarnings =
-      ignore:Module already imported so cannot be rewritten.*anyio:pytest.PytestAssertRewriteWarning
-  ```
-- Filter ist eng gefasst (nur anyio, nur PytestAssertRewriteWarning)
-- Kommentar in `pytest.ini` verweist auf diese Dokumentation
-
-**Referenz:**
-
-- `backend/tests/auth/sec/test_token_blacklist.py:32` nutzt `@pytest.mark.anyio`
-- pytest-anyio Plugin Version: 4.12.0
-- Filter aktiv seit: 2025-12-11
+**Quelle**: `backend/pytest.ini:L1-L10`
 
 ---
 
-## Mobile (npm/Expo/React Native)
+### 3. npm: Deprecated Dependencies (transitive)
 
-### 1. npm deprecated: transitive Dependencies
-
-**Status:** ✅ Akzeptiert als Upstream-Einschränkung
-
-**Betroffene Packages:**
-
+**Warnung**:
 ```
-npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory.
-  Do not use it. Check out lru-cache if you want a good and tested way to coalesce
-  async requests by a key value, which is much more comprehensive and powerful.
-
-npm warn deprecated rimraf@<verschiedene Versionen>
-npm warn deprecated glob@<verschiedene Versionen>
-npm warn deprecated domexception@<version>
-npm warn deprecated abab@<version>
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory...
+npm warn deprecated rimraf@...: ...
+npm warn deprecated glob@...: ...
 ```
 
-**Ursache:**
-Diese Packages werden **ausschließlich transitiv** über Expo-, Jest- und
-React-Native-Tooling eingebunden. Sie sind **nicht** in unseren direkten Dependencies
-(`mobile/package.json`).
+**Status**: ✅ Akzeptiert als Upstream-Problem (Stand: 2025-12-11)
 
-**Dependency-Kette (Beispiel):**
+**Grund**:
 
+- Diese Packages sind **transitiv** (nicht direkt in dependencies)
+- Sie stammen von Expo, Jest, React-Native-Tooling
+- Expo 54 ist aktuelle Stable (Expo 55 Beta nicht Production-ready)
+- Downgrade würde Sicherheits-Updates verlieren
+
+**Verifikation**:
+```bash
+cd mobile
+npm audit              # 0 vulnerabilities
+expo-doctor            # 17/17 checks passed
 ```
-jest-expo → jest → jest-cli → @jest/core → jest-runner → jest-haste-map →
-  walker → makedir → node-modules-regexp → glob@7 → inflight
-```
 
-**Technische Bewertung:**
+**Monitoring**: Bei Expo 55/56 Major-Updates prüfen.
 
-- ✅ `expo-doctor`: 17/17 checks grün
-- ✅ Alle Tests grün (Lint, TypeScript, Jest, Build)
-- ✅ Keine funktionalen Auswirkungen
-- ✅ Keine Sicherheitsprobleme (`npm audit`: 0 vulnerabilities)
-- ⚠️ **Upstream-Problem:** Expo/Jest-Team muss Dependencies modernisieren
+**Quelle**: `mobile/package.json:L32-L50`
 
-**Warum kein Upgrade?**
-| Package | Aktuelle Version | Status |
-|---------|------------------|---------|
-| expo | ~54.0.27 | ✅ Neueste Stable |
-| jest-expo | ~54.0.15 | ✅ Kompatibel mit Expo 54 |
-| react-native | 0.81.5 | ✅ Korrekt für Expo 54 |
-| react | 19.1.0 | ✅ Neueste Stable |
+---
 
-- **Expo 55:** Aktuell Beta, nicht Production-ready
-- **Downgrade:** Würde Sicherheits-/Feature-Updates verlieren
-- **Override erzwingen:** Könnte Build/Runtime-Inkompatibilitäten verursachen
+## 🔍 Debug-Tipps
 
-**Maßnahme:**
-
-1. ✅ Warnungen bewusst akzeptiert
-2. 🔄 Monitoring: Bei Expo-Major-Updates (55, 56, ...) prüfen, ob behoben
-3. 📊 Quarterly Review: Deprecation-Status überprüfen
-
-**Dokumentierte Ausnahme:**
-
-Weitere Overrides werden **nicht** hinzugefügt, um Tooling-Stabilität zu wahren.
-
-## Pipeline-Status (Stand: 2025-12-11)
-
-### Backend
+### Backend loggen
 
 ```bash
-✅ pytest -m unit         →  7 passed
-✅ pytest -m integration  → 43 passed (1 ResourceWarning akzeptiert)
-✅ ruff check app/        → All checks passed
-✅ mypy app/              → Success: no issues found
+# Live-Logs anschauen
+tail -f /tmp/backend.log
+
+# Backend im Vordergrund starten (mehr Output)
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level debug
 ```
 
-### Mobile
+### Frontend loggen
 
 ```bash
-✅ expo-doctor            → 17/17 checks passed
-✅ npm run lint           → No lint errors
-✅ npx tsc --noEmit       → No type errors
-✅ npm test               → All tests passed
-✅ npm run build          → Build successful
+# Live-Logs anschauen
+tail -f /tmp/frontend.log
+
+# Expo im CLI-Modus starten
+cd mobile
+npm run web -- --port 19006
 ```
 
-### E2E
+### Health-Check prüfen
 
 ```bash
-✅ E2E-Contracttests      → Via pmcd_run run-e2e-contracts
+curl -i http://127.0.0.1:8000/health
+# Erwartet: 200 OK, { "status": "ok" }
+
+curl -i http://localhost:19006/
+# Erwartet: 200 OK, HTML (Expo-Web)
 ```
 
 ---
 
-## Wartung
+## 🧪 Test-Fehler
 
-**Überprüfung empfohlen bei:**
+### Backend-Tests: Database Error
 
-- Major-Updates von Python (3.14+), SQLAlchemy (2.1+), pytest (9.x+)
-- Major-Updates von Expo (55+), React Native (0.82+), Jest (30+)
-- Neuen Warnungen, die in der CI auftauchen
+**Fehler**:
 
-**Ansprechpartner:**
+```
+sqlite3.OperationalError: attempt to write a readonly database
+```
 
-- Backend-Warnungen: Backend-Team
-- Mobile-Warnungen: Frontend/Mobile-Team
-- Pipeline: DevOps/CI-Team
+**Ursache**: SQLite DB im Repo ist read-only oder tmp-Verzeichnis nicht beschreibbar.
+
+**Lösung**:
+
+```bash
+# Pytest prüft automatisch auf read-only und redirects zu /tmp/
+# Falls immer noch Fehler:
+rm -f backend/homewidget.db backend/test_e2e.db
+bash tools/dev/setup_dev_env.sh
+cd backend && pytest tests -v
+```
+
+**Quelle**: `backend/app/core/config.py:L40-L54` (Auto-Redirect zu /tmp für Test)
 
 ---
 
-## Referenzen
+### E2E-Tests: Playwright Timeout
 
-- [pytest ResourceWarnings](https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings)
+**Fehler**:
+
+```
+Timeout waiting for page to load
+```
+
+**Ursache**: Backend oder Frontend nicht verfügbar oder zu langsam.
+
+**Lösung**:
+
+```bash
+# Starte Backend & Frontend manuell
+bash tools/dev/pipeline/ci_steps.sh e2e_backend_start     # Port 8100
+bash tools/dev/pipeline/ci_steps.sh e2e_expo_web_start    # Port 19006
+
+# Prüfe Erreichbarkeit
+curl http://127.0.0.1:8100/health
+curl http://localhost:19006/
+
+# Dann starte Tests
+cd tests/e2e/browseri/playwright
+npx playwright test --debug  # Debugger öffnet sich
+```
+
+**Quelle**: `tools/dev/pipeline/ci_steps.sh:L100-L190`
+
+---
+
+### Jest-Tests: Module Not Found
+
+**Fehler**:
+
+```
+Cannot find module 'react-native'
+```
+
+**Ursache**: npm install nicht durchgeführt oder Cache-Problem.
+
+**Lösung**:
+
+```bash
+cd mobile
+rm -rf node_modules package-lock.json
+npm install
+npm test
+```
+
+---
+
+## 📊 Pipeline-Status (Stand: 2025-12-11)
+
+### ✅ Backend
+
+```
+✅ pytest -m unit        → 7 passed
+✅ pytest -m integration → 43 passed (1 ResourceWarning akzeptiert)
+✅ ruff check app/       → All checks passed
+✅ mypy app/             → Success: no issues found
+```
+
+### ✅ Mobile
+
+```
+✅ expo-doctor           → 17/17 checks passed
+✅ npm run lint          → No lint errors
+✅ npx tsc --noEmit      → No type errors
+✅ npm test              → All tests passed
+✅ npm run build         → Build successful
+```
+
+### ✅ E2E
+
+```
+✅ E2E-Contract-Tests    → Via tools/dev/pipeline/ci_steps.sh
+✅ E2E-Browser-Tests     → Playwright (auth, home-feed, widgets)
+```
+
+**Quelle**: `.github/workflows/ci.yml:L1-L365`
+
+---
+
+## 📞 Hilfreiche Commands
+
+```bash
+# Setup
+bash tools/dev/setup_dev_env.sh
+
+# Start
+bash tools/dev/orchestration/start.sh
+
+# Stop
+bash tools/dev/orchestration/finalize_all.sh
+
+# Backend-Tests
+cd backend && pytest tests -v
+
+# Mobile-Tests
+cd mobile && npm test
+
+# E2E-Tests (Playwright)
+cd tests/e2e/browseri/playwright && npx playwright test --ui
+
+# Logs ansehen
+tail -f /tmp/backend.log
+tail -f /tmp/frontend.log
+```
+
+**Quelle**: `tools/dev/orchestration/`, `mobile/package.json`, `backend/pytest.ini`
+
+---
+
+*Zuletzt aktualisiert: Dezember 2025*
 - [SQLAlchemy Connection Pooling](https://docs.sqlalchemy.org/en/20/core/pooling.html)
 - [Expo Doctor](https://docs.expo.dev/more/expo-cli/#doctor)
 - [npm deprecation policy](https://docs.npmjs.com/deprecating-and-undeprecating-packages-or-package-versions)
